@@ -1,0 +1,172 @@
+\ Plus D support for Abersoft Forth
+
+\ Plus D disk interface support
+\ for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ Requirements:
+\ assembler (under development)
+
+\ 2015-03-13: Start.
+
+FORTH DEFINITIONS
+
+
+VOCABULARY G+DOS IMMEDIATE
+G+DOS DEFINITIONS DECIMAL
+
+1 VARIABLE DRIVE \ 1 or 2
+0 VARIABLE UFIA 22 ALLOT \ User File Information Area
+
+UFIA      CONSTANT DSTR1 \ drive: 1 or 2
+UFIA 1+   CONSTANT FSTR1 \ program number
+UFIA 2+   CONSTANT SSTR1 \ stream number
+UFIA 3 +  CONSTANT LSTR1 \ device: "D" or "d"
+UFIA 4 +  CONSTANT NSTR1 \ directory description
+UFIA 5 +  CONSTANT NSTR2 \ file name
+UFIA 15 + CONSTANT HD00  \ file type
+UFIA 16 + CONSTANT HD0B  \ file lenght
+UFIA 18 + CONSTANT HD0D  \ file start address
+UFIA 20 + CONSTANT HD0F  \ BASIC lenght without variables
+UFIA 22 + CONSTANT HD11  \ BASIC autorun line
+
+\ File types
+0 CONSTANT BASIC-FILETYPE
+1 CONSTANT DATA-ARRAY-FILETYPE
+2 CONSTANT STRING-ARRAY-FILETYPE
+3 CONSTANT CODE-FILETYPE
+
+\ Directory descriptions
+01 CONSTANT BASIC-FILE
+02 CONSTANT DATA-ARRAY
+03 CONSTANT STRING-ARRAY
+04 CONSTANT CODE-FILE
+05 CONSTANT SNAPSHOT-48K
+06 CONSTANT MICRODRIVE-FILE
+07 CONSTANT SCREENS$-FILE
+08 CONSTANT SPECIAL-FILE
+09 CONSTANT SNAPSHOT-128K
+10 CONSTANT OPENTYPE-FILE
+11 CONSTANT EXECUTE-FILE
+
+\ Hook codes
+HEX
+33 CONSTANT HXFER
+34 CONSTANT OFSM
+35 CONSTANT HOFLE
+36 CONSTANT SBYT
+37 CONSTANT HSVBK
+38 CONSTANT CFSM
+39 CONSTANT PNTP
+3A CONSTANT COPS
+3B CONSTANT HGFLE
+3C CONSTANT LBYT
+3D CONSTANT HLDBK
+3E CONSTANT WSAD
+3F CONSTANT SAD
+40 CONSTANT REST
+41 CONSTANT HERAZ
+DECIMAL
+
+: INIT-UFIA ( start lenght dir -- )
+  \ Init the content of the User File Information Area
+  NSTR1 C!  HD0B !  HD0D !
+  DRIVE @ DSTR1 C!
+  100 LSTR1 C!  \ "d" device
+  CODE-FILETYPE HD00 C!
+  \ File name:
+  NSTR2 10 BLANKS
+  BL WORD HERE COUNT 10 MAX  NSTR2 SWAP CMOVE
+  ;
+
+: ?G+DOS-ERROR  ( ior --)
+  \ ior = the AF register returned by a G+DOS command:
+  \     bit 0     = set: error
+  \     bits 8-14 = error code
+  \     bit 15    = set: ZX Spectrum error; unset: G+DOS error
+  DUP 1 AND       \ error?
+  SWAP 255 /      \ error code
+  DUP 128 AND     \ ZX Spectrum error?
+  IF    -1 *      \ ZX Spectrum error
+  ELSE 100 +      \ G+DOS error
+  THEN ?ERROR ;
+
+CODE (SAVE-BLOCK-FILE) ( -- ior )
+  SAVE-FORTH-REGISTERS
+  DSTR1 IX LDP#
+  8 RST  HOFLE C, \ open the file and create its header
+  NC IF \ no error?
+    HD0D DE LDP \ start
+    HD0B BC LDP \ lenght
+    8 RST  HSVBK C, \ save to file
+    NC IF  \ no error?
+      8 RST  CFSM C,  \ close the file
+    ENDIF
+  ENDIF
+  RESTORE-FORTH-REGISTERS  AF PUSH
+  END-CODE
+
+CODE (LOAD-BLOCK-FILE) ( -- ior )
+  ( Abrir fichero y crear cabecera:)
+  SAVE-FORTH-REGISTERS
+  DSTR1 IX LDP#
+  8 RST  3B C,
+  NC IF \ no error?
+    \ Load the file header
+    HD00 DE LDP#
+    9 B LD#
+    \ loop
+    8 RST  3C C,
+    12 C,                         ( LD [DE],A)
+    DE INCP
+    10 C, FA C,                   ( DJNZ bucle)
+    ( Cargar el fichero del disco:)
+    HD0D DE LDP
+    HD0B BC LDP
+    8 RST  3D C, \ load the file
+  THEN
+  RESTORE-FORTH-REGISTERS  AF PUSH
+  END-CODE
+
+CODE (ERASE-FILE) ( -- ior )
+  SAVE-FORTH-REGISTERS
+  UFIA IX LDP#
+  UFIA IX LDP#
+  8 RST  41 C,
+  RESTORE-FORTH-REGISTERS
+  AF PUSH
+  ( bit 0 de F = ¿error?)
+  ( bits 0-6 de A = código de error)
+  ( si el bit 7 de A es 1, el código)
+  ( de error se refiere)
+  ( al Spectrum, no al DISCiPLE)
+  END-CODE
+
+\ XXX TODO filenames
+: BLOCKS>UFIA ( n --)
+  FLUSH LO HI LO - SPECIAL-FILE INIT-UFIA ;
+: SAVED-BLOCK-FILE ( ca len -- )
+  BLOCKS>UFIA (SAVE-BLOCK-FILE) ?G+DOS-ERROR ;
+: SAVE-BLOCK-FILE ( "name" -- )
+  ;
+: LOADED-BLOCK-FILE ( ca len -- )
+  BLOCKS>UFIA (LOAD-BLOCK-FILE) ?G+DOS-ERROR ;
+: LOAD-BLOCK-FILE ( "name" -- )
+  ;
+: ERASED-FILE ( ca len -- )
+  (ERASE-FILE) ?G+DOS-ERROR ;
+: ERASE-FILE ( "name" -- )
+  ;
+
+: SAVE-SYSTEM ( "name" -- )
+  \ XXX TODO filename
+  LATEST 12 +ORIGIN !
+  HERE 28 +ORIGIN !
+  HERE 30 +ORIGIN !
+  HERE FENCE !
+  ' FORTH 8 + 32 +ORIGIN !
+  SIZE CODE-FILE INIT-UFIA
+  (SAVE-BLOCK-FILE) ?G+DOS-ERROR
+  ;
+

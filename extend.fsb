@@ -1,0 +1,31 @@
+\ Extensions for Abersoft Forth
+\ By Marcos Cruz (programandala.net)
+\ 2015-03
+( Backslash )
+: \ ( "ccc<newline>" -- )
+  IN @ DUP C/L >
+  IF     B/BUF SWAP MOD
+  ELSE   C/L SWAP -
+  THEN   IN +! ; IMMEDIATE
+-->
+( Strings )
+: CHAR  ( "name" -- c )  BL WORD HERE 1+ C@ ;
+: [CHAR] ( "name" -- c ) CHAR [COMPILE] LITERAL ; IMMEDIATE
+-->
+( Files )
+: LOAD-TAPE  ( n -- )  LOADT LOAD ;
+-->
+( Operators and stack )
+: INVERT  ( n1 -- n2 )  -1 XOR ;
+: BOUNDS  ( a1 len -- a2 a1 )  OVER + SWAP ;
+-->
+( BYE )
+\ Rename MON to BYE
+' MON NFA 1+
+CHAR B OVER C!  CHAR Y OVER 1+ C!  CHAR E 128 + SWAP 2+ C!
+-->
+( DUMP )
+: DUMP ( a len -- )
+  BOUNDS DO  ?TERMINAL IF  LEAVE  THEN
+    I U. I C@ DUP 3 .R SPACE BL MAX EMIT CR
+  LOOP ;

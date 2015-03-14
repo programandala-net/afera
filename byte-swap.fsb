@@ -1,0 +1,11 @@
+\ Byte swap
+\ 2015-03-13
+
+CODE ><  ( n1 -- n2 )
+  \ Swap the low and high bytes within n1
+  HL POP
+  H A LD
+  L H LD
+  A L LD
+  HL PUSH
+END-CODE

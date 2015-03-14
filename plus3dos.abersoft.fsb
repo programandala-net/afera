@@ -1,0 +1,57 @@
+\ +3DOS support for ZX Spectrum Abersoft Forth
+\ By Marcos Cruz (programandala.net)
+\ 
+\ Requirements:
+\   The asm_ch assembler (under development)
+\
+\ 2015-02-13: Start.
+
+CONSTANT SYS-BANKM \ RAM/ROM switching system variable
+CONSTANT BANK1-PORT \ port for horizontal ROM switch and RAM paging
+( DOS calling routine )
+LABEL DOS.IX
+  JPIX
+LABEL DOS
+  \ Adapted from the ZX Spectrum +3 manual.
+  \ IX holds the address of the DOS routine to be run. All
+  \ other registers are passed intact to the DOS routine and
+  \ are returned from it.
+  \ Stack must be somewhere in central 32K (conforming to DOS
+  \ requirements), so saved AF and BC will not be switched out.
+  AF PUSH  BC PUSH  SYS-BANKM LDA
+  7 OR#  \ want RAM page 7
+  4 A RES  \ and DOS ROM
+  BANK1-PORT BC LDP#
+  DI
+  SYS-BANKM STA  \ keep system variables up to date
+  A OUTBC  \ RAM page 7 to top and DOS ROM
+  EI
+  BC POP  AF POP
+  DOS.IX CALL
+  AF PUSH  BC PUSH
+  SYS-BANKM LDA
+  F8 AND  \ reset bits for page 0
+  4 A SET
+  BANK1-PORT BC LDP#
+  \ switch back to RAM page 0 and 48 BASIC
+  DI  SYS-BANKM STA  A OUTBC  EI
+  BC POP  AF POP  RET
+( Filenames )
+15 CONSTANT /FILENAME \ max lenght
+0 VARIABLE FILENAME /FILENAME 2- ALLOT \ filename area
+: -FILENAME ( -- ) \ init the filename area
+  FILENAME /FILENAME 255 FILL ;
+: FILENAME! ( ca len -- ) \ store a filename into its area
+  -FILENAME /FILENAME MAX FILENAME SWAP CMOVE ;
+: PARSE ( c "ccc<c>" -- ca len ) WORD HERE COUNT ;
+: PARSE-NAME ( "name" -- ca len ) BL PARSE ;
+( File access methods )
+1 CONSTANT R/O  2 CONSTANT W/O  3 CONSTANT R/W  5 CONSTANT S/R
+: BIN ( fam -- fam ) NOOP ;
+CODE HEADED ( fam -- fam' )  HL POP  7 L SET HL PUSH 
+( LOADED-FILE and LOAD-FILE )
+: LOADED-FILE  ( n ca len -- )
+  FILENAME!
+  LOAD ;
+: LOAD-FILE  ( n "filename" -- )
+  PARSE-NAME LOADED-FILE ; 

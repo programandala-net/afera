@@ -1,0 +1,12 @@
+= Afera
+:author: Marcos Cruz (programandala.net)
+
+// This file is part of
+// Afera (Abersoft Forth Extensions, Resources and Addons)
+// http://programandala.net/en.program.afera.html
+
+Afera stands for “Abersoft Forth Extensions, Resources and Addons”.
+It's a library under development for Abersoft Forth, a fig-Forth
+system for ZX Spectrum from 1983.
+
+Home page: http://programandala.net/en.afera.html
