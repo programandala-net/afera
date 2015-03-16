@@ -1,5 +1,13 @@
-\ Requirement: assembler (under development)
-
+\ `NEGATE` for ZX Spectrum Abersoft Forth
+\ 
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\
+\ Requirements:
+\ fsb:
+\   (http://programandala.net/en.program.fsb.html)
+\ Pleonasmo AF
+\   http://programandala.net/en.program.pleonasmo.html
+\
 \ 2015-03-13:
 \ Adapted from L.C. Benschop's ZX Spectrum Forth-83
 

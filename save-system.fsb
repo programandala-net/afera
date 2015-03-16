@@ -21,6 +21,8 @@
   \ ca len = filename
 
   LATEST 12 +ORIGIN !  HERE 28 +ORIGIN !  HERE 30 +ORIGIN !
-  HERE FENCE !  ' FORTH 8 + 32 +ORIGIN !
-  0 +ORIGIN SIZE 2SWAP SAVE-FILE ;
+  HERE FENCE !
+  ' FORTH 8 +  \ XXX or other vocabulary and `6 +`
+  32 +ORIGIN !
+  0 +ORIGIN SIZE 10 + 2SWAP SAVE-FILE ;
 
