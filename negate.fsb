@@ -1,0 +1,14 @@
+\ Requirement: assembler (under development)
+
+\ 2015-03-13:
+\ Adapted from L.C. Benschop's ZX Spectrum Forth-83
+
+( NEGATE )
+CODE NEGATE  ( n1 -- n2 )
+ DE POP
+ A XOR
+ A L LD
+ A H LD
+ DE SBCP
+ HL PUSH
+ END-CODE

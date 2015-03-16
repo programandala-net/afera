@@ -1,0 +1,26 @@
+\ Disk SAVE-SYSTEM for for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ Requirements:
+\ fsb:
+\   (http://programandala.net/en.program.fsb.html)
+\ `SAVE-FILE` from the +3DOS or G+DOS modules of
+\ AF extend
+\   (http://programandala.net/en.program.af_extend.html)
+
+\ 2015-03-13: Start as part of the G+DOS module.
+\ 2015-03-16: Moved to its own file, in order to share it
+\ with the +3DOS module.
+
+( SAVE-SYSTEM )
+
+: SAVE-SYSTEM ( ca len -- )
+
+  \ Save a copy of the Forth system
+  \ ca len = filename
+
+  LATEST 12 +ORIGIN !  HERE 28 +ORIGIN !  HERE 30 +ORIGIN !
+  HERE FENCE !  ' FORTH 8 + 32 +ORIGIN !
+  0 +ORIGIN SIZE 2SWAP SAVE-FILE ;
+

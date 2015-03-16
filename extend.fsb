@@ -1,31 +1,77 @@
 \ Extensions for Abersoft Forth
 \ By Marcos Cruz (programandala.net)
 \ 2015-03
-( Backslash )
+
+( Backslash)
+
+CR ." Loading extensions" CR
+
 : \ ( "ccc<newline>" -- )
   IN @ DUP C/L >
   IF     B/BUF SWAP MOD
   ELSE   C/L SWAP -
   THEN   IN +! ; IMMEDIATE
 -->
-( Strings )
+
+( Strings)
+
 : CHAR  ( "name" -- c )  BL WORD HERE 1+ C@ ;
 : [CHAR] ( "name" -- c ) CHAR [COMPILE] LITERAL ; IMMEDIATE
+: PARSE-TEXT  ( c "ccc<c>" -- ca len )  TEXT PAD COUNT ;
+: PARSE-NAME  ( "name" -- ca len )  BL PARSE-TEXT ;
+: SLIT ( -- ca len ) R COUNT DUP 1+ R> + >R ;
+: S, ( ca len -- ) SWAP HERE ROT CMOVE 1+ ALLOT ;
+: SLITERAL ( ca len -- ) COMPILE SLIT S, ; IMMEDIATE
+: .( ( "ccc<paren>" -- ) [CHAR] ) PARSE-TEXT TYPE ; IMMEDIATE
+
 -->
-( Files )
-: LOAD-TAPE  ( n -- )  LOADT LOAD ;
+
+( Strings: S" S' )
+
+  \ Copied from "Advanced Spectrum Forth",
+  \ for reference:
+  \ : (.")
+  \   R COUNT DUP 1+ R> + >R TYPE ;
+  \ : ."
+  \   [ 34 ] LITERAL STATE @
+  \   IF COMPILE (.") WORD HERE C@ 1+ ALLOT
+  \   ELSE WORD HERE COUNT TYPE ; IMMEDIATE
+
+: (S) ( Compilation: c "ccc<c>" -- ) ( Run-time:  -- ca len )
+  STATE @
+  IF    COMPILE SLIT WORD HERE C@ 1+ ALLOT
+  ELSE  PARSE-TEXT  THEN ;
+
+: S"  ( Compilation: "ccc<">" -- ) ( Run-time:  -- ca len )
+  [CHAR] " (S) ; IMMEDIATE
+
+: S'  ( Compilation: "ccc<'>" -- ) ( Run-time:  -- ca len )
+  [CHAR] ' (S) ; IMMEDIATE
+
+
 -->
-( Operators and stack )
+
+( Files)
+
+: TLOAD  ( n -- )  LOADT LOAD ;
+-->
+
+( Operators and stack)
+
 : INVERT  ( n1 -- n2 )  -1 XOR ;
 : BOUNDS  ( a1 len -- a2 a1 )  OVER + SWAP ;
+: NIP ( n1 n2 -- n2 ) SWAP DROP ;
 -->
-( BYE )
+
+( Interpreter directives)
+
+: [DEFINED] ( "name" -- f )
+  -FIND DUP IF NIP NIP THEN ; IMMEDIATE
+-->
+
+( BYE)
+
+;S
 \ Rename MON to BYE
 ' MON NFA 1+
 CHAR B OVER C!  CHAR Y OVER 1+ C!  CHAR E 128 + SWAP 2+ C!
--->
-( DUMP )
-: DUMP ( a len -- )
-  BOUNDS DO  ?TERMINAL IF  LEAVE  THEN
-    I U. I C@ DUP 3 .R SPACE BL MAX EMIT CR
-  LOOP ;

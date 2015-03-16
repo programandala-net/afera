@@ -1,0 +1,204 @@
+\ G+DOS module for ZX Spectrum's Abersoft Forth
+\ Compatible with GDOS
+
+\ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ Requirements:
+\ fsb:
+\   (http://programandala.net/en.program.fsb.html)
+\ AF extend
+\   (http://programandala.net/en.program.af_extend.html)
+\ Pleonasmo AF
+\   (http://programandala.net/en.program.pleonasmo.html)
+
+\ 2015-03-13: Start.
+
+( Init )
+
+CR ." Loading G+DOS extensions" CR
+FORTH DEFINITIONS
+VOCABULARY DOS IMMEDIATE
+DOS DEFINITIONS DECIMAL
+
+10 CONSTANT /FILENAME  \ max filename lenght
+1 VARIABLE DRIVE \ 1 or 2
+[CHAR] d VARIABLE DEVICE \ "d" or "D"
+-->
+
+( UFIA -- User File Information Area)
+
+0 VARIABLE UFIA 22 ALLOT
+
+UFIA      CONSTANT DSTR1 \ drive: 1 or 2
+UFIA 1+   CONSTANT FSTR1 \ program number
+UFIA 2+   CONSTANT SSTR1 \ stream number
+UFIA 3 +  CONSTANT LSTR1 \ device: "D" or "d"
+UFIA 4 +  CONSTANT NSTR1 \ directory description
+UFIA 5 +  CONSTANT NSTR2 \ file name
+UFIA 15 + CONSTANT HD00  \ file type
+UFIA 16 + CONSTANT HD0B  \ file lenght
+UFIA 18 + CONSTANT HD0D  \ file start address
+UFIA 20 + CONSTANT HD0F  \ BASIC lenght without variables
+UFIA 22 + CONSTANT HD11  \ BASIC autorun line
+
+-->
+
+( File types, directory descriptions and hook codes)
+
+  \ File types
+
+0 CONSTANT BASIC-FILETYPE        1 CONSTANT DATA-ARRAY-FILETYPE
+2 CONSTANT STRING-ARRAY-FILETYPE 3 CONSTANT CODE-FILETYPE
+
+  \ Directory descriptions
+
+01 CONSTANT BASIC-FILE    02 CONSTANT DATA-ARRAY
+03 CONSTANT STRING-ARRAY  04 CONSTANT CODE-FILE
+05 CONSTANT SNAPSHOT-48K  06 CONSTANT MICRODRIVE-FILE
+07 CONSTANT SCREENS$-FILE 08 CONSTANT SPECIAL-FILE
+09 CONSTANT SNAPSHOT-128K 10 CONSTANT OPENTYPE-FILE
+11 CONSTANT EXECUTE-FILE
+
+  \ Hook codes
+
+HEX
+
+33 CONSTANT HXFER 34 CONSTANT OFSM  35 CONSTANT HOFLE
+36 CONSTANT SBYT  37 CONSTANT HSVBK 38 CONSTANT CFSM
+39 CONSTANT PNTP  3A CONSTANT COPS  3B CONSTANT HGFLE
+3C CONSTANT LBYT  3D CONSTANT HLDBK 3E CONSTANT WSAD
+3F CONSTANT SAD   40 CONSTANT REST  41 CONSTANT HERAZ
+
+DECIMAL -->
+
+( UFIA manipulation)
+
+: -FILENAME ( -- )
+  \ Init the filename area
+  NSTR2 /FILENAME BLANKS ;
+
+: FILENAME!  ( ca len -- )
+
+  \ Store a filename into the NSTR2 field of UFIA.
+  \ ca len = filename
+
+  -FILENAME /FILENAME MAX NSTR2 SWAP CMOVE ;
+
+
+: >UFIA ( ca1 len1 ca2 len2 dir -- )
+
+  \ Set the User File Information Area
+
+  \ ca1 len1 = memory region to save
+  \ ca2 len2 = filename
+  \ dir = directory description
+
+  NSTR1 C!  FILENAME!  HD0B !  HD0D !
+  DEVICE @ LSTR1 C!  DRIVE @ DSTR1 C!
+  CODE-FILETYPE HD00 C! ;
+
+: BLOCKS-INIT-UFIA ( ca len --)
+
+  \ Init the User File Information Area for the RAM disc
+
+  \ ca len = filename
+
+  FLUSH LO HI LO - 1+ 2SWAP SPECIAL-FILE >UFIA ;
+
+-->
+
+( Error checking)
+
+: ?DOS-ERROR  ( ior --)
+
+  \ ior = the AF register returned by a DOS command:
+  \     bit 0     = set: error
+  \     bits 8-14 = error code
+  \     bit 15    = set: ZX Spectrum error; unset: DOS error
+
+  DUP 1 AND       \ error?
+  SWAP 255 /      \ error code
+  DUP 128 AND     \ ZX Spectrum error?
+  IF  -1 *  ELSE  100 +  THEN ?ERROR
+
+-->
+
+( Save a file)
+
+CODE (SAVE-FILE) ( -- ior )
+
+  \ Save a file using the data hold in UFIA
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+  DSTR1 IX LDP#
+  8 RST  HOFLE C, \ open the file and create its header
+  NC IF \ no error?
+    HD0D DE LDP \ start
+    HD0B BC LDP \ lenght
+    8 RST  HSVBK C, \ save to file
+    NC IF  \ no error?
+      8 RST  CFSM C,  \ close the file
+    THEN
+  THEN
+  IX POP  BC POP  \ restore the Forth registers
+  AF PUSH
+
+  END-CODE -->
+
+( Load a file)
+
+CODE (LOAD-FILE) ( -- ior )
+
+  \ Load a file using the data hold in UFIA
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+  DSTR1 IX LDP#  8 RST  HGFLE C, \ get the file
+  NC IF \ no error?  -- load the file header:
+    HD00 DE LDP#  9 B LD# \ destination and count
+    BEGIN
+      8 RST  LBYT C, \ load byte and store it in A
+      DE STAP  DE INCP  \ update destination and count
+    DSZ
+    HD0D DE LDP  HD0B BC LDP \ start and lenght
+    8 RST  HLDBK C, \ load the file
+  THEN
+  IX POP  BC POP  \ restore the Forth registers
+  AF PUSH
+
+  END-CODE -->
+
+( Delete a file)
+
+CODE (DELETE-FILE) ( -- ior )
+
+  \ Delete a file using the data hold in UFIA
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+  UFIA IX LDP#
+  8 RST  HERAZ C, \ delete the file
+  IX POP  BC POP  \ restore the Forth registers
+  AF PUSH
+
+  END-CODE -->
+
+( User interface)
+
+: SAVE-FILE ( ca1 len1 ca2 len2 -- )
+
+  \ Save a file
+
+  \ ca1 len1 = memory region to save
+  \ ca2 len2 = filename
+
+  >UFIA (SAVE-FILE) ?DOS-ERROR ;
+
+: SAVE-BLOCKS-FILE ( ca len -- )
+  BLOCKS>UFIA (SAVE-FILE) ?DOS-ERROR ;
+
+: LOAD-BLOCKS-FILE ( ca len -- )
+  BLOCKS>UFIA (LOAD-FILE) ?DOS-ERROR ;
+
+: DELETE-FILE ( ca len -- )
+  (DELETE-FILE) ?DOS-ERROR ;
+
+
