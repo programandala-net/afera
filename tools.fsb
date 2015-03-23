@@ -1,10 +1,12 @@
- \ Tools for Abersoft Forth
- \ By Marcos Cruz (programandala.net)
- \ 2015-03
- \ Requirements: BOUNDS
+\ Tools for Abersoft Forth
+\ By Marcos Cruz (programandala.net)
+\ 2015-03
+\ Requirements: BOUNDS
+
 ( DUMP )
 : DUMP ( a len -- )
   BOUNDS DO  ?TERMINAL IF  LEAVE  THEN
     I U. I C@ DUP 3 .R SPACE BL MAX EMIT CR
   LOOP ;
 
+  \ vim: filetype=abersoftforth

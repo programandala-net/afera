@@ -1,77 +1,141 @@
-\ Extensions for Abersoft Forth
-\ By Marcos Cruz (programandala.net)
-\ 2015-03
+\ Extensions for Abersoft Forth By Marcos Cruz
+\ (programandala.net) 1985,1986,1987,2015
+\
+  \ History
+  \
+  \ 1985, 1986, 1987:
+  \
+  \ \ INVERT >= <= <> SGN NOR NAND NXOR DEPTH PICK DRAWL RDRAW
+  \ RDRAWL
+  \
+  \ 2015-03:
+  \
+  \ CHAR [CHAR] PARSE-TEXT PARSE-NAME SLIT S, SLITERAL .( (S)
+  \ S" S' TLOAD RUNT BOUNDS NIP [DEFINED] BYE UDG! AKEY THRU
+  \ +LOAD +THRU RDROP R@
 
-( Backslash)
+( Backslash, files)
 
 CR ." Loading extensions" CR
 
-: \ ( "ccc<newline>" -- )
-  IN @ DUP C/L >
-  IF     B/BUF SWAP MOD
-  ELSE   C/L SWAP -
-  THEN   IN +! ; IMMEDIATE
--->
+: \  ( "ccc<newline>" -- )
+  IN @ DUP C/L > IF  B/BUF SWAP MOD  ELSE   C/L SWAP -  THEN
+  IN +!  ; IMMEDIATE
+
+: THRU  ( n1 n2 -- )  1+ SWAP DO  I LOAD  LOOP  ;
+: +LOAD  ( n -- )  BLK @ LOAD  ;
+: +THRU  ( n1 n2 -- )  1+ SWAP DO  I +LOAD  LOOP  ;
+: TLOAD  ( n -- )  INIT-DISC LOADT LOAD  ;
+: RUNT  ( -- )  1 TLOAD  ;
+
+2 10 THRU
 
 ( Strings)
 
-: CHAR  ( "name" -- c )  BL WORD HERE 1+ C@ ;
-: [CHAR] ( "name" -- c ) CHAR [COMPILE] LITERAL ; IMMEDIATE
-: PARSE-TEXT  ( c "ccc<c>" -- ca len )  TEXT PAD COUNT ;
-: PARSE-NAME  ( "name" -- ca len )  BL PARSE-TEXT ;
-: SLIT ( -- ca len ) R COUNT DUP 1+ R> + >R ;
-: S, ( ca len -- ) SWAP HERE ROT CMOVE 1+ ALLOT ;
-: SLITERAL ( ca len -- ) COMPILE SLIT S, ; IMMEDIATE
-: .( ( "ccc<paren>" -- ) [CHAR] ) PARSE-TEXT TYPE ; IMMEDIATE
-
--->
+: CHAR  ( "name" -- c )  BL WORD HERE 1+ C@  ;
+: [CHAR]  ( "name" -- c ) CHAR [COMPILE] LITERAL  ; IMMEDIATE
+: PARSE-TEXT  ( c "ccc<c>" -- ca len )  TEXT PAD COUNT  ;
+: PARSE-NAME  ( "name" -- ca len )  BL PARSE-TEXT  ;
+: SLIT  ( -- ca len ) R COUNT DUP 1+ R> + >R  ;
+: S,  ( ca len -- ) SWAP HERE ROT CMOVE 1+ ALLOT  ;
+: SLITERAL  ( ca len -- ) COMPILE SLIT S,  ; IMMEDIATE
+: .(  ( "ccc<paren>" -- ) [CHAR] ) PARSE-TEXT TYPE  ; IMMEDIATE
 
 ( Strings: S" S' )
 
   \ Copied from "Advanced Spectrum Forth",
   \ for reference:
-  \ : (.")
-  \   R COUNT DUP 1+ R> + >R TYPE ;
+  \ :  (.")
+  \   R COUNT DUP 1+ R> + >R TYPE  ;
   \ : ."
   \   [ 34 ] LITERAL STATE @
   \   IF COMPILE (.") WORD HERE C@ 1+ ALLOT
-  \   ELSE WORD HERE COUNT TYPE ; IMMEDIATE
+  \   ELSE WORD HERE COUNT TYPE  ; IMMEDIATE
 
 : (S) ( Compilation: c "ccc<c>" -- ) ( Run-time:  -- ca len )
   STATE @
   IF    COMPILE SLIT WORD HERE C@ 1+ ALLOT
-  ELSE  PARSE-TEXT  THEN ;
+  ELSE  PARSE-TEXT  THEN  ;
 
 : S"  ( Compilation: "ccc<">" -- ) ( Run-time:  -- ca len )
-  [CHAR] " (S) ; IMMEDIATE
+  [CHAR] " (S)  ; IMMEDIATE
 
 : S'  ( Compilation: "ccc<'>" -- ) ( Run-time:  -- ca len )
-  [CHAR] ' (S) ; IMMEDIATE
+  [CHAR] ' (S)  ; IMMEDIATE
 
+( Operators) 
 
--->
+: INVERT  ( n1 -- n2 )  -1 XOR  ;
+: BOUNDS  ( a1 len -- a2 a1 )  OVER + SWAP  ;
+: >=  ( n1 n2 -- f ) 2DUP > ROT ROT SWAP = OR  ;
+: <=  ( n1 n2 -- f ) 2DUP < ROT ROT SWAP = OR  ;
+: <>  ( n1 n2 -- f ) = NOT  ;
+: SGN  ( n1 -- n2 ) 1 +-  ;
+: NOR  ( n1 n2 -- n3 ) OR NOT  ;
+: NAND  ( n1 n2 -- n3 ) AND NOT  ;
+: NXOR  ( n1 n2 -- n3 ) XOR NOT  ;
 
-( Files)
+( Stack)
 
-: TLOAD  ( n -- )  LOADT LOAD ;
--->
+: DEPTH  ( -- u ) SP@ S0 @ - -2 /  ;
+: PICK  ( u -- x ) 2 * 2 + SP@ + @  ;
+: RDROP  ( -- ) ( R: x -- )  NEXT  ;
+: R@ ( -- x ) ( R: x -- x )  R ;
 
-( Operators and stack)
+\ XXX TODO -- finish
+\ : ROLL  ( u -- )
+\ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 - CMOVE DROP  ;
 
-: INVERT  ( n1 -- n2 )  -1 XOR ;
-: BOUNDS  ( a1 len -- a2 a1 )  OVER + SWAP ;
-: NIP ( n1 n2 -- n2 ) SWAP DROP ;
--->
+: NIP  ( n1 n2 -- n2 ) SWAP DROP  ;
+
+( Keyboard)
+
+: AKEY  ( -- c )
+  \ Wait for a key press and return its code.
+  \ This is an alternative to 'KEY', because 'KEY'
+  \ always shows the flashing cursor, even if the
+  \ current attributes are changed.
+  BEGIN  INKEY DUP 255 =  WHILE  DROP  REPEAT  ;
+
+( Graphics)
+
+ : DRAWL  ( x1 y1 x2 y2 -- )
+  \ Draw a line from x1 y1 to x2 y2
+  2SWAP PLOT DRAW  ;
+
+  \ ZX Spectrum system variables:
+23677 CONSTANT COORDS
+COORDS CONSTANT X-COORD  COORDS 1+ CONSTANT Y-COORD
+
+: RDRAW  ( inc-x inc-y -- )
+  \ Draw a line from to the current plot position
+  Y-COORD C@ + SWAP X-COORD C@ + SWAP DRAW  ;
+
+: RDRAWL  ( x y inc-x inc-y -- )
+  \ Draw a line from x1 y1
+  2SWAP PLOT RDRAW  ;
+
+: UDG!  ( b0..b7 c -- )
+  \ Store the given 8 bytes into the c UDG char
+  \ b0 = first (top) scan
+  \ b7 = last (bottom) scan
+  \ c = 144..164 (144..162 on 128K models)
+  144 - 8 * UDG + 1 - DUP 8 + DO  I C!  -1 +LOOP  ;
 
 ( Interpreter directives)
 
-: [DEFINED] ( "name" -- f )
-  -FIND DUP IF NIP NIP THEN ; IMMEDIATE
--->
+: [DEFINED]  ( "name" -- f )
+  -FIND DUP IF NIP NIP THEN  ; IMMEDIATE
 
-( BYE)
+( System)
 
+ \ XXX FIXME
+ \ : NEXT  ( -- )  [COMPILE] ;S  ; IMMEDIATE
+: BYE  ( -- )  MON  ;
 ;S
-\ Rename MON to BYE
+
+\ Actually rename `MON` to `BYE`:
 ' MON NFA 1+
 CHAR B OVER C!  CHAR Y OVER 1+ C!  CHAR E 128 + SWAP 2+ C!
+
+  \ vim: filetype=abersoftforth

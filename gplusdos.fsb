@@ -40,7 +40,6 @@ UFIA 16 + CONSTANT HD0B  \ file lenght
 UFIA 18 + CONSTANT HD0D  \ file start address
 UFIA 20 + CONSTANT HD0F  \ BASIC lenght without variables
 UFIA 22 + CONSTANT HD11  \ BASIC autorun line
-
 -->
 
 ( File types, directory descriptions and hook codes)
@@ -130,6 +129,7 @@ CODE (SAVE-FILE) ( -- ior )
   \ Save a file using the data hold in UFIA
 
   BC PUSH  IX PUSH  \ save the Forth registers
+  [ CONTEXT @ U. CR ]  \ XXX INFORMER
   DSTR1 IX LDP#
   8 RST  HOFLE C, \ open the file and create its header
   NC IF \ no error?
@@ -141,11 +141,11 @@ CODE (SAVE-FILE) ( -- ior )
     THEN
   THEN
   IX POP  BC POP  \ restore the Forth registers
-  AF PUSH
-
-  END-CODE -->
+  AF PUSH END-CODE -->
 
 ( Load a file)
+
+  \ XXX FIXME: strange error: '(LOAD-FILE)' not found!
 
 CODE (LOAD-FILE) ( -- ior )
 
@@ -156,6 +156,7 @@ CODE (LOAD-FILE) ( -- ior )
   \ fig-Forth does it.
 
   BC PUSH  IX PUSH  \ save the Forth registers
+  [ CONTEXT @ U. CR ]  \ XXX INFORMER
   DSTR1 IX LDP#  8 RST  HGFLE C, \ get the file
   NC IF \ no error?  -- load the file header:
     HD00 DE LDP#  9 B LD# \ destination and count
@@ -167,9 +168,7 @@ CODE (LOAD-FILE) ( -- ior )
     8 RST  HLDBK C, \ load the file
   THEN
   IX POP  BC POP  \ restore the Forth registers
-  AF PUSH
-
-  END-CODE -->
+  AF PUSH  END-CODE -->
 
 ( Delete a file)
 

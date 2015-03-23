@@ -1,0 +1,34 @@
+\ `BCALL` for ZX Spectrum Abersoft Forth
+\ 
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\
+\ Requirements:
+\ fsb:
+\   (http://programandala.net/en.program.fsb.html)
+\ Pleonasmo AF
+\   http://programandala.net/en.program.pleonasmo.html
+\
+\ 2015-03-16:
+\ Start. Copied from L.C. Benschop's ZX Spectrum Forth-83.
+\ First changes
+
+
+( BASCALL )
+
+CODE BASCALL  ( linenumber -- )
+  ORIGIN 3 + BC LDP# \ XXX TODO adapt
+  HL POP
+  DE PUSH
+  5C3D DE LDP
+  DE PUSH
+  BC PUSH
+  5C3D SP STP
+  5C42 STHL
+  A XOR
+  5C44 STA
+  5C89 LDA
+  3 CP#
+  0DAF CALLC
+  %Y 2 31 )LD#
+  1B76 JP
+  ;C
