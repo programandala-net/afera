@@ -1,0 +1,37 @@
+\ dump.fsb
+\ 2015-03-26: Start. Copied from SPECTRUM FORTH83.
+\ 2015-03-28: Simple version as a temporary alternative.
+
+( DUMP -- simple version)
+
+: DUMP  ( a len -- )
+
+  BOUNDS DO
+  I CR U. I C@ DUP 3 .R BL MAX SPACE EMIT
+  LOOP
+  ;
+
+( DUMP -- complete version)
+
+HEX
+: BS  ( -- )  8 EMIT  ;
+  \ SPECTRUM FORTH83 version of `HEX.` (called `H.`):
+  \ : HEX.  ( n -- )
+  \  BASE @ SWAP S->D <# # # # # #> TYPE SPACE BASE !  ;
+: HEX.  ( n -- )  BASE @ SWAP HEX U. BASE !  ;
+
+  \ XXX TODO
+: ?DO [COMPILE] DO ; IMMEDIATE
+
+: STYPE  ( ca len -- )
+  0 ?DO
+    DUP C@ 7F AND DUP BL < IF DROP 2E THEN EMIT
+  1+ LOOP DROP ;
+
+: DUMP  ( a len -- )
+  7 + -8 AND 8 / 0 ?DO
+    CR DUP HEX.
+    8 0 DO  I OVER + @ >< HEX.  2 +LOOP
+    DUP BS 8 STYPE ?TERMINAL IF LEAVE THEN
+  8 + LOOP DROP ;
+DECIMAL

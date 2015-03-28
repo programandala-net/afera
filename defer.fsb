@@ -1,0 +1,42 @@
+\ Extensions for Abersoft Forth By Marcos Cruz
+
+  \ History
+  \
+  \ 2015-03-28: First draft of deferred words.
+ 
+( Deferred words -- common code )
+
+: (DEFER)  ( -- )
+  \ Default behaviour of an uninitialized deferred word:
+  \ "Definition not finished".
+  20 ERROR ;
+
+: DEFER  ( "name" -- )
+  [COMPILE] : COMPILE (DEFER) [COMPILE] ;  ;
+
+: ACTION-OF  ( "name" -- cfa )  [COMPILE] ' @ ;
+
+( Deferred words -- version with CFA )
+
+  \ XXX FIXME Not fully tested yet.
+
+: DEFER!  ( cfa pfa -- )  !  ;
+: <IS>  ( cfa "name" -- )  [COMPILE] ' DEFER!  ;
+: [IS]  ( cfa "name" -- )
+  [COMPILE] ' [COMPILE] LITERAL [ ' DEFER! CFA ] LITERAL ,  ;
+  IMMEDIATE
+: IS  ( cfa "name" -- )
+  STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
+  
+( Deferred words -- version with PFA )
+
+  \ XXX FIXME Not fully tested yet.
+
+: DEFER!  ( pfa1 pfa2 -- )  SWAP CFA SWAP !  ;
+: <IS>  ( pfa "name" -- )  [COMPILE] ' DEFER!  ;
+: [IS]  ( pfa "name" -- )
+  [COMPILE] ' [COMPILE] LITERAL POSTPONE DEFER!  ; IMMEDIATE
+: IS  ( pfa "name" -- )
+  STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
+
+  \ vim: filetype=abersoftforth

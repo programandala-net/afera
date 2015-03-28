@@ -1,0 +1,52 @@
+\ load-code.fsb
+\ 
+\ `LOAD-CODE` extension for Abersoft Forth.
+\ 2015-03-26: Start.
+\
+
+\ Dictionary reference in the book
+\ _Advanced Spectrum Forth_:
+\
+\ 340 (page 119): (TAPE)
+\ 
+\ pop hl
+\ push bc
+\ push ix
+\ ld a,l ; 1=LOAD, 0=SAVE
+\ ld hl,D000  ; start address to save or load
+\ ld ix,start-of-header-area
+\ ; ld a,(5C72) ; XXX this is a mistake in the book
+\ ; XXX fixed:
+\ ld (5C74),A
+\ call 075A
+\ pop ix
+\ pop bc
+\ jp next1
+\
+\ 344 (page 120): LOADT
+\
+\ 1 (TAPE)
+
+\ 345 (page 120): SAVET
+\
+\ 0 (TAPE)
+
+\ The header area is between the words `.CPU` and `(TAPE)`, and
+\ it consists of two headers:
+\
+\ The save header (pointed by IX before calling the ROM
+\ routine) is at address 30182 (0x75E6).  Its containts are:
+
+\ +00 : 3 (identifier of code file type)
+\ +01 : "DISC      " = 10-char filename, padded with spaces
+\ +11 : 11263 (0x2BFF)  = lenght
+\ +13 : 53248 (0xD0FF)  = start address
+\ +15 : "  " (2 spaces) = not used for code files
+
+\ The load header (pointed by the ROM routine, by adding 0x11
+\ to IX) is right after the save header, at address 30199
+\ (0x75F7). It doe
+
+: LOAD-CODE  ( a1 a2 len2 -- )
+  \ Load the code file a2 len2 from tape, at address a1.
+  ;

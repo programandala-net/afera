@@ -1,0 +1,28 @@
+\ see.fsb
+\
+\ Adapted the book
+\ Spectrum Advanced Forth, page 73
+\
+\ 2015-03-28: Start.
+
+( see )
+
+: (SEE)  ( pfa -- )
+  CLS ." Enter=continue" CR
+  ." D=skip data" CR ." Break=Exit" CR CR
+  BEGIN
+    DUP @ 2+ NFA ID.
+      KEY CASE
+      13 OF  2+ DUP @ U. 2+  0  ENDOF
+      70 OF  2+  ENDOF
+    ENDCASE
+  ?TERMINAL UNTIL  ;
+
+: SEE  ( "name" -- )
+  -FIND
+  \ XXX in the original there was:
+  \ QUERY INTERPRET
+  \ XXX why?
+  IF  DROP (SEE)  ELSE  0 ERROR  THEN  ;
+
+  \ vim: filetype=abersoftforth:fileencoding=utf-8

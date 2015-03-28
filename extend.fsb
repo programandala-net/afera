@@ -5,14 +5,18 @@
   \
   \ 1985, 1986, 1987:
   \
-  \ \ INVERT >= <= <> SGN NOR NAND NXOR DEPTH PICK DRAWL RDRAW
-  \ RDRAWL
+  \ `\`, `INVERT`, `>=`, `<=`, `<>`, `SGN` (from the Abersoft
+  \ Forth manual), `NOR`, `NAND`, `NXOR`, `DEPTH`, `PICK`,
+  \ `DRAWL`, `RDRAW`, `RDRAWL`.
   \
   \ 2015-03:
   \
-  \ CHAR [CHAR] PARSE-TEXT PARSE-NAME SLIT S, SLITERAL .( (S)
-  \ S" S' TLOAD RUNT BOUNDS NIP [DEFINED] BYE UDG! AKEY THRU
-  \ +LOAD +THRU RDROP R@
+  \ `CHAR`, `[CHAR]`, `PARSE-TEXT`, `PARSE-NAME`, `SLIT`, `S,`,
+  \ `SLITERAL`, `.(`, `(S)`, `S"`, `S'`, `TLOAD`, `RUNT`,
+  \ `BOUNDS`, `NIP`, `[DEFINED]`, `BYE`, `UDG!`, `AKEY`,
+  \ `THRU`, `+LOAD` (after Gforth), `+THRU` (after Gforth),
+  \ `RDROP`, `R@`, `RDEPTH`, `SGN`, `(after`, `Gforth)`,
+  \ `RECURSE`, `ROLL` (after Gforth), `XY>ATTRA`.
 
 ( Backslash, files)
 
@@ -26,7 +30,25 @@ CR ." Loading extensions" CR
 : +LOAD  ( n -- )  BLK @ LOAD  ;
 : +THRU  ( n1 n2 -- )  1+ SWAP DO  I +LOAD  LOOP  ;
 : TLOAD  ( n -- )  INIT-DISC LOADT LOAD  ;
-: RUNT  ( -- )  1 TLOAD  ;
+
+  \ `RUNT` loads the next RAM-disc file from tape and then
+  \ interprets its first block.  This word makes it possible to
+  \ chain several RAM-disc files from tape, allowing the
+  \ automatic compilation of sources larger than 10 blocks.
+  \
+  \ `QUIT` is needed at the end of `RUNT` because otherwise the
+  \ `LOAD` that loaded the block of `RUNT` would continue to
+  \ interpret after `RUNT`, but the contents of the block would
+  \ had already been changed by `TLOAD`.
+
+: RUNT  ( -- )  1 TLOAD QUIT  ;
+ 
+ \ XXX OLD -- alternatives that don't work:
+ \ : RUNT  ( -- )  1 TLOAD 0 BLK ! RP! ;
+ \ : RUNT  ( -- )  1 TLOAD 0 BLK !  ;
+ \ : RUNT  ( -- )  1 TLOAD RDROP  ;
+ \ : RUNT  ( -- )  1 TLOAD [COMPILE] ;S  ;
+ \ : RUNT  ( -- )  1 TLOAD R> RDROP RDROP >R ;
 
 2 10 THRU
 
@@ -65,26 +87,49 @@ CR ." Loading extensions" CR
 
 ( Operators) 
 
+  \ XXX TODO -- rewrite in assembler.
+
 : INVERT  ( n1 -- n2 )  -1 XOR  ;
 : BOUNDS  ( a1 len -- a2 a1 )  OVER + SWAP  ;
 : >=  ( n1 n2 -- f ) 2DUP > ROT ROT SWAP = OR  ;
 : <=  ( n1 n2 -- f ) 2DUP < ROT ROT SWAP = OR  ;
 : <>  ( n1 n2 -- f ) = NOT  ;
-: SGN  ( n1 -- n2 ) 1 +-  ;
-: NOR  ( n1 n2 -- n3 ) OR NOT  ;
-: NAND  ( n1 n2 -- n3 ) AND NOT  ;
-: NXOR  ( n1 n2 -- n3 ) XOR NOT  ;
+
+  \ From the Abersoft Forth manual:
+  \ : SGN  ( n1 -- n2 ) 1 +-  ;
+  \ A better alternative, after Gforth:
+: SGN  ( n1 -- -1|0|1 ) DUP IF  0< 2 * 1+  THEN  ;
+
+( System)
+
+2 CONSTANT CELL
+: CELL+  ( n1 -- n2 )  2+  ;
+: CELLS ( n1 -- n2 )  CELL *  ;
+: NEXT  ( -- )  COMPILE [COMPILE] ;S  ; IMMEDIATE
+: BYE  ( -- )  MON  ;
+
+\ Actually rename `MON` to `BYE`:
+\  ' MON NFA 1+
+\  CHAR B OVER C!  CHAR Y OVER 1+ C!  CHAR E 128 + SWAP 2+ C!
+
+: RECURSE  ( -- )  LATEST PFA CFA ,  ; IMMEDIATE
 
 ( Stack)
 
 : DEPTH  ( -- u ) SP@ S0 @ - -2 /  ;
 : PICK  ( u -- x ) 2 * 2 + SP@ + @  ;
+: RDEPTH  ( -- u ) RP@ R0 @ - -2 /  ;
 : RDROP  ( -- ) ( R: x -- )  NEXT  ;
 : R@ ( -- x ) ( R: x -- x )  R ;
 
-\ XXX TODO -- finish
+  \ XXX TODO -- finish
 \ : ROLL  ( u -- )
 \ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 - CMOVE DROP  ;
+  \ Gforth's recursive version:
+\ : ROLL  ( u -- )
+\   DUP 0<= IF  DROP  ELSE  SWAP >R 1- ROLL R> SWAP THEN  ;
+ : ROLL  ( u -- )
+   DUP 1 < IF  DROP  ELSE  SWAP >R 1 - RECURSE R> SWAP THEN  ;
 
 : NIP  ( n1 n2 -- n2 ) SWAP DROP  ;
 
@@ -119,23 +164,18 @@ COORDS CONSTANT X-COORD  COORDS 1+ CONSTANT Y-COORD
   \ Store the given 8 bytes into the c UDG char
   \ b0 = first (top) scan
   \ b7 = last (bottom) scan
-  \ c = 144..164 (144..162 on 128K models)
+  \ c = 144..164
   144 - 8 * UDG + 1 - DUP 8 + DO  I C!  -1 +LOOP  ;
+
+22528 CONSTANT ATTRIBUTES
+: XY>ATTRA  ( x y -- a )
+  \ Convert a pixel coordinate to its attribute address.
+  175 SWAP - 8 / 32 *  SWAP 8 /  + ATTRIBUTES +  ;
 
 ( Interpreter directives)
 
 : [DEFINED]  ( "name" -- f )
   -FIND DUP IF NIP NIP THEN  ; IMMEDIATE
 
-( System)
-
- \ XXX FIXME
- \ : NEXT  ( -- )  [COMPILE] ;S  ; IMMEDIATE
-: BYE  ( -- )  MON  ;
-;S
-
-\ Actually rename `MON` to `BYE`:
-' MON NFA 1+
-CHAR B OVER C!  CHAR Y OVER 1+ C!  CHAR E 128 + SWAP 2+ C!
 
   \ vim: filetype=abersoftforth
