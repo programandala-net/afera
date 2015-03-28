@@ -5,9 +5,9 @@
 ( DUMP -- simple version)
 
 : DUMP  ( a len -- )
-
   BOUNDS DO
-  I CR U. I C@ DUP 3 .R BL MAX SPACE EMIT
+    CR I 6 U.R SPACE
+       I C@  DUP 3 .R SPACE  BL MAX EMIT
   LOOP
   ;
 

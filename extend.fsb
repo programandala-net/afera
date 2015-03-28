@@ -27,9 +27,9 @@ CR ." Loading extensions" CR
   IN +!  ; IMMEDIATE
 
 : THRU  ( n1 n2 -- )  1+ SWAP DO  I LOAD  LOOP  ;
-: +LOAD  ( n -- )  BLK @ LOAD  ;
+: +LOAD  ( n -- )  BLK @ + LOAD  ;
 : +THRU  ( n1 n2 -- )  1+ SWAP DO  I +LOAD  LOOP  ;
-: TLOAD  ( n -- )  INIT-DISC LOADT LOAD  ;
+: TLOAD  ( n -- )  EMPTY-BUFFERS INIT-DISC LOADT LOAD  ;
 
   \ `RUNT` loads the next RAM-disc file from tape and then
   \ interprets its first block.  This word makes it possible to
@@ -41,14 +41,14 @@ CR ." Loading extensions" CR
   \ interpret after `RUNT`, but the contents of the block would
   \ had already been changed by `TLOAD`.
 
+  \ XXX TODO show the "ok" prompt before `QUIT`:
+
 : RUNT  ( -- )  1 TLOAD QUIT  ;
  
- \ XXX OLD -- alternatives that don't work:
- \ : RUNT  ( -- )  1 TLOAD 0 BLK ! RP! ;
- \ : RUNT  ( -- )  1 TLOAD 0 BLK !  ;
- \ : RUNT  ( -- )  1 TLOAD RDROP  ;
- \ : RUNT  ( -- )  1 TLOAD [COMPILE] ;S  ;
- \ : RUNT  ( -- )  1 TLOAD R> RDROP RDROP >R ;
+  \ Fix a bug in Abersoft Forth:
+11264 DUP  \ actual length of the RAM disc, not 11263
+30182 11 + !  \ patch the load tape header
+' INIT-DISC 6 + !  \ patch `INIT-DISC`
 
 2 10 THRU
 
