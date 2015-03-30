@@ -1,0 +1,15 @@
+\ dot-s.fsb
+\ `.S` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+\ 2015-03-30: Written.
+
+: .S   ( -- )
+  DEPTH S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
+  DEPTH -DUP IF  0 DO  DEPTH I - 1 - PICK .  LOOP  THEN  ;
+  
+  \ vim: ft=abersoftforth

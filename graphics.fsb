@@ -1,0 +1,44 @@
+\ graphics.fsb
+\ Graphic extensions for Abersoft Forth By Marcos Cruz
+
+\ Copyright (C) 1985,1986,1987,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+\ 2015-03-28: Code extracted from the main file of the library.
+
+( Graphics)
+
+FORTH DEFINITIONS DECIMAL
+
+  \ System variables and addresses
+
+23677 CONSTANT COORDS
+COORDS CONSTANT X-COORD  COORDS 1+ CONSTANT Y-COORD
+
+22528 CONSTANT ATTRIBUTES
+
+ : DRAWL  ( x1 y1 x2 y2 -- )
+  \ Draw a line from x1 y1 to x2 y2
+  2SWAP PLOT DRAW  ;
+
+: RDRAW  ( inc-x inc-y -- )
+  \ Draw a line from to the current plot position
+  Y-COORD C@ + SWAP X-COORD C@ + SWAP DRAW  ;
+
+: RDRAWL  ( x y inc-x inc-y -- )
+  \ Draw a line from x1 y1
+  2SWAP PLOT RDRAW  ;
+
+: UDG!  ( b0..b7 c -- )
+  \ Store the given 8 bytes into the c UDG char
+  \ b0 = first (top) scan
+  \ b7 = last (bottom) scan
+  \ c = 144..164
+  144 - 8 * UDG + 1 - DUP 8 + DO  I C!  -1 +LOOP  ;
+
+: XY>ATTRA  ( x y -- a )
+  \ Convert a pixel coordinate to its attribute address.
+  175 SWAP - 8 / 32 *  SWAP 8 /  + ATTRIBUTES +  ;
+

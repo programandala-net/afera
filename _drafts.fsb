@@ -1,0 +1,38 @@
+\ Draft code for Abersof Forth
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+( PROMPT )
+
+  27975 CONSTANT (.PROMPT) \ address of `(.")` in `QUIT`
+  \ Problem: the in-line parameter of `BRANCH` is an offset.
+  \ Anyway, it doesn't work, it does nothing:
+  : PROMPT  ( -- )
+    BRANCH [ (.PROMPT) HERE - , ] ;
+
+( ?DO )
+
+\ Version from Matteo Vitturi's Forth.
+\ It seems illogical, or unfinished.
+
+: ?DO
+   COMPILE 2DUP
+   COMPILE (DO)
+   COMPILE -
+   [COMPILE] IF 2DROP
+   HERE SWAP 1 6
+   ; IMMEDIATE
+
+( EXIT)
+
+\ An alternative way to fix EXIT
+
+: EXIT  ( -- )  COMPILE [COMPILE] ;S  ; IMMEDIATE
+
+( RDROP)
+
+  \ Abersoft Forth's `EXIT` (fixed) just does a `RDROP`, so:
+ 
+: RDROP  ( R: x -- )  EXIT  ;
+

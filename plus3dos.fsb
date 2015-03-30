@@ -1,6 +1,11 @@
-\ +3DOS module for ZX Spectrum Abersoft Forth
-\ 
+\ plus3dos.fsb
+\ +3DOS support for ZX Spectrum Abersoft Forth
+ 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
 \
 \ Requirements:
 \ fsb:
@@ -16,8 +21,10 @@
 
 CR ." Loading +3DOS extensions" CR
 
-CONSTANT SYS-BANKM \ RAM/ROM switching system variable
-CONSTANT BANK1-PORT \ port for horizontal ROM switch and RAM paging
+  \ RAM/ROM switching system variable:
+CONSTANT SYS-BANKM
+  \ Port for horizontal ROM switch and RAM paging:
+CONSTANT BANK1-PORT
 
 ( DOS calling routine )
 
@@ -26,9 +33,11 @@ LABEL DOS.IX  JPIX
 LABEL DOS
 
   \ Adapted from the ZX Spectrum +3 manual.
+
   \ IX holds the address of the DOS routine to be run. All
   \ other registers are passed intact to the DOS routine and
   \ are returned from it.
+ 
   \ Stack must be somewhere in central 32K (conforming to DOS
   \ requirements), so saved AF and BC will not be switched out.
 

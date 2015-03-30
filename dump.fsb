@@ -1,15 +1,29 @@
 \ dump.fsb
-\ 2015-03-26: Start. Copied from SPECTRUM FORTH83.
-\ 2015-03-28: Simple version as a temporary alternative.
+\ DUMP word for ZX Spectrum's Abersoft Forth
 
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03-26: Start. Copied from Lennart Benschop's SPECTRUM
+  \ FORTH83.
+  \
+  \ 2015-03-28: Simple version as a temporary alternative,
+  \ until `?DO` is defined.
+
+  \ -----------------------------------------------------------
+ 
 ( DUMP -- simple version)
 
 : DUMP  ( a len -- )
   BOUNDS DO
     CR I 6 U.R SPACE
        I C@  DUP 3 .R SPACE  BL MAX EMIT
-  LOOP
-  ;
+  LOOP  ;
 
 ( DUMP -- complete version)
 

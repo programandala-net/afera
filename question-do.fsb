@@ -1,0 +1,10 @@
+\ ?DO test
+
+: ?DO
+   COMPILE 2DUP
+   COMPILE (DO)
+   COMPILE -
+   [COMPILE] IF 2DROP
+   HERE SWAP 1 6
+   ; IMMEDIATE
+

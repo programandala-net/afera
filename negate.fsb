@@ -1,15 +1,18 @@
+\ negate.fsb
 \ `NEGATE` for ZX Spectrum Abersoft Forth
 \ 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
-\
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
 \ Requirements:
 \ fsb:
 \   (http://programandala.net/en.program.fsb.html)
 \ Pleonasmo AF
 \   http://programandala.net/en.program.pleonasmo.html
-\
-\ 2015-03-13:
-\ Adapted from L.C. Benschop's SPECTRUM FORTH83
+
+\ 2015-03-13: Adapted from Lennart Benschop's SPECTRUM FORTH83.
 
 ( NEGATE )
 CODE NEGATE  ( n1 -- n2 )
@@ -20,3 +23,5 @@ CODE NEGATE  ( n1 -- n2 )
   DE SBCP
   HL PUSH
   END-CODE
+  
+  \ vim: filetype=abersoftforth

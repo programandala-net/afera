@@ -1,0 +1,123 @@
+\ strings.fsb
+\ Strings extensions for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+  \ -----------------------------------------------------------
+  \ History of this file
+  
+  \ 2015-03:
+  \
+  \ `CHAR`, `[CHAR]`, `PARSE-TEXT`, `PARSE-NAME`, `SLIT`, `S,`,
+  \ `SLITERAL`, `.(`, `(S)`, `S"`, `S'`.
+  \
+  \ 2015-03-28: File created with code extracted from the main
+  \ file of the library. New: `STR=`, after Gforth.
+  \
+  \ 2015-03-29: New: 'PLACE' and '+PLACE', after Gforth;
+  \ circular string buffer and related tools, adapted from csb8
+  \ (http://programandala.net/en.program.csb8.html).
+
+( Load )
+
+\ 1 4 +THRU
+2 6 THRU
+
+( Strings )
+
+  \ XXX TMP -- `MOVE` is an alias of `CMOVE`, as a temporary
+  \ solution until `MOVE` itself is written is assembler:
+' CMOVE ALIAS MOVE  ( a1 len1 a2 -- )
+
+: CHAR  ( "name" -- c )  BL WORD HERE 1+ C@  ;
+: [CHAR]  ( "name" -- c ) CHAR [COMPILE] LITERAL  ; IMMEDIATE
+: PARSE-TEXT  ( c "ccc<c>" -- ca len )  TEXT PAD COUNT  ;
+: PARSE-NAME  ( "name" -- ca len )  BL PARSE-TEXT  ;
+: SLIT  ( -- ca len ) R COUNT DUP 1+ R> + >R  ;
+: S,  ( ca len -- ) SWAP HERE ROT CMOVE 1+ ALLOT  ;
+: SLITERAL  ( ca len -- ) COMPILE SLIT S,  ; IMMEDIATE
+: .(  ( "ccc<paren>" -- ) [CHAR] ) PARSE-TEXT TYPE  ; IMMEDIATE
+: PLACE  ( a1 len1 a2 )  2DUP C! 1+ SWAP MOVE  ;
+: +PLACE  ( a1 len1 a2 )
+  2DUP C@ + OVER C!  DUP C@ 1+ + SWAP MOVE  ;
+
+( S" S' )
+
+  \ Copied from Don Thomasson's "Advanced Spectrum Forth", for
+  \ reference:
+
+  \ :  (.")
+  \   R COUNT DUP 1+ R> + >R TYPE  ;
+  \ : ."
+  \   [ 34 ] LITERAL STATE @
+  \   IF COMPILE (.") WORD HERE C@ 1+ ALLOT
+  \   ELSE WORD HERE COUNT TYPE  ; IMMEDIATE
+
+: (S) ( Compilation: c "ccc<c>" -- ) ( Run-time:  -- ca len )
+  STATE @
+  IF    COMPILE SLIT WORD HERE C@ 1+ ALLOT
+  ELSE  PARSE-TEXT  THEN  ;
+
+: S"  ( Compilation: "ccc<">" -- ) ( Run-time:  -- ca len )
+  [CHAR] " (S)  ; IMMEDIATE
+
+: S'  ( Compilation: "ccc<'>" -- ) ( Run-time:  -- ca len )
+  [CHAR] ' (S)  ; IMMEDIATE
+
+( LENGTHS STR= )
+
+: LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
+  2 PICK OVER  ;
+
+: STR=  ( ca1 len1 ca2 len2 -- f )
+  2 PICK OVER -  \ different lenghts?
+  IF    2DROP 2DROP FALSE EXIT
+  ELSE  DROP [ CONTEXT @ EDITOR ] -TEXT [ CONTEXT ! ] 0= 0=
+  THEN  ;
+
+( Circular string buffer)
+
+\ XXX TODO make it configurable, with deferred words
+\ and a word to make the buffer.
+
+512 CONSTANT /CSB  \ buffer size
+
+/CSB VARIABLE CSB-UNUSED         \ unused buffer space
+HERE  /CSB ALLOT  CONSTANT CSB0  \ bottom address
+
+\ XXX TODO -- rewrite, make it faster:
+
+: ?CSB  ( len -- )
+  \ Make sure there's room for the given characters.
+  DUP CSB-UNUSED @ > IF  /CSB CSB-UNUSED !  THEN
+  NEGATE CSB-UNUSED +!  ;
+
+: STRING-ALLOCATE  ( len -- ca )
+  ?CSB CSB0 CSB-UNUSED @ +  ;
+
+  \ XXX TODO use `2>R` and `2R>` when available:
+: SAVE-STRING  ( ca1 len1 -- ca2 len1 )
+  DUP STRING-ALLOCATE SWAP  2DUP >R >R  MOVE  R> R>  ;
+
+: SAVE-COUNTED-STRING  ( ca1 len1 -- ca2 )
+  DUP 1+ STRING-ALLOCATE DUP >R PLACE R> ;
+
+( SMOVE S+ )
+
+: SMOVE ( ca1 len ca2 -- )
+  SWAP MOVE  ;
+
+: S+  ( ca1 len1 ca2 len2 -- ca3 len3 )
+  \ Append the string ca2 len2 to the end of string ca1 len1
+  \ returning the resulting string ca2 len3.
+  LENGTHS + >R          ( ca1 len2 ca2 len2 ) ( R: len3 )
+  R STRING-ALLOCATE >R  ( R: len3 ca3 )
+  2 PICK R +            ( ca1 len1 ca2 len2 len1+ca3 )
+  SMOVE                 ( ca1 len1 )  \ 2nd string to buffer
+  R SMOVE               \  1st string to buffer
+  R> R>  ;
+
+  \ vim: filetype=abersoftforth

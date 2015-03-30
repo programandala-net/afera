@@ -1,7 +1,10 @@
-\ G+DOS module for ZX Spectrum's Abersoft Forth
-\ Compatible with GDOS
+\ gplusdos.fsb
+\ GDOS/G+DOS support for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
 
 \ Requirements:
 \ fsb:
@@ -11,7 +14,8 @@
 \ Pleonasmo AF
 \   (http://programandala.net/en.program.pleonasmo.html)
 
-\ 2015-03-13: Start.
+\ 2015-03-13: Start, based on code already written in 1988 and
+\ 1994.
 
 ( Init )
 
@@ -207,3 +211,4 @@ FORTH DEFINITIONS
   (DELETE-FILE) ?DOS-ERROR ;
 
 
+  \ vim: filetype=abersoftforth

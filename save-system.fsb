@@ -1,6 +1,9 @@
-\ Disk SAVE-SYSTEM for for ZX Spectrum's Abersoft Forth
+\ Disk `SAVE-SYSTEM` for for ZX Spectrum's Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
 
 \ Requirements:
 \ fsb:

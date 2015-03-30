@@ -1,8 +1,21 @@
-\ Extensions for Abersoft Forth By Marcos Cruz
+\ defer.fsb
+\ Deferred words for ZX Spectrum's Abersoft Forth
 
-  \ History
-  \
-  \ 2015-03-28: First draft of deferred words.
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03-28: Start.
+
+  \ -----------------------------------------------------------
+
+( Load)
+
+1 2 +THRU
  
 ( Deferred words -- common code )
 
@@ -12,31 +25,66 @@
   20 ERROR ;
 
 : DEFER  ( "name" -- )
+  \ Create a deferred word.
   [COMPILE] : COMPILE (DEFER) [COMPILE] ;  ;
 
-: ACTION-OF  ( "name" -- cfa )  [COMPILE] ' @ ;
+: DEFER@  ( pfa -- cfa )
+  \ Return the code field address of a deferred word.
+  @  ;
 
-( Deferred words -- version with CFA )
+: DEFERS  ( "name" -- )
+  \ Compiles the present contents of the deferred word "name"
+  \ into the current definition. I.e. this produces static
+  \ binding as if "name" was not deferred.
+  [COMPILE] ' DEFER@ ,  ; IMMEDIATE
 
-  \ XXX FIXME Not fully tested yet.
+: ACTION-OF  ( Interpretation: "name" -- cfa )
+             ( Compilation:    "name" -- )
+             ( Runtime:        -- cfa )
+  \ Return the code field address of a deferred word.
+  STATE @ IF    [COMPILE] ' COMPILE DEFER@ 
+          ELSE  [COMPILE] ' DEFER@  THEN  ; IMMEDIATE
 
-: DEFER!  ( cfa pfa -- )  !  ;
-: <IS>  ( cfa "name" -- )  [COMPILE] ' DEFER!  ;
-: [IS]  ( cfa "name" -- )
-  [COMPILE] ' [COMPILE] LITERAL [ ' DEFER! CFA ] LITERAL ,  ;
-  IMMEDIATE
-: IS  ( cfa "name" -- )
-  STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
-  
 ( Deferred words -- version with PFA )
 
   \ XXX FIXME Not fully tested yet.
+  
+  \ This default version _looks_ like modern standard Forth,
+  \ but it _works_ differently since fig-Forth's `'` returns
+  \ the pfa (parameter field address), not the cfa (code field
+  \ address). Example:
+ 
+  \   DEFER MYWORD
+  \   ' NOOP IS MYWORD
 
 : DEFER!  ( pfa1 pfa2 -- )  SWAP CFA SWAP !  ;
 : <IS>  ( pfa "name" -- )  [COMPILE] ' DEFER!  ;
 : [IS]  ( pfa "name" -- )
   [COMPILE] ' [COMPILE] LITERAL POSTPONE DEFER!  ; IMMEDIATE
 : IS  ( pfa "name" -- )
+  STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
+
+( Deferred words -- version with CFA )
+
+  \ XXX FIXME Not fully tested yet.
+
+  \ This alternative version _works_ more like modern standard
+  \ Forth, because cfa (code field address) is used, but it
+  \ _looks_ different because the word `CFA` has to be used,
+  \ since fig-Forth's `'` returns the pfa (parameter field
+  \ address).  Example:
+ 
+  \   DEFER MYWORD
+  \   ' NOOP CFA IS MYWORD
+
+: DEFER!  ( cfa pfa -- )  !  ;
+: <IS>  ( cfa "name" -- )  [COMPILE] ' DEFER!  ;
+: [IS]  ( cfa "name" -- )
+  [COMPILE] ' [COMPILE] LITERAL [ ' DEFER! CFA ] LITERAL ,  ;
+  IMMEDIATE
+: IS  ( Interpretation: cfa "name" -- )
+      ( Compilation:    "name" -- )
+      ( Run-time:       -- cfa )
   STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
 
   \ vim: filetype=abersoftforth

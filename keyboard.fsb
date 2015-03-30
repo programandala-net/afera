@@ -1,14 +1,21 @@
+\ keyboard.fsb
 \ Keyboard extensions for Abersoft Forth
-\
-\ By Marcos Cruz (programandala.net)
 
-  \ History
-  \
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
   \ 2015-03-21: Start: ports, key identifiers, key table,
   \ 'pressed?', 'pressed'.
   \
   \ 2015-03-23: Fix: The 0x0A bit mask was used instead of
   \ 0x10.
+
+  \ -----------------------------------------------------------
 
 ( Keyboard rows ports)
 
@@ -82,8 +89,11 @@ DECIMAL  -->
 
 ( Keys table manipulation -- slower )
 
-  \ With these words, every key identifier occupies 3 bytes
-  \ in the table (total size is 80 bytes)
+  \ ............................................
+  \ Method 1: more compact but slower
+
+  \ Every key identifier occupies 3 bytes in the table (total
+  \ size is 80 bytes)
 
 \ 3 CONSTANT /K  \ bytes per key definition in the keys table
 
@@ -92,6 +102,9 @@ DECIMAL  -->
 
   \ Fech a key definition from an element of the keys table:
  \ : K@  ( a -- bitmask port ) DUP C@ SWAP 1+ @ ;
+
+  \ ............................................
+  \ Method 2: bigger but faster
 
   \ With these words, every key identifier occupies 4 bytes
   \ in the table (total size is 160 bytes)
@@ -139,10 +152,14 @@ K-SP K, K-SS K, K-M K, K-N K, K-B K,
 ( ONLY-ONE-PRESSED )
 
 0. 2VARIABLE K-PRESSED
+
 : ONLY-ONE-PRESSED  ( -- false | bitmask port true )
+
   \ XXX TODO finish
+
   \ Return the key identifier of the key pressed,
   \ if there's only one key pressed.
+
   0. K-PRESSED 2! \ none by default
   [ K-TABLE KEYS /K * BOUNDS SWAP ] LITERAL LITERAL
   DO  I K@ PRESSED?

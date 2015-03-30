@@ -1,0 +1,52 @@
+\ conditional_compilation.fsb
+
+\ Copyright (C) 2005-2010,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+\ 2015-03-28: Start, with code adapted from Forth 5mx
+\ (http://programandala.net/en.program.forth_5mx.html),
+\ that was already adapted from pForth.
+
+\ XXX FIXME still not working fine.
+
+( Load )
+
+2 4 THRU
+
+( [DEFINED] [UNDEFINED] )
+
+: [DEFINED]  ( "name" -- f )
+  -FIND DUP IF NIP NIP THEN  ; IMMEDIATE
+
+: [UNDEFINED]  ( "name" -- f )
+  [COMPILE] [DEFINED] 0=  ; IMMEDIATE
+
+( [ELSE] )
+
+: [IF]?  ( ca len -- f )  S" [IF]" STR=  ;
+: [ELSE]?  ( ca len -- f )  S" [ELSE]" STR=  ;
+: [THEN]?  ( ca len -- f )  S" [THEN]" STR=  ;
+
+: [ELSE]  ( -- )
+  \ Skip the code until `[THEN]` is found.
+  1  \ recursion level
+  BEGIN  PARSE-NAME OVER C@  \ first char is not zero?
+  WHILE  2DUP [IF]?
+    IF 2DROP 1+
+    ELSE 
+      2DUP [ELSE]?  IF    2DROP 1 - DUP IF  1+  THEN
+                    ELSE  [THEN]? IF  1 -  THEN  THEN
+    THEN  -DUP 0= IF  DROP EXIT  THEN
+  REPEAT  DROP
+  ; IMMEDIATE
+
+( [IF] [THEN] )
+
+: [IF]  ( f -- )
+  0= IF  [COMPILE] [ELSE]  THEN  ; IMMEDIATE
+
+: [THEN]  ( -- )  ; IMMEDIATE
+
+  \ vim: filetype=abersoftforth
