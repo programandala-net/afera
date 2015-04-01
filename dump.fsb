@@ -5,6 +5,7 @@
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
   \ History of this file
@@ -17,7 +18,7 @@
 
   \ -----------------------------------------------------------
  
-( DUMP -- simple version)
+.( Loading DUMP -- simple version)
 
 : DUMP  ( a len -- )
   BOUNDS DO
@@ -25,7 +26,9 @@
        I C@  DUP 3 .R SPACE  BL MAX EMIT
   LOOP  ;
 
-( DUMP -- complete version)
+RUNT
+
+.( Loading DUMP -- complete version)
 
 HEX
 : BS  ( -- )  8 EMIT  ;

@@ -5,6 +5,7 @@
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
   \ History of this file
@@ -20,11 +21,19 @@
   \ 2015-03-29: New: 'PLACE' and '+PLACE', after Gforth;
   \ circular string buffer and related tools, adapted from csb8
   \ (http://programandala.net/en.program.csb8.html).
+  \
+  \ 2015-03-30:
+  \
+  \ `.(`is moved to the main extend module, in order to use it
+  \ at block headers.
+  \
+  \ 2015-03-31:
+  \
+  \ New: `/STRING`.
 
-( Load )
+.( Loading strings extensions )
 
-\ 1 4 +THRU
-2 6 THRU
+2 6 THRU RUNT
 
 ( Strings )
 
@@ -34,15 +43,20 @@
 
 : CHAR  ( "name" -- c )  BL WORD HERE 1+ C@  ;
 : [CHAR]  ( "name" -- c ) CHAR [COMPILE] LITERAL  ; IMMEDIATE
+
 : PARSE-TEXT  ( c "ccc<c>" -- ca len )  TEXT PAD COUNT  ;
 : PARSE-NAME  ( "name" -- ca len )  BL PARSE-TEXT  ;
+
 : SLIT  ( -- ca len ) R COUNT DUP 1+ R> + >R  ;
 : S,  ( ca len -- ) SWAP HERE ROT CMOVE 1+ ALLOT  ;
 : SLITERAL  ( ca len -- ) COMPILE SLIT S,  ; IMMEDIATE
-: .(  ( "ccc<paren>" -- ) [CHAR] ) PARSE-TEXT TYPE  ; IMMEDIATE
-: PLACE  ( a1 len1 a2 )  2DUP C! 1+ SWAP MOVE  ;
-: +PLACE  ( a1 len1 a2 )
+
+: PLACE  ( ca1 len1 ca2 )  2DUP C! 1+ SWAP MOVE  ;
+: +PLACE  ( ca1 len1 ca2 )
   2DUP C@ + OVER C!  DUP C@ 1+ + SWAP MOVE  ;
+
+: /STRING  ( ca1 len1 n -- ca2 len2 ) 
+  DUP >R - SWAP R> + SWAP  ;
 
 ( S" S' )
 

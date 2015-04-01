@@ -5,6 +5,7 @@
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
   \ History of this file
@@ -58,7 +59,7 @@
 
   \ -----------------------------------------------------------
 
-( Load )
+.( Loading tape extensions ) CR
 
 : TASK ;
 
@@ -138,10 +139,6 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   DUP   \ filename specified?
   IF  T-FILENAME!  ELSE  2DROP ANY-T-FILENAME  THEN
   T-LENGTH! T-START!  1 (TAPE)  T-RESTORE   ;
-
-: ANY-TAPE>MEM  ( -- )
-  \ Load the next file from tape into memory.
-  0 0 0 0 TAPE>MEM  ;
 
 ( MEM>TAPE )
 

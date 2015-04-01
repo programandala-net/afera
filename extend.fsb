@@ -5,6 +5,7 @@
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
   \ History of this file
@@ -35,21 +36,48 @@
   \
   \ `TRUE`, `FALSE`, `ON`, `OFF`, `-ROT`, `?EXIT` (after
   \ Gforth), `ALIAS` (for code words only), `HERE:` (Afera
-  \ specific), `BUFFER:` (after Forth-2012). The renamings 
-  \ are moved to an own file.
+  \ specific), `BUFFER:` (after Forth-2012). The renamings are
+  \ moved to an own file.
+  \
+  \ 2015-03-30:
+  \
+  \ `.(` is moved from the strings module, in order to use it
+  \ at block headers. New: `MS`.
+  \
+  \ 2015-03-31:
+  \
+  \ New: `INKEY?`, `?RSTACK`.
+  \
+  \ Change: `TLOAD` is combined into `RUNT`.
+  \
+  \ Fix: Now `RUNT` clears the return stack.
+  \
+  \ Fix: `+LOAD`: the problem was `BLK` doesn't hold the block
+  \ number in Abersoft Forth: it has to be divided by `B/SCR`
+  \ (a constant that returns 8). The definitions of `LOAD` and
+  \ `-->`, from Don Thomasson's book "Spectrum Advanced Forth",
+  \ gave the definitive clue.
 
   \ -----------------------------------------------------------
 
-( Line comments, booleans, bug fixes)
+( Line comments, booleans)
 
-CR ." Loading extensions" CR
+." Loading extensions"
 
   \ ............................................
-  \ Line comment
+  \ Line comments
 
 : \  ( "ccc<newline>" -- )
   IN @ DUP C/L > IF  B/BUF SWAP MOD  ELSE   C/L SWAP -  THEN
   IN +!  ; IMMEDIATE
+
+: .(  ( "ccc<paren>" -- ) 41 TEXT PAD COUNT TYPE  ; IMMEDIATE
+
+  \ `.(` could be defined this way, but the strings module
+  \ would be required:
+  \
+  \ : .(  ( "ccc<paren>" -- )
+  \   [CHAR] ) PARSE-TEXT TYPE  ; IMMEDIATE
 
   \ ............................................
   \ Booleans
@@ -68,10 +96,10 @@ FALSE 0= CONSTANT TRUE
   \ Bugs found in Abersoft Forth
   \ during the development of Afera
 
-  \ The length of the RAM disk is 11264 (0x2C00),
+  \ The length of the RAM disk must be 11264 (0x2C00),
   \ not 11263 (0x2BFF):
 
-11264 CONSTANT /RAM-DISC      \ length of the RAM disc
+11264 CONSTANT /RAM-DISC      \ length of the RAM disk
 /RAM-DISC 30182 11 + !        \ patch the load tape header
 /RAM-DISC ' INIT-DISC 6 + !   \ patch `INIT-DISC`
 
@@ -81,49 +109,25 @@ FALSE 0= CONSTANT TRUE
 
 -->
 
-( Blocks)
-
-  \ XXX FIXME `+LOAD` fails: `BLK+` is bigger than expected, at
-  \ least after using `RUNT`
-
-: THRU  ( n1 n2 -- )  1+ SWAP DO  I LOAD  LOOP  ;
-: +LOAD  ( n -- )  BLK @ + LOAD  ;
-: +THRU  ( n1 n2 -- )  1+ SWAP DO  I +LOAD  LOOP  ;
-: TLOAD  ( n -- )  EMPTY-BUFFERS INIT-DISC LOADT LOAD  ;
-
-  \ `RUNT` loads the next RAM disk file from tape and then
-  \ interprets its first block.  This word makes it possible to
-  \ chain several RAM disk files from tape, allowing the
-  \ automatic compilation of sources larger than 10 blocks.
-  \
-  \ `QUIT` is needed at the end of `RUNT` because otherwise the
-  \ `LOAD` that loaded the block of `RUNT` would continue to
-  \ interpret after `RUNT`, but the contents of the block would
-  \ had already been changed by `TLOAD`.
-
-: RUNT  ( -- )  1 TLOAD ." ok" QUIT  ;
-
-: /INIT-DISC  ( n -- )
-  \ Blank the init disc from the given block number.
-  \ XXX TODO use `/STRING`.
-  1024 * DUP >R /RAM-DISC SWAP - LO R> + SWAP BLANKS  ;
-
-4 10 THRU
-
 ( Operators) 
 
   \ XXX TODO -- rewrite in assembler.
 
 : INVERT  ( n1 -- n2 )  -1 XOR  ;
 : NEGATE  ( n1 -- n2 )  -1 *  ;
-: BOUNDS  ( a1 len -- a2 a1 )  OVER + SWAP  ;
-: >=  ( n1 n2 -- f ) 2DUP > ROT ROT SWAP = OR  ;
-: <=  ( n1 n2 -- f ) 2DUP < ROT ROT SWAP = OR  ;
+: BOUNDS  ( a1 len1 -- a2 a1 )  OVER + SWAP  ;
+: >=  ( n1 n2 -- f ) SWAP < 0=  ;
+: <=  ( n1 n2 -- f ) SWAP > 0=  ;
 : <>  ( n1 n2 -- f ) = 0=  ;  \ `-` is faster
 : SGN  ( n1 -- -1|0|1 ) DUP IF  0< 2 * 1+  THEN  ;
 
+-->
+
 ( System)
 
+2 CONSTANT CELL
+: CELL+  ( n1 -- n2 )  2+  ;
+: CELLS ( n1 -- n2 )  CELL *  ;
 
 : ALIAS  ( pfa "name" -- )
   \ Create the word "name" as an alias of the *code* word
@@ -133,34 +137,47 @@ FALSE 0= CONSTANT TRUE
   [COMPILE] : [COMPILE] ;  LATEST PFA CFA !  ;
 
   \ XXX TODO Improved alternative:
-: ALIAS  ( pfa "name" -- )
-  \ Create the word "name" as an alias of the *code* word
-  \ whose pfa is given.
-  DUP DUP CFA @ =  \ code word?
-  IF    [COMPILE] : [COMPILE] ;  LATEST PFA CFA !
-  \ XXX FIXME :
-  ELSE  CREATE SMUDGE (;CODE)
-        195 C, CFA ,  \ jp cfa
-        [COMPILE] ;
-  THEN ;
-
-2 CONSTANT CELL
-: CELL+  ( n1 -- n2 )  2+  ;
-: CELLS ( n1 -- n2 )  CELL *  ;
+  \ : ALIAS  ( pfa "name" -- )
+  \   \ Create the word "name" as an alias of the *code* word
+  \   \ whose pfa is given.
+  \   DUP DUP CFA @ =  \ code word?
+  \   IF    [COMPILE] : [COMPILE] ;  LATEST PFA CFA !
+  \   \ XXX FIXME :
+  \   ELSE  CREATE SMUDGE (;CODE)
+  \         195 C, CFA ,  \ jp cfa
+  \         [COMPILE] ;
+  \   THEN ;
 
 : RECURSE  ( -- )  LATEST PFA CFA ,  ; IMMEDIATE
 
-  \ XXX TODO
- \ From vForth, but can't work:
- \ : :NONAME HERE DUP CELL+ , ;
+: ?EXIT  ( f -- )
+  [COMPILE] IF  COMPILE EXIT  [COMPILE] THEN  ; IMMEDIATE
 
-( Stack)
+-->
+
+( Return stack)
+
+: RDEPTH  ( -- u ) RP@ R0 @ - -2 /  ;
+
+: ?RSTACK  ( -- )
+  \ Issue an error message
+  \ if the return stack is out of bounds.
+  \ Written after `?STACK`, as shown in Don Thomasson's book
+  \ "Spectrum Advanced Forth".
+  R0 @ RP@ U< 1 ?ERROR      \ stack empty
+  RP@ @ S0 U< 7 ?ERROR  ;   \ stack full
+
+: RDROP  ( -- ) ( R: x -- )  R> DROP  ;
+
+' R ALIAS R@  ( -- x ) ( R: x -- x )
+
+-->
+
+( Data stack)
 
 : DEPTH  ( -- u ) SP@ S0 @ - -2 /  ;
 : PICK  ( u -- x ) 2 * 2 + SP@ + @  ;
-: RDEPTH  ( -- u ) RP@ R0 @ - -2 /  ;
-: RDROP  ( -- ) ( R: x -- )  R> DROP  ;
-: R@  ( -- x ) ( R: x -- x )  R  ;
+
 : -ROT  ( x1 x2 x3 -- x3 x1 x2 )  ROT ROT  ;
   
   \ XXX TODO -- `2>R` and `2R>`
@@ -177,21 +194,9 @@ FALSE 0= CONSTANT TRUE
 : NIP  ( n1 n2 -- n2 ) SWAP DROP  ;
 : TUCK  ( n1 n2 -- n2 n1 n2 )  SWAP OVER ;
 
-( Keyboard)
+-->
 
-: AKEY  ( -- c )
-  \ Wait for a key press and return its code.
-  \ This is an alternative to 'KEY', because 'KEY'
-  \ always shows the flashing cursor, even if the
-  \ current attributes are changed.
-  BEGIN  INKEY DUP 255 =  WHILE  DROP  REPEAT  ;
-
-( Control structures)
-
-: ?EXIT  ( f -- )
-  [COMPILE] IF  COMPILE EXIT  [COMPILE] THEN  ; IMMEDIATE
-
-( Data structures)
+( Tables and control structures)
 
 : HERE:  ( "name" -- )
   \ Create a word "name" that will return its pfa, that will be
@@ -204,5 +209,74 @@ FALSE 0= CONSTANT TRUE
   \ Create a word "name" and allocate u bytes in its pfa.
   \ "name" will return its pfa.
   HERE: ALLOT  ;
+
+-->
+
+( Keyboard)
+
+: AKEY  ( -- c )
+  \ Wait for a key to be pressed and return its code.
+  \ This is an alternative to 'KEY', because 'KEY'
+  \ always shows the flashing cursor, even if the
+  \ current attributes are changed.
+  BEGIN  INKEY DUP 255 =  WHILE  DROP  REPEAT  ;
+
+: INKEY?  ( -- c true | false )
+  \ If a key is pressed, return its code and a true flag;
+  \ otherwise return a false flag.
+  INKEY DUP 255 <> DUP ?EXIT NIP  ;
+
+-->
+
+( Other)
+
+23672 CONSTANT SYS-FRAMES
+
+: MS  ( n -- )
+  \ Wait n ms (miliseconds), with 20 ms precision.
+  20 / SYS-FRAMES @ +
+  BEGIN  DUP SYS-FRAMES @ U<  UNTIL DROP  ;
+
+-->
+
+( Blocks)
+
+  \ ............................................
+  \ Standard or common usage extensions
+
+
+: THRU  ( n1 n2 -- )  1+ SWAP DO  I LOAD  LOOP  ;
+: +LOAD  ( n -- )  BLK @ B/SCR / + LOAD  ;
+: +THRU  ( n1 n2 -- )  1+ SWAP DO  I +LOAD  LOOP  ;
+
+  \ ............................................
+  \ Specific extensions
+
+: /INIT-DISC  ( n -- )
+  \ Blank the init disc from the given block number.
+  \ XXX TODO use `/STRING`.
+  1024 * DUP >R /RAM-DISC SWAP - LO R> + SWAP BLANKS  ;
+
+: RUNT  ( -- )
+
+  \ Read a new RAM disk from tape and load its fist block.
+
+  \ This word makes it possible to chain several RAM disk files
+  \ from tape, allowing the automatic compilation of sources
+  \ larger than 10 blocks.
+  \
+  \ `RP!` is neded before `LOAD` because every `LOAD` saves the
+  \ contents of `BLK` `IN` into the return stack, beside its
+  \ own return address; chained loading of several RAM disks
+  \ would fill it.
+  \
+  \ `QUIT` is needed at the end because otherwise the `LOAD`
+  \ that loaded the block of `RUNT` would continue to interpret
+  \ after `RUNT`, but the contents of the block would had
+  \ already been changed.
+
+  FLUSH INIT-DISC LOADT RP! 1 LOAD ." ok" QUIT  ;
+
+RUNT
 
   \ vim: filetype=abersoftforth

@@ -8,8 +8,12 @@
 
 \ 2015-03-30: Written.
 
+.( Loading .S )
+
 : .S   ( -- )
   DEPTH S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
   DEPTH -DUP IF  0 DO  DEPTH I - 1 - PICK .  LOOP  THEN  ;
+
+RUNT
   
   \ vim: ft=abersoftforth

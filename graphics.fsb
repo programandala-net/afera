@@ -5,10 +5,11 @@
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
 
 \ 2015-03-28: Code extracted from the main file of the library.
 
-( Graphics)
+.( Loading graphic extensions )
 
 FORTH DEFINITIONS DECIMAL
 
