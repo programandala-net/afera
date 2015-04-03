@@ -11,6 +11,7 @@
   \ History of this file
 
   \ 2015-03-28: Start.
+  \ 2015-04-02: Fix.
 
   \ -----------------------------------------------------------
 
@@ -61,7 +62,7 @@
 : DEFER!  ( pfa1 pfa2 -- )  SWAP CFA SWAP !  ;
 : <IS>  ( pfa "name" -- )  [COMPILE] ' DEFER!  ;
 : [IS]  ( pfa "name" -- )
-  [COMPILE] ' [COMPILE] LITERAL POSTPONE DEFER!  ; IMMEDIATE
+  [COMPILE] ' [COMPILE] LITERAL COMPILE DEFER!  ; IMMEDIATE
 : IS  ( pfa "name" -- )
   STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
 

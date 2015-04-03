@@ -1,7 +1,8 @@
 \ graphics.fsb
 \ Graphic extensions for Abersoft Forth By Marcos Cruz
 
-\ Copyright (C) 1985,1986,1987,2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1985,1986,1987,2015
+\ Marcos Cruz (programandala.net)
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -43,3 +44,6 @@ COORDS CONSTANT X-COORD  COORDS 1+ CONSTANT Y-COORD
   \ Convert a pixel coordinate to its attribute address.
   175 SWAP - 8 / 32 *  SWAP 8 /  + ATTRIBUTES +  ;
 
+RUNT
+
+  \ vim: filetype=abersoftforth

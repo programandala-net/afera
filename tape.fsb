@@ -59,11 +59,11 @@
 
   \ -----------------------------------------------------------
 
-.( Loading tape extensions ) CR
+.( Loading tape extensions )
 
 : TASK ;
 
-2 10 THRU  RUNT
+2 6 THRU  RUNT
 
 ( Headers )
 
@@ -120,7 +120,7 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
 
 ( Debugging tools )
 
-  \ XXX TMP for debugging:
+\ XXX TMP for debugging:
 
 : T-DUMP  ( -- )
   CR ." Load header:"

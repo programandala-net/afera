@@ -36,8 +36,8 @@
   \
   \ `TRUE`, `FALSE`, `ON`, `OFF`, `-ROT`, `?EXIT` (after
   \ Gforth), `ALIAS` (for code words only), `HERE:` (Afera
-  \ specific), `BUFFER:` (after Forth-2012). The renamings are
-  \ moved to an own file.
+  \ specific), `BUFFER:` (after Forth-2012). The renamings
+  \ (`BYE`, `-DUP`, `VLIST`) are moved to an own file.
   \
   \ 2015-03-30:
   \
@@ -57,12 +57,49 @@
   \ (a constant that returns 8). The definitions of `LOAD` and
   \ `-->`, from Don Thomasson's book "Spectrum Advanced Forth",
   \ gave the definitive clue.
+  \
+  \ Change: simpler definitions of `>=` and `<=`; `NEGATE` is
+  \ removed because it already exists, but it's called `MINUS`.
+  \
+  \ 2015-04-01:
+  \ 
+  \ Change: Now `RUNT` halts if Break is pressed.  The problem
+  \ was the Fuse emulator, when the TAP file is finished,
+  \ rewinds it, and this behaviour is not configurable.
+  \ Therefore loading a single module of the library was
+  \ impossible: it loaded itself in an endless loop.  This
+  \ change solves this problem to some extent, while still
+  \ keeping `RUNT` for chain loading. A better solution is
+  \ searched.
+  \
+  \ New: Patches that make it possible to use the whole screen.
+  \
+  \ New: `RND`, adapted from Bertie, the demo program bundled
+  \ with Abersoft Forth.
+  \
+  \ 2015-04-02:
+  \
+  \ Fix: Now `AT` works on line 32. The solution was to use
+  \ `>CHAN` (conversion of `TCH` from Lennart Benschop's
+  \ SPECTRUM FORTH83) instead of. `EMIT`.
+  \
+  \ Improvement: `RUNT` checks `DEPTH` instead of the Break
+  \ key.
+  \
+  \ New: `VALUE`, `TO`, `[TO]` and `<TO>`.
+  \
+  \ 2015-04-03:
+  \
+  \ Improvement: `RUNT` checks also `BLK`; this make it
+  \ possible to use it manually to load the next RAM disk.
+  \
+  \ Change: `CHAR` and `[CHAR]` are moved here from the strings module.
 
   \ -----------------------------------------------------------
 
-( Line comments, booleans)
+( Line comments, booleans, bug fixes)
 
-." Loading extensions"
+." Loading extensions "
 
   \ ............................................
   \ Line comments
@@ -88,10 +125,6 @@ FALSE 0= CONSTANT TRUE
 : ON   ( a -- )  TRUE  SWAP !  ;
 : OFF  ( a -- )  FALSE SWAP !  ;
 
--->
-
-( Bug fixes)
-
   \ ............................................
   \ Bugs found in Abersoft Forth
   \ during the development of Afera
@@ -107,19 +140,8 @@ FALSE 0= CONSTANT TRUE
 
  ' R> CFA ' EXIT !
 
--->
-
-( Operators) 
-
-  \ XXX TODO -- rewrite in assembler.
-
-: INVERT  ( n1 -- n2 )  -1 XOR  ;
-: NEGATE  ( n1 -- n2 )  -1 *  ;
-: BOUNDS  ( a1 len1 -- a2 a1 )  OVER + SWAP  ;
-: >=  ( n1 n2 -- f ) SWAP < 0=  ;
-: <=  ( n1 n2 -- f ) SWAP > 0=  ;
-: <>  ( n1 n2 -- f ) = 0=  ;  \ `-` is faster
-: SGN  ( n1 -- -1|0|1 ) DUP IF  0< 2 * 1+  THEN  ;
+  \ Bugs still to be fixed: `MESSAGE` does not work with
+  \ negative values.
 
 -->
 
@@ -148,10 +170,132 @@ FALSE 0= CONSTANT TRUE
   \         [COMPILE] ;
   \   THEN ;
 
+  \ Compile a call to the word being defined.
 : RECURSE  ( -- )  LATEST PFA CFA ,  ; IMMEDIATE
 
+  \ Exit the current word if the given flag is not zero.
 : ?EXIT  ( f -- )
   [COMPILE] IF  COMPILE EXIT  [COMPILE] THEN  ; IMMEDIATE
+
+: BYE  ( -- )  MON  ;
+
+-->
+
+( Whole screen )
+
+  \ ............................................
+  \ By default, Abersoft Forth does not allow to use
+  \ the lower part of the screen.
+
+  \ XXX FIXME -- when loading many files, still appears
+  \ "scroll?"
+
+  \ The system variable DF SZ holds the number of lines in the
+  \ lower part of the screen:
+
+  : WHOLE-SCREEN  ( -- )  0 23659 C!  ;  WHOLE-SCREEN
+
+  \ Its original value must be restored before returning to
+  \ BASIC, otherwise the system will crash:
+ 
+  : MON  ( -- )  2 23659 C! MON  ;
+
+  \ Note: `WHOLE-SCREEN` must be used after returning to Forth.
+  \ As an alternative, `POKE 23659,0` could be added before
+  \ every `RANDOMIZE USR` in the BASIC loader.
+
+  \ The definition of `CLS` has to be patched: it calls
+  \ the ROM routine CLS (0x0D6B), but CL-ALL (0x0DAF) must be
+  \ used instead (otherwise the system will crash):
+
+  HEX  0DAF 75C0 !  DECIMAL
+
+  \ `>CHAN` is adapted from Lennart Benschop's SPECTRUM
+  \ FORTH83. It is needed by the new version of `AT`, because
+  \ Abersoft Forth's `EMIT' changes the current channel and
+  \ other things.
+
+HEX  CREATE >CHAN  ( c -- )
+  \ Send the character with ASCII code c to the current channel.
+  E1 C,                     \ pop hl
+  7D C,                     \ ld a,l
+  FD C, 36 C, 52 C, FF C,   \ ld (iy+0x52),0xFF ; set SCR CT
+  D7 C,                     \ rst 10
+  C3 C, NEXT ,              \ jp NEXT
+  SMUDGE DECIMAL
+
+-->
+
+( Whole screen: AT )
+
+  \ Finally, also `AT` must be patched.  Its original
+  \ definition is the following (from Don Thomasson's book
+  \ "Advanced Spectrum Forth", page 127):
+
+  \ : AT ( line col -- )
+  \   ABS DUP 31 >
+  \   IF    2DROP
+  \   ELSE  SWAP ABS DUP 21 >
+  \         IF  2DROP  ELSE  22 EMIT EMIT EMIT  THEN
+  \   THEN  ;
+
+  \ The number 21 (0x15) must be changed to 23 (0x17): HEX  17
+  \ 7BFA !  DECIMAL
+  \
+  \ But it's not enough: line 23 needs special treatment.
+  \
+: AT ( line col -- )
+  \ Warning: The system will crash if the coordinates are
+  \ out of screen. For the sake of speed, no check is done.
+  \ A wrapper secure word can be written if needed.
+  SWAP DUP 23 -  \ not the last line?
+  IF    22 >CHAN >CHAN >CHAN
+  ELSE  1 - DUP >CHAN >CHAN 0 >CHAN CR
+        \ system variable:
+        \ address in display file of print position
+        DUP 23684 +!
+        \ system variable:
+        \ 33-column number for print position
+        33 SWAP - 23688 C!
+  THEN ;  -->
+
+  \ XXX TMP 
+  \ : CR  ( -- ) 13 >CHAN  255 23692 C!   ;
+
+( Operators) 
+
+: CHAR  ( "name" -- c )  BL WORD HERE 1+ C@  ;
+: [CHAR]  ( "name" -- c ) CHAR [COMPILE] LITERAL  ; IMMEDIATE
+
+: INVERT  ( n1 -- n2 )  -1 XOR  ;
+: BOUNDS  ( a1 len1 -- a2 a1 )  OVER + SWAP  ;
+: >=  ( n1 n2 -- f ) SWAP < 0=  ;
+: <=  ( n1 n2 -- f ) SWAP > 0=  ;
+: <>  ( n1 n2 -- f ) = 0=  ;  \ `-` is faster
+: SGN  ( n1 -- -1|0|1 ) DUP IF  0< 2 * 1+  THEN  ;
+
+-->
+
+( Data stack)
+
+: DEPTH  ( -- u ) SP@ S0 @ - -2 /  ;
+: PICK  ( u -- x ) 2 * 2 + SP@ + @  ;
+
+: -ROT  ( x1 x2 x3 -- x3 x1 x2 )  ROT ROT  ;
+  
+  \ XXX TODO -- `2>R` and `2R>`
+
+  \ XXX OLD
+\ : ROLL  ( u -- )
+\ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 - CMOVE DROP  ;
+  \ Gforth's recursive version:
+\ : ROLL  ( u -- )
+\   DUP 0<= IF  DROP  ELSE  SWAP >R 1- ROLL R> SWAP THEN  ;
+ : ROLL  ( u -- )
+   DUP 1 < IF  DROP  ELSE  SWAP >R 1 - RECURSE R> SWAP THEN  ;
+
+: NIP  ( n1 n2 -- n2 )  SWAP DROP  ;
+: TUCK  ( n1 n2 -- n2 n1 n2 )  SWAP OVER ;
 
 -->
 
@@ -169,46 +313,30 @@ FALSE 0= CONSTANT TRUE
 
 : RDROP  ( -- ) ( R: x -- )  R> DROP  ;
 
-' R ALIAS R@  ( -- x ) ( R: x -- x )
+  \ ' R ALIAS R@  ( -- x ) ( R: x -- x )
 
 -->
 
-( Data stack)
-
-: DEPTH  ( -- u ) SP@ S0 @ - -2 /  ;
-: PICK  ( u -- x ) 2 * 2 + SP@ + @  ;
-
-: -ROT  ( x1 x2 x3 -- x3 x1 x2 )  ROT ROT  ;
-  
-  \ XXX TODO -- `2>R` and `2R>`
-
-  \ XXX TODO -- finish
-\ : ROLL  ( u -- )
-\ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 - CMOVE DROP  ;
-  \ Gforth's recursive version:
-\ : ROLL  ( u -- )
-\   DUP 0<= IF  DROP  ELSE  SWAP >R 1- ROLL R> SWAP THEN  ;
- : ROLL  ( u -- )
-   DUP 1 < IF  DROP  ELSE  SWAP >R 1 - RECURSE R> SWAP THEN  ;
-
-: NIP  ( n1 n2 -- n2 ) SWAP DROP  ;
-: TUCK  ( n1 n2 -- n2 n1 n2 )  SWAP OVER ;
-
--->
-
-( Tables and control structures)
+( Tables and values)
 
 : HERE:  ( "name" -- )
   \ Create a word "name" that will return its pfa, that will be
   \ empty (no bytes allocated during the definition).  This is
   \ syntactic sugar for a table definition whose contents will
   \ be compiled on the fly.
-  0 VARIABLE  CELL NEGATE ALLOT  ;
+  0 VARIABLE  CELL MINUS ALLOT  ;
 
 : BUFFER:  ( u "name" -- )
   \ Create a word "name" and allocate u bytes in its pfa.
   \ "name" will return its pfa.
   HERE: ALLOT  ;
+
+: VALUE  ( n "name"  -- )  CONSTANT  ;
+: <TO>  ( n "name" -- )  [COMPILE] ' !  ;
+: [TO]  ( n "name" -- )
+  [COMPILE] ' [COMPILE] LITERAL COMPILE !  ; IMMEDIATE
+: TO  ( n "name" -- )
+  STATE @ IF  [COMPILE] [TO]  ELSE  <TO>  THEN  ; IMMEDIATE
 
 -->
 
@@ -228,22 +356,10 @@ FALSE 0= CONSTANT TRUE
 
 -->
 
-( Other)
-
-23672 CONSTANT SYS-FRAMES
-
-: MS  ( n -- )
-  \ Wait n ms (miliseconds), with 20 ms precision.
-  20 / SYS-FRAMES @ +
-  BEGIN  DUP SYS-FRAMES @ U<  UNTIL DROP  ;
-
--->
-
 ( Blocks)
 
   \ ............................................
   \ Standard or common usage extensions
-
 
 : THRU  ( n1 n2 -- )  1+ SWAP DO  I LOAD  LOOP  ;
 : +LOAD  ( n -- )  BLK @ B/SCR / + LOAD  ;
@@ -264,6 +380,12 @@ FALSE 0= CONSTANT TRUE
   \ This word makes it possible to chain several RAM disk files
   \ from tape, allowing the automatic compilation of sources
   \ larger than 10 blocks.
+  \ 
+  \ `DEPTH` is checked to prevent a RAM disk from leaving
+  \ something on the stack, and also to make it possible to
+  \ load individual files of the library, when the ZX Spectrum
+  \ emulator automatically rewinds the tape file (like Fuse),
+  \ what causes the same file to be loaded in an endless loop.
   \
   \ `RP!` is neded before `LOAD` because every `LOAD` saves the
   \ contents of `BLK` `IN` into the return stack, beside its
@@ -275,7 +397,8 @@ FALSE 0= CONSTANT TRUE
   \ after `RUNT`, but the contents of the block would had
   \ already been changed.
 
-  FLUSH INIT-DISC LOADT RP! 1 LOAD ." ok" QUIT  ;
+  DEPTH IF  BLK @ IF  ." Stack not empty " 20 ERROR  THEN  THEN
+  FLUSH INIT-DISC LOADT RP! 1 LOAD  ." ok" QUIT  ;
 
 RUNT
 

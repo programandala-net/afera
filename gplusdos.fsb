@@ -10,13 +10,21 @@
 \ Requirements:
 \ fsb:
 \   (http://programandala.net/en.program.fsb.html)
-\ AF extend
-\   (http://programandala.net/en.program.af_extend.html)
+\ Afera's main file
+\   (http://programandala.net/en.program.afera.html)
 \ Pleonasmo AF
 \   (http://programandala.net/en.program.pleonasmo.html)
 
-\ 2015-03-13: Start, based on code already written in 1988 and
-\ 1994.
+  \ 2015-03-13: Start, based on code already written in 1988
+  \ and 1994.
+  \
+  \ 2015-04-01: Checks.
+  \
+  \ 2015-04-02: First succesful compilation, after some fixes
+  \ in the assembler. Some words renamed.
+
+\ XXX FIXME still not working fine: it seems some control chars
+\ are included in file names.
 
 ( Init )
 
@@ -25,14 +33,14 @@ FORTH DEFINITIONS
 VOCABULARY DOS IMMEDIATE
 DOS DEFINITIONS DECIMAL
 
-10 CONSTANT /FILENAME  \ max filename lenght
+10 CONSTANT /FILENAME  \ max filename length
 1 VARIABLE DRIVE \ 1 or 2
 [CHAR] d VARIABLE DEVICE \ "d" or "D"
 -->
 
-( UFIA -- User File Information Area)
+( UFIA: User File Information Area)
 
-0 VARIABLE UFIA 22 ALLOT
+0 VARIABLE UFIA  24 2 - ALLOT
 
 UFIA      CONSTANT DSTR1 \ drive: 1 or 2
 UFIA 1+   CONSTANT FSTR1 \ program number
@@ -41,9 +49,9 @@ UFIA 3 +  CONSTANT LSTR1 \ device: "D" or "d"
 UFIA 4 +  CONSTANT NSTR1 \ directory description
 UFIA 5 +  CONSTANT NSTR2 \ file name
 UFIA 15 + CONSTANT HD00  \ file type
-UFIA 16 + CONSTANT HD0B  \ file lenght
+UFIA 16 + CONSTANT HD0B  \ file length
 UFIA 18 + CONSTANT HD0D  \ file start address
-UFIA 20 + CONSTANT HD0F  \ BASIC lenght without variables
+UFIA 20 + CONSTANT HD0F  \ BASIC length without variables
 UFIA 22 + CONSTANT HD11  \ BASIC autorun line
 -->
 
@@ -78,12 +86,15 @@ DECIMAL -->
 ( UFIA manipulation)
 
 : -FILENAME ( -- )
-  \ Init the filename area
+
+  \ Blank the filename area.
+
   NSTR2 /FILENAME BLANKS ;
 
 : FILENAME!  ( ca len -- )
 
   \ Store a filename into the NSTR2 field of UFIA.
+
   \ ca len = filename
 
   -FILENAME /FILENAME MAX NSTR2 SWAP CMOVE ;
@@ -93,53 +104,64 @@ DECIMAL -->
 
   \ Set the User File Information Area
 
-  \ ca1 len1 = memory region to save
-  \ ca2 len2 = filename
-  \ dir = directory description
+  \ ca1 len1  = memory region
+  \ ca2 len2  = filename
+  \ dir       = directory description
 
   NSTR1 C!  FILENAME!  HD0B !  HD0D !
   DEVICE @ LSTR1 C!  DRIVE @ DSTR1 C!
   CODE-FILETYPE HD00 C! ;
 
-: BLOCKS-INIT-UFIA ( ca len --)
+: RAM-DISC>UFIA  ( ca len -- )
 
-  \ Init the User File Information Area for the RAM disc
+  \ Init the User File Information Area
+  \ to load or save the Forth RAM disc.
 
-  \ ca len = filename
+  \ ca1 len1 = filename
 
-  FLUSH LO HI LO - 1+ 2SWAP SPECIAL-FILE >UFIA ;
+  FLUSH LO /RAM-DISC 2SWAP SPECIAL-FILE >UFIA ;
 
 -->
 
 ( Error checking)
 
-: ?DOS-ERROR  ( ior --)
+: IOR>ERROR  ( ior -- n )
+  \ Convert a DOS ior to a Forth error number.
+  \ ior = the AF register returned by a DOS command:
+  \     bit 0     = set: error
+  \     bits 8-14 = error code
+  \     bit 15    = set: ZX Spectrum error; unset: DOS error
+  \ XXX TODO -- test
+  DUP 1 AND       \ error?
+  SWAP 255 /      \ error code
+  DUP 128 AND     \ ZX Spectrum error?
+  IF  -1 *  ELSE  100 +  THEN  ;
+
+: ?DOS-ERROR  ( ior -- )
+
+  \ XXX OLD
 
   \ ior = the AF register returned by a DOS command:
   \     bit 0     = set: error
   \     bits 8-14 = error code
   \     bit 15    = set: ZX Spectrum error; unset: DOS error
 
-  DUP 1 AND       \ error?
-  SWAP 255 /      \ error code
-  DUP 128 AND     \ ZX Spectrum error?
-  IF  -1 *  ELSE  100 +  THEN ?ERROR ;
+  IOR>ERROR ?ERROR ;
 
 -->
 
 ( Save a file)
 
-CODE (SAVE-FILE) ( -- ior )
+CODE (MEM>DISK) ( -- ior )
 
-  \ Save a file using the data hold in UFIA
+  \ Save a file to disk using the data hold in UFIA.
 
   BC PUSH  IX PUSH  \ save the Forth registers
-  [ CONTEXT @ U. CR ]  \ XXX INFORMER
   DSTR1 IX LDP#
   8 RST  HOFLE C, \ open the file and create its header
   NC IF \ no error?
     HD0D DE LDP \ start
-    HD0B BC LDP \ lenght
+    HD0B BC LDP \ length
     8 RST  HSVBK C, \ save to file
     NC IF  \ no error?
       8 RST  CFSM C,  \ close the file
@@ -150,26 +172,19 @@ CODE (SAVE-FILE) ( -- ior )
 
 ( Load a file)
 
-  \ XXX FIXME: strange error: '(LOAD-FILE)' not found!
+CODE (DISK>MEM) ( -- ior )
 
-CODE (LOAD-FILE) ( -- ior )
-
-  \ Load a file using the data hold in UFIA
-
-  \ XXX FIXME 2015-03-16: DSTR1 is not found above.  There is
-  \ problem with the vocabulary chaining.  I have to study how
-  \ fig-Forth does it.
+  \ Load a file from disk using the data hold in UFIA.
 
   BC PUSH  IX PUSH  \ save the Forth registers
-  [ CONTEXT @ U. CR ]  \ XXX INFORMER
   DSTR1 IX LDP#  8 RST  HGFLE C, \ get the file
   NC IF \ no error?  -- load the file header:
     HD00 DE LDP#  9 B LD# \ destination and count
     BEGIN
       8 RST  LBYT C, \ load byte and store it in A
-      DE STAP  DE INCP  \ update destination and count
+      DE STAP  DE INC  \ update destination and count
     DSZ
-    HD0D DE LDP  HD0B BC LDP \ start and lenght
+    HD0D DE LDP  HD0B BC LDP \ start and length
     8 RST  HLDBK C, \ load the file
   THEN
   IX POP  BC POP  \ restore the Forth registers
@@ -177,13 +192,13 @@ CODE (LOAD-FILE) ( -- ior )
 
 ( Delete a file)
 
-CODE (DELETE-FILE) ( -- ior )
+CODE (ERASE) ( -- ior )
 
-  \ Delete a file using the data hold in UFIA
+  \ Erase a disk file using the data hold in UFIA.
 
   BC PUSH  IX PUSH  \ save the Forth registers
   UFIA IX LDP#
-  8 RST  HERAZ C, \ delete the file
+  8 RST  HERAZ C, \ erase the file
   IX POP  BC POP  \ restore the Forth registers
   AF PUSH
 
@@ -193,23 +208,33 @@ CODE (DELETE-FILE) ( -- ior )
 
 FORTH DEFINITIONS
 
-: SAVE-FILE ( ca1 len1 ca2 len2 -- )
+: DISK>MEM ( ca1 len1 ca2 len2 -- )
+  \ Load a file from disk.
+  \ ca1 len1 = memory region to load
+  \ ca2 len2 = filename
+  DOS >UFIA (DISK>MEM) ?DOS-ERROR ;
 
-  \ Save a file
-
+: MEM>DISK ( ca1 len1 ca2 len2 -- )
+  \ Save a file to disk.
   \ ca1 len1 = memory region to save
   \ ca2 len2 = filename
+  DOS >UFIA (MEM>DISK) ?DOS-ERROR ;
 
-  >UFIA (SAVE-FILE) ?DOS-ERROR ;
+: SAVED ( ca len -- )
+  \ Save the Forth RAM-disc to disk
+  \ (word named after Abersoft Forth's `SAVET`.)
+  \ ca len = filename
+  DOS RAM-DISC>UFIA (MEM>DISK) ?DOS-ERROR ;
 
-: SAVE-BLOCKS-FILE ( ca len -- )
-  BLOCKS>UFIA (SAVE-FILE) ?DOS-ERROR ;
+: LOADD ( ca len -- )
+  \ Load a Forth RAM-disc from disk.
+  \ (word named after Abersoft Forth's `LOADT`.)
+  \ ca len = filename
+  DOS RAM-DISC>UFIA (DISK>MEM) ?DOS-ERROR ;
 
-: LOAD-BLOCKS-FILE ( ca len -- )
-  BLOCKS>UFIA (LOAD-FILE) ?DOS-ERROR ;
-
-: DELETE-FILE ( ca len -- )
-  (DELETE-FILE) ?DOS-ERROR ;
-
+: ERASE ( ca len -- )
+  \ Erase a disk file.
+  \ ca len = filename
+  0 0 2SWAP DOS >UFIA (ERASE) ?DOS-ERROR ;
 
   \ vim: filetype=abersoftforth
