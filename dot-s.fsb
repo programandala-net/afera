@@ -6,13 +6,22 @@
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 
-\ 2015-03-30: Written.
+\ 2015-03-30: First version.
+\ 2015-04-14: Second version.
 
 .( Loading .S )
 
 : .S   ( -- )
   DEPTH S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
-  DEPTH -DUP IF  0 DO  DEPTH I - 1 - PICK .  LOOP  THEN  ;
+  
+  \ First version:
+  
+  \ DEPTH -DUP IF  0 DO  DEPTH I - 1 - PICK .  LOOP  THEN
+  
+  \ Second simpler version, copied from Matteo Vitturi's
+  \ vForth:
+  
+  SP@ 2 - S0 @ 2 - DO I @ . -2 +LOOP ; 
 
 RUNT
   

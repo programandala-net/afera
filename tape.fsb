@@ -122,14 +122,14 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
 
 \ XXX TMP for debugging:
 
-: T-DUMP  ( -- )
-  CR ." Load header:"
-  LOADT-HEADER /T-HEADER DUMP SPACE KEY DROP
-  CR ." Save header:"
-  SAVET-HEADER /T-HEADER DUMP
-  CR ." (TAPE) start: " (TAPE)-START @ U.  ;
+\ : T-DUMP  ( -- )
+\   CR ." Load header:"
+\   LOADT-HEADER /T-HEADER DUMP SPACE KEY DROP
+\   CR ." Save header:"
+\   SAVET-HEADER /T-HEADER DUMP
+\   CR ." (TAPE) start: " (TAPE)-START @ U.  ;
 
-( TAPE>MEM )
+( TAPE>MEM MEM>TAPE )
 
 : TAPE>MEM  ( a1 len1 a2 len2 -- )
   \ Load a file from tape into memory.
@@ -140,13 +140,35 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   IF  T-FILENAME!  ELSE  2DROP ANY-T-FILENAME  THEN
   T-LENGTH! T-START!  1 (TAPE)  T-RESTORE   ;
 
-( MEM>TAPE )
-
 : MEM>TAPE  ( a1 len1 a2 len2 -- )
   \ Save a memory region into a tape file.
   \ a1      = address of the code
   \ len1    = length of the code
   \ a2 len2 = filename
   T-FILENAME! T-LENGTH! T-START!  0 (TAPE)  T-RESTORE  ;
+
+( BLOCK>A /LOADT /SAVET )
+
+: /LOADT  ( n -- )
+  \ Load a RAM-disc from tape, at address of block n.
+  \ Warning: the file will be loaded, no matter its length.
+  \ n = first block (0..10)
+  FLUSH BLOCK>A 0 S" DISC" TAPE>MEM  ;
+
+: /SAVET  ( n1 n2 -- )
+  \ Save a RAM-disc to tape, from block n1 to block n2.
+  \ n1 = first block (0..10)
+  \ n2 = last block (0..10)
+  FLUSH 1+ BLOCK>A SWAP BLOCK>A DUP ROT SWAP -
+  S" DISC" MEM>TAPE  ;
+
+: INCLUDET  ( -- )
+  \ Load a RAM-disc from tape, at address of block 2,
+  \ and loads its first block.
+  \ This word is intended to be used in block 1 in order
+  \ to load all modules of an application.
+  \ Warning: the file will be loaded, no matter its length.
+  \ XXX TODO test
+  2 /LOADT 3 LOAD  ;
 
   \ vim: filetype=abersoftforth

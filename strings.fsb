@@ -35,16 +35,51 @@
   \
   \ Change: `CHAR` and `[CHAR]` are moved to the main file of
   \ the library. 
+  \
+  \ 2015-04-14:
+  \
+  \ New: `CMOVE>`, `MOVE`.
 
 .( Loading strings extensions )
 
-2 6 THRU RUNT
+2 9 THRU RUNT
+
+( CMOVE> )
+
+CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
+
+  \ Note: Adapted from Lennart Benschop's SPECTRUM FORTH83.
+
+  HEX
+  D9 C,         \ exx
+  C1 C,         \ pop bc
+  D1 C,         \ pop de
+  E1 C,         \ pop hl
+  79 C,         \ ld a,c
+  B0 C,         \ or b
+  28 C, 8 C,    \ jr z,end
+
+( CMOVE> )
+
+  09 C,         \ add hl,bc
+  2B C,         \ dec hl
+  EB C,         \ ex de,hl
+  09 C,         \ add hl,bc
+  2B C,         \ dec hl
+  EB C,         \ ex de,hl
+  ED C, B8 C,   \ lddr
+  \ end:
+  D9 C,         \ exx
+  C3 C, NEXT ,  \ jp NEXT
+  SMUDGE DECIMAL
+
+( MOVE )
+
+: MOVE  ( a1 a2 u -- )  \ Forth-94
+ \ Note: Copied from Phil Burk's pForth (V19).
+  >R 2DUP - 0< IF  R> CMOVE>  ELSE  R> CMOVE  THEN  ;
 
 ( Strings )
-
-  \ XXX TMP -- `MOVE` is an alias of `CMOVE`, as a temporary
-  \ solution until `MOVE` itself is written is assembler:
-' CMOVE ALIAS MOVE  ( a1 len1 a2 -- )
 
 : PARSE-TEXT  ( c "ccc<c>" -- ca len )  TEXT PAD COUNT  ;
 : PARSE-NAME  ( "name" -- ca len )  BL PARSE-TEXT  ;
@@ -123,7 +158,7 @@ HERE  /CSB ALLOT  CONSTANT CSB0  \ bottom address
 
 ( SMOVE S+ )
 
-: SMOVE ( ca1 len ca2 -- )
+: SMOVE  ( ca1 ca2 u -- )
   SWAP MOVE  ;
 
 : S+  ( ca1 len1 ca2 len2 -- ca3 len3 )

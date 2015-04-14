@@ -15,9 +15,10 @@
 
   \ -----------------------------------------------------------
 
-( Load)
+.( Loading DEFER extensions )
 
 1 2 +THRU
+RUNT
  
 ( Deferred words -- common code )
 
@@ -67,6 +68,8 @@
   STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
 
 ( Deferred words -- version with CFA )
+
+;S
 
   \ XXX FIXME Not fully tested yet.
 

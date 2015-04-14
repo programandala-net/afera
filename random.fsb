@@ -1,5 +1,5 @@
 \ random.fsb
-\ Random number extensions for ZX Spectrum Abersoft Forth.
+\ Random number generator for ZX Spectrum Abersoft Forth.
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
