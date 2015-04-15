@@ -1,0 +1,93 @@
+\ gdos_vars.fsb
+\ GDOS support for ZX Spectrum Abersoft Forth (DOS vars)
+
+\ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+\ Requirements:
+\ XXX todo
+\ fsb:
+\   (http://programandala.net/en.program.fsb.html)
+\ Afera's main file
+\   (http://programandala.net/en.program.afera.html)
+\ Pleonasmo AF
+\   (http://programandala.net/en.program.pleonasmo.html)
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-04-15: Start.
+
+.( GDOS extensions -- system variables)
+
+2 10 THRU
+
+( DOSC@ )
+
+  \ XXX FIXME
+
+8192 CONSTANT DOS-VARS
+
+CODE DOSC@  ( n -- b )
+  \ Fetch the content of G+DOS variable n.
+  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH
+  PATCH HOOK
+  HL POP  DOS-VARS DE LDP#  DE ADDP
+  (HL) A LD 0 D LD#  A E LD
+  E7 OUT
+  IX POP  BC POP  \ restore the Forth registers
+  DE PUSH
+  END-CODE
+
+( DOS@ )
+
+CODE DOS@  ( n1 -- n2 )
+  \ Fetch the content of G+DOS variable n1.
+  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH
+  PATCH HOOK
+  HL POP  DOS-VARS DE LDP#  DE ADDP
+  (HL) E LD  HL INCP  (HL) D LD
+  E7 OUT
+  IX POP  BC POP  \ restore the Forth registers
+  DE PUSH
+  END-CODE
+
+( DOSC! )
+
+CODE DOSC!  ( b n -- )
+  \ Store b into the G+DOS variable n.
+  \ XXX TODO -- finish
+  HL POP  DE POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  DE POP HL PUSH
+  PATCH HOOK
+  HL POP  DOS-VARS DE LDP#  DE ADDP  DE POP 
+  E (HL) LD  
+  E7 OUT
+  IX POP  BC POP  \ restore the Forth registers
+  END-CODE
+
+( DOS! )
+
+CODE DOS!  ( n1 n2 -- )
+  \ Store n1 into the G+DOS variable n2.
+  HL POP  DE POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  DE PUSH  HL PUSH
+  PATCH HOOK
+  HL POP  DOS-VARS DE LDP#  DE ADDP  DE POP
+  E (HL) LD  HL INCP  D (HL) LD
+  E7 OUT
+  IX POP  BC POP  \ restore the Forth registers
+  END-CODE
+
+RUNT
+
+  \ vim: filetype=abersoftforth

@@ -8,6 +8,7 @@
 \ http://programandala.net/en.program.afera.html
 
 \ Requirements:
+\ XXX todo
 \ fsb:
 \   (http://programandala.net/en.program.fsb.html)
 \ Afera's main file
@@ -144,15 +145,24 @@ CODE GDOS?  ( -- f )
 
 ( Drive)
 
-CODE DRIVE@  ( -- f )
+  \ XXX Note: this is for G+DOS only
+  \ XXX TODO -- check if this works with `CAT` when available
+
+CODE DRIVE@  ( -- n )
+  \ Get the current drive (1 or 2).
   BC PUSH  IX PUSH  \ save the Forth registers
-  PATCH HOOK
-  3E01 LDA
-  E7 OUT
+  PATCH HOOK  3E01 LDA  E7 OUT
   IX POP  BC POP  \ restore the Forth registers
-  0 H LD#
-  A L LD
+  0 H LD#  A L LD  HL PUSH
+  END-CODE
+
+CODE DRIVE!  ( n -- )
+  \ Set the current drive (1 or 2).
+  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
   HL PUSH
+  PATCH HOOK  HL POP  L A LD  3E01 STA  E7 OUT
+  IX POP  BC POP  \ restore the Forth registers
   END-CODE
 
 ( UFIA manipulation)

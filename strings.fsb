@@ -42,7 +42,7 @@
 
 .( Loading strings extensions )
 
-2 9 THRU RUNT
+2 8 THRU RUNT
 
 ( CMOVE> )
 
@@ -59,7 +59,7 @@ CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
   B0 C,         \ or b
   28 C, 8 C,    \ jr z,end
 
-( CMOVE> )
+( CMOVE> MOVE )
 
   09 C,         \ add hl,bc
   2B C,         \ dec hl
@@ -72,8 +72,6 @@ CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
   D9 C,         \ exx
   C3 C, NEXT ,  \ jp NEXT
   SMUDGE DECIMAL
-
-( MOVE )
 
 : MOVE  ( a1 a2 u -- )  \ Forth-94
  \ Note: Copied from Phil Burk's pForth (V19).
@@ -97,8 +95,7 @@ CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
 
 ( S" S' )
 
-  \ Copied from Don Thomasson's "Advanced Spectrum Forth", for
-  \ reference:
+  \ Reference from Don Thomasson's _Advanced Spectrum Forth_:
 
   \ :  (.")
   \   R COUNT DUP 1+ R> + >R TYPE  ;
