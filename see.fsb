@@ -1,28 +1,35 @@
 \ see.fsb
-\
-\ Adapted the book
-\ Spectrum Advanced Forth, page 73
-\
-\ 2015-03-28: Start.
+\ `SEE` for Abersoft Forth
 
-( see )
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03-28: Start.  Code adapted from Don Thomasson's book
+  \ _Spectrum Advanced Forth_, page 73
+
+( SEE )
 
 : (SEE)  ( pfa -- )
-  CLS ." Enter=continue" CR
-  ." D=skip data" CR ." Break=Exit" CR CR
+  CLS ." Enter=continue"  CR
+      ." D=skip data"     CR
+      ." Break=Exit"      CR CR
   BEGIN
+    DUP U.
     DUP @ 2+ NFA ID.
-      KEY CASE
-      13 OF  2+ DUP @ U. 2+  0  ENDOF
-      70 OF  2+  ENDOF
-    ENDCASE
-  ?TERMINAL UNTIL  ;
+    KEY CASE
+      \ 13 OF  2+ DUP @ U. 2+  0  ENDOF
+      13 OF  2+  ENDOF
+      70 OF  2+ 2+  ENDOF
+    ENDCASE  CR
+  ?TERMINAL UNTIL  DROP  ;
 
 : SEE  ( "name" -- )
-  -FIND
-  \ XXX in the original there was:
-  \ QUERY INTERPRET
-  \ XXX why?
-  IF  DROP (SEE)  ELSE  0 ERROR  THEN  ;
+  -FIND IF  DROP (SEE)  ELSE  0 ERROR  THEN  ;
 
-  \ vim: filetype=abersoftforth:fileencoding=utf-8
+  \ vim: filetype=abersoftforth

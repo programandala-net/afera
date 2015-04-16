@@ -88,6 +88,4 @@ CODE DOS!  ( n1 n2 -- )
   IX POP  BC POP  \ restore the Forth registers
   END-CODE
 
-RUNT
-
   \ vim: filetype=abersoftforth

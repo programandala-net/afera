@@ -85,6 +85,8 @@ CODE (DELETE-FILE)  ( -- ior )
 
   END-CODE
 
+( CAT )
+
 CODE (CAT)  ( -- )
   \ XXX FIXME -- CAT is not finished yet
   BC PUSH  IX PUSH  \ save the Forth registers
@@ -128,6 +130,8 @@ FORTH DEFINITIONS
 
 : RUND  ( ca len -- )
 
+  \ XXX OLD
+
   \ Read a new RAM-disc from disk and load its first block.
   
   \ ca len = filename
@@ -150,6 +154,50 @@ FORTH DEFINITIONS
 
   DEPTH IF  BLK @ IF  ." Stack not empty " 20 ERROR  THEN  THEN
   FLUSH INIT-DISC LOADD RP! 1 LOAD  ." ok" QUIT  ;
+
+( User interface: blocks of the Forth RAM-disc )
+
+
+: (/LOADD)  ( n ca len -- a len1 ca2 len2 )
+  \ Prepare the parameters to load a RAM-disc from disk,
+  \ at address of block n.
+  \ Warning: the file will be loaded, no matter its length.
+  \ n = first block (0..10)
+  ROT FLUSH BLOCK>A 0 2SWAP ;
+
+: /LOADD  ( n ca len -- )
+  \ Load a RAM-disc from disk, at address of block n.
+  \ Warning: the file will be loaded, no matter its length.
+  \ n = first block (0..10)
+  (/LOADD) DISK>MEM  ;
+
+: /LOADD?  ( n ca len -- error? error )
+  \ Load a RAM-disc from disk, at address of block n.
+  \ Warning: the file will be loaded, no matter its length.
+  \ n = first block (0..10)
+  (/LOADD) DISK>MEM?  ;
+
+: (/SAVED)  ( n1 n2 ca len -- a1 len1 ca2 len2 )
+  \ Prepare the parameters to save a RAM-disc to disk,
+  \ from block n1 to block n2.
+  \ n1 = first block (0..10)
+  \ n2 = last block (0..10)
+  \ ca len = filename
+  2SWAP FLUSH 1+ BLOCK>A SWAP BLOCK>A DUP ROT SWAP - 2SWAP  ;
+
+: /SAVED  ( n1 n2 ca len -- )
+  \ Save a RAM-disc to disk, from block n1 to block n2.
+  \ n1 = first block (0..10)
+  \ n2 = last block (0..10)
+  \ ca len = filename
+  (/SAVED) MEM>DISK  ;
+
+: /SAVED?  ( n1 n2 ca len -- error? error )
+  \ Save a RAM-disc to disk, from block n1 to block n2.
+  \ n1 = first block (0..10)
+  \ n2 = last block (0..10)
+  \ ca len = filename
+  (/SAVED) MEM>DISK?  ;
 
 ( User interface: ordinary files )
 
@@ -192,8 +240,6 @@ FORTH DEFINITIONS
   \ Delete a disk file.
   \ ca len = filename
   DELETE-FILE? ?ERROR  ;
-
-RUNT
 
   \ vim: filetype=abersoftforth
 

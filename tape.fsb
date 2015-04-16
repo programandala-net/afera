@@ -59,9 +59,9 @@
 
   \ -----------------------------------------------------------
 
-.( Loading tape extensions )
+.( Tape extensions )
 
-2 6 THRU  RUNT
+2 6 THRU
 
 ( Headers )
 

@@ -10,7 +10,7 @@
 
 \ 2015-03-28: Code extracted from the main file of the library.
 
-.( Loading graphic extensions )
+.( Graphic extensions )
 
 FORTH DEFINITIONS DECIMAL
 
@@ -44,6 +44,5 @@ COORDS CONSTANT X-COORD  COORDS 1+ CONSTANT Y-COORD
   \ Convert a pixel coordinate to its attribute address.
   175 SWAP - 8 / 32 *  SWAP 8 /  + ATTRIBUTES +  ;
 
-RUNT
 
   \ vim: filetype=abersoftforth

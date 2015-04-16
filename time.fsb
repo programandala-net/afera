@@ -15,7 +15,7 @@
   \
   \ 2015-04-03: New: `TIME@`, `TIME!` and `TIME0`.
 
-.( Loading time extensions )
+.( Time extensions )
 
 23672 CONSTANT SYS-FRAMES
 
@@ -35,7 +35,5 @@
 : TIME0  ( -- )
   \ Reset the system frames counter.
   0. TIME!  ;
-
-RUNT
 
   \ vim: filetype=abersoftforth

@@ -15,10 +15,9 @@
 
   \ -----------------------------------------------------------
 
-.( Loading DEFER extensions )
+.( DEFER )
 
 1 2 +THRU
-RUNT
  
 ( Deferred words -- common code )
 

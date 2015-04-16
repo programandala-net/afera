@@ -40,9 +40,9 @@
   \
   \ New: `CMOVE>`, `MOVE`.
 
-.( Loading strings extensions )
+.( Strings extensions )
 
-2 8 THRU RUNT
+2 8 THRU 
 
 ( CMOVE> )
 

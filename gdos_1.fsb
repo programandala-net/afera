@@ -151,7 +151,8 @@ CODE GDOS?  ( -- f )
 CODE DRIVE@  ( -- n )
   \ Get the current drive (1 or 2).
   BC PUSH  IX PUSH  \ save the Forth registers
-  PATCH HOOK  3E01 LDA  E7 OUT
+  PATCH HOOK  3E01 LDA
+  E7 OUT  \ page +D out
   IX POP  BC POP  \ restore the Forth registers
   0 H LD#  A L LD  HL PUSH
   END-CODE
@@ -161,7 +162,8 @@ CODE DRIVE!  ( n -- )
   HL POP
   BC PUSH  IX PUSH  \ save the Forth registers
   HL PUSH
-  PATCH HOOK  HL POP  L A LD  3E01 STA  E7 OUT
+  PATCH HOOK  HL POP  L A LD  3E01 STA
+  E7 OUT  \ page +D out
   IX POP  BC POP  \ restore the Forth registers
   END-CODE
 
@@ -202,7 +204,5 @@ CODE DRIVE!  ( n -- )
   \ ca1 len1 = filename
 
   FLUSH LO /RAM-DISC 2SWAP SPECIAL-FILE >UFIA  ;
-
-RUNT
 
   \ vim: filetype=abersoftforth

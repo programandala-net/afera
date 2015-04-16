@@ -1,0 +1,114 @@
+\ plusscreen.fsb
+\ Whole screen support for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-04-15: Code extracted from the main file of the
+  \ library.
+
+  \ -----------------------------------------------------------
+
+.( Whole screen support )
+
+  \ Abersoft Forth does not allow to use
+  \ the lower part of the screen, but this can be changed.
+
+  \ XXX FIXME -- when loading many files, still appears
+  \ "scroll?"
+
+  \ The system variable DF SZ holds the number of lines in the
+  \ lower part of the screen (2 by default):
+
+  23659 CONSTANT SYS-DF-SZ
+
+  : -SCREEN  ( -- )  2 SYS-DF-SZ C!  ;
+  : +SCREEN  ( -- )  0 SYS-DF-SZ C!  ;  +SCREEN
+
+  \ Its original value must be restored before returning to
+  \ BASIC, otherwise the system will crash:
+ 
+  : MON  ( -- )  -SCREEN MON  ;
+  \ Patch `BYE` to use the new version of `MON`:
+  ' MON CFA ' BYE !
+
+  \ The definition of `CLS` has to be patched: it calls
+  \ the ROM routine CLS (0x0D6B), but CL-ALL (0x0DAF) must be
+  \ used instead (otherwise the system will crash):
+
+  HEX  0DAF 75C0 !  DECIMAL
+
+  \ Two words to toggle the scroll prompt.
+
+  23692 CONSTANT SYS-SCR-CT
+  : +SCROLL  ( -- )    0 SYS-SCR-CT C!  ;
+  : -SCROLL  ( -- )  255 SYS-SCR-CT C!  ;  -SCROLL
+
+-->
+
+( >CHAN )
+
+CREATE >CHAN  ( c -- )
+  \ Send the character with ASCII code c to the current channel.
+  
+  \ This word is adapted from Lennart Benschop's SPECTRUM
+  \ FORTH83. It is needed by the new version of `AT`, because
+  \ Abersoft Forth's `EMIT' changes the current channel and
+  \ other things.
+
+  HEX
+  E1 C,                     \ pop hl
+  7D C,                     \ ld a,l
+  FD C, 36 C, 52 C, FF C,   \ ld (iy+0x52),0xFF ; set SCR CT
+  D7 C,                     \ rst 10
+  C3 C, NEXT ,              \ jp NEXT
+  SMUDGE DECIMAL
+
+-->
+
+( AT )
+
+  \ Finally, also `AT` must be patched.  Its original
+  \ definition is the following (from Don Thomasson's book
+  \ "Advanced Spectrum Forth", page 127):
+
+  \ : AT ( line col -- )
+  \   ABS DUP 31 >
+  \   IF    2DROP
+  \   ELSE  SWAP ABS DUP 21 >
+  \         IF  2DROP  ELSE  22 EMIT EMIT EMIT  THEN
+  \   THEN  ;
+
+  \ The number 21 (0x15) must be changed to 23 (0x17):
+  \
+  \ HEX  17 7BFA !  DECIMAL
+  \
+  \ But it's not enough: line 23 needs special treatment.  The
+  \ new version of `AT` is adapted from Lennart Benschop's
+  \ SPECTRUM FORTH83:
+
+: AT ( line col -- )
+  \ Warning: The system will crash if the coordinates are
+  \ out of screen. For the sake of speed, no check is done.
+  \ A wrapper secure word can be written if needed.
+  SWAP DUP 23 -  \ not the last line?
+  IF    22 >CHAN >CHAN >CHAN
+  ELSE  1 - DUP >CHAN >CHAN 0 >CHAN CR
+        \ system variable:
+        \ address in display file of print position
+        DUP 23684 +!
+        \ system variable:
+        \ 33-column number for print position
+        33 SWAP - 23688 C!
+  THEN ;
+
+  \ XXX TMP 
+  \ : CR  ( -- )  13 >CHAN  -SCROLL   ;
+
+  \ vim: filetype=abersoftforth

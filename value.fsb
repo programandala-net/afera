@@ -1,0 +1,32 @@
+\ value.fsb
+\ `VALUE` for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-04-15: Code extracted from the main file of the
+  \ library.
+
+  \ -----------------------------------------------------------
+
+.( VALUE extensions )
+
+: VALUE  ( n "name"  -- )
+  CONSTANT  ;
+
+: <TO>  ( n "name" -- )
+  [COMPILE] ' !  ;
+
+: [TO]  ( n "name" -- )
+  [COMPILE] ' [COMPILE] LITERAL COMPILE !  ; IMMEDIATE
+
+: TO  ( n "name" -- )
+  STATE @ IF  [COMPILE] [TO]  ELSE  <TO>  THEN  ; IMMEDIATE
+
+  \ vim: filetype=abersoftforth

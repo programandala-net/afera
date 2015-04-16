@@ -1,0 +1,56 @@
+\ logo.fsb
+\ Logo-like graphics for Abersoft Forth
+
+\ Copyright (C) 1985,2009,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+  
+  \ 1985-05-20: First version.
+  \
+  \ 2009-05-27: Improved with the following words: `X!`, `Y!`,
+  \ `COORDS`, `X-COORD`, `Y-COORD, `RELATIVE`.
+  \
+  \ 2015-04-15: Included in the Afera library. `COORDS` is
+  \ renamed to `SYS-COORDS` after the current convention.
+
+  \ -----------------------------------------------------------
+
+( Coordinates )
+
+." Logo-like graphics"
+
+23677 CONSTANT SYS-COORDS  \ ZX Spectrum system variable
+COORDS CONSTANT X-COORD
+COORDS 1+ CONSTANT Y-COORD
+
+: X@  ( -- b )  X-COORD C@  ;
+: Y@  ( -- b )  Y-COORD C@  ;
+: X!  ( b -- )  X-COORD C!  ;
+: Y!  ( b -- )  Y-COORD C!  ;
+
+-->
+
+( Commands )
+
+: RELATIVE  ( x1 y1 -- x2 y2 )  Y@ + SWAP X@ + SWAP  ;
+
+: RDRAW  ( x y -- )  RELATIVE DRAW  ;
+: SETXY  ( x y -- )  RELATIVE PLOT  ;
+
+: RIGHT  ( u -- )  0 RDRAW  ;
+: LEFT  ( u -- )  -1 * 0 RDRAW  ;
+: UP  ( u -- )  0 SWAP RDRAW  ;
+: DOWN  ( u -- )  -1 * 0 SWAP RDRAW  ;
+
+: PAT  ( x y -- )  Y! X!  ;
+: RPAT  ( x y -- )  Y@ + Y!  X@ + X!  ;
+
+: RPLOT  ( u -- )  0 SETXY  ;
+: LPLOT  ( u -- )  -1 * 0 SETXY  ;
+: UPLOT  ( u -- )  0 SWAP SETXY  ;
+: DPLOT  ( u -- )  -1 * 0 SWAP SETXY  ;

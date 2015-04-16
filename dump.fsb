@@ -18,7 +18,7 @@
 
   \ -----------------------------------------------------------
  
-.( Loading DUMP -- simple version)
+( DUMP -- simple version)
 
 : DUMP  ( a len -- )
   BOUNDS DO
@@ -26,9 +26,7 @@
        I C@  DUP 3 .R SPACE  BL MAX EMIT
   LOOP  ;
 
-RUNT
-
-.( Loading DUMP -- complete version)
+( DUMP -- complete version)
 
 HEX
 : BS  ( -- )  8 EMIT  ;

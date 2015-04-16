@@ -9,7 +9,7 @@
 \ 2015-03-30: First version.
 \ 2015-04-14: Second version.
 
-.( Loading .S )
+.( .S )
 
 : .S   ( -- )
   DEPTH S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
@@ -23,6 +23,4 @@
   
   SP@ 2 - S0 @ 2 - DO I @ . -2 +LOOP ; 
 
-RUNT
-  
   \ vim: ft=abersoftforth

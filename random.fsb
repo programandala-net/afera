@@ -16,7 +16,7 @@
   \ `RND` adapted from Bertie,
   \ the demo program bundled with Abersoft Forth:
 
-.( Loading random number extensions )
+.( Random numbers extensions )
 
 23670 CONSTANT SYS-SEED
 
@@ -25,6 +25,4 @@
   OVER OVER U< - - 1 - DUP SYS-SEED !
   U* SWAP DROP ;
 
-RUNT
-  
   \ vim: filetype=abersoftforth

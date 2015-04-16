@@ -10,6 +10,8 @@
 \ Requirement: assembler
 
 \ 2015-03-13: Adapted from Lennart Benschop's SPECTRUM FORTH83.
+\ 2015-04-16: Note: this is called `CSWAP` in a Z80 fig-Forth
+\ implementation by Dennis L. Wilson (1980).
 
 ( >< )
 

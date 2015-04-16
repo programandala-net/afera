@@ -28,7 +28,6 @@
 : -CC- ; \ XXX TMP
 
 1 3 +THRU
-RUNT
 
 ( [DEFINED] [UNDEFINED] )
 
