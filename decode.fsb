@@ -1,0 +1,91 @@
+\ decode.fsb
+\ `DECODE` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ History of this file:
+  \
+  \ 2015-04-17: Start. Code extracted and adapted from Z80 CP/M
+  \ fig-Forth 1.1g. It works fine.
+  \
+  \ XXX TODO -- show the addresses
+
+
+( Recursive Decompiler, FORTH DIMENSIONS IV,#2 p28)
+
+  \ Original by Robert Dudley Ackerman
+  \ Modified by Dennis Wilson
+
+FORTH DEFINITIONS DECIMAL
+
+: MARKS  ( n -- )
+  0 DO  [CHAR] - EMIT [CHAR] + EMIT  LOOP  ;
+
+0 VARIABLE INLEVEL  \ depth of nesting
+
+: INDENT  ( -- )
+  CR INLEVEL @ -DUP IF  MARKS  THEN  SPACE  ;
+
+: INDENT+  ( -- )
+  1 INLEVEL +! INDENT ;
+
+-->
+
+( Recursive Decompiler, FORTH DIMENSIONS IV,#2 p28)
+
+: GCHK
+  DUP @ 2+ ' COMPILE =
+  IF   2+ DUP @ 2+ NFA ID. 2+
+  ELSE    DUP @ 2+ DUP ' LIT =
+          OVER ' BRANCH  = OR
+          OVER ' 0BRANCH = OR
+          OVER ' (LOOP)  = OR
+          SWAP ' (+LOOP) = OR
+    IF   2+ DUP @ SPACE   .  2+
+    ELSE    DUP @            2+ ' (.") =
+      IF   2+ DUP COUNT TYPE  DUP C@ 1+ +
+      ELSE 2+  THEN
+    THEN
+  THEN   -1 INLEVEL +!   ;    \ Handle special cases
+
+-->
+
+( Recursive Decompiler, FORTH DIMENSIONS IV,#2 p28)
+
+: (DECODE)  ( pfa --- )
+
+  DUP CFA @ ' : CFA @ = OVER ' ERROR = 0= AND
+  IF  \ colon definition & not `ERROR`
+    INDENT DUP NFA ." : "  ID.
+    BEGIN  DUP @ DUP ' ;S  CFA =  OVER ' (;CODE) CFA = OR 0=
+    WHILE      \ high level & NOT end of colon definition
+       2+ DUP INDENT+  NFA ID. KEY DUP [CHAR] Q =
+       IF     SP! QUIT
+       ELSE   BL =  IF  DROP  ELSE  RECURSE THEN
+       THEN   GCHK
+    REPEAT  2+ INDENT NFA ID. \ show last word
+  THEN DROP  ;
+
+-->
+
+( Recursive Decompiler, FORTH DIMENSIONS IV,#2 p28)
+
+DECIMAL
+
+: DECODE  ( "name" -- )
+  -FIND IF    DROP 0 INLEVEL ! (DECODE)
+        ELSE  ." Not Found"
+        THEN  ;
+
+\  <------------------------------>
+." DECODE installed." CR
+." Use SPACE bar to show next word" CR
+." at same level; RETURN key to" CR
+." DECODE last word shown (except" CR
+." primitives); Q to Quit." CR
+
+  \ vim: filetype=abersoftforth
