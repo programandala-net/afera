@@ -15,38 +15,50 @@
   \
   \ 2015-03-28: Simple version as a temporary alternative,
   \ until `?DO` is defined.
+  \
+  \ 2015-04-17: The code from SPECTRUM FORTH83 has been
+  \ adapted, with `IF ... DO` instead of `?DO`.
 
   \ -----------------------------------------------------------
- 
-( DUMP -- simple version)
 
-: DUMP  ( a len -- )
-  BOUNDS DO
-    CR I 6 U.R SPACE
-       I C@  DUP 3 .R SPACE  BL MAX EMIT
-  LOOP  ;
+.( DUMP )
 
-( DUMP -- complete version)
+1 2 +THRU
+
+( BS H. STYPE )
+
+: BS  ( -- )  8 EMIT  ;
+
+: H.  ( n -- )
+  \ Print n in hexadecimal with four digits.
+  BASE @ SWAP S->D <# # # # # #> TYPE SPACE BASE !  ;
 
 HEX
-: BS  ( -- )  8 EMIT  ;
-  \ SPECTRUM FORTH83 version of `HEX.` (called `H.`):
-  \ : HEX.  ( n -- )
-  \  BASE @ SWAP S->D <# # # # # #> TYPE SPACE BASE !  ;
-: HEX.  ( n -- )  BASE @ SWAP HEX U. BASE !  ;
-
-  \ XXX TODO
-: ?DO [COMPILE] DO ; IMMEDIATE
 
 : STYPE  ( ca len -- )
-  0 ?DO
-    DUP C@ 7F AND DUP BL < IF DROP 2E THEN EMIT
-  1+ LOOP DROP ;
+  0 2DUP - IF
+    DO
+      DUP C@ 7F AND DUP BL < IF  DROP [CHAR] .  THEN  EMIT 1+
+    LOOP
+  ELSE  2DROP  THEN  DROP  ;
+
+DECIMAL
+
+( DUMP )
 
 : DUMP  ( a len -- )
-  7 + -8 AND 8 / 0 ?DO
-    CR DUP HEX.
-    8 0 DO  I OVER + @ >< HEX.  2 +LOOP
-    DUP BS 8 STYPE ?TERMINAL IF LEAVE THEN
-  8 + LOOP DROP ;
+  7 + -8 AND 8 / 0
+  2DUP - IF
+    DO
+      CR DUP H.
+      8 0 DO
+        I OVER + @ CSWAP H.
+      2 +LOOP
+      DUP BS 8 STYPE
+      ?TERMINAL IF  LEAVE  THEN
+    8 + LOOP
+  ELSE  2DROP  THEN  DROP  ;
+
 DECIMAL
+
+  \ vim: filetype=abersoftforth

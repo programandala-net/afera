@@ -1,0 +1,21 @@
+\ cls0.fsb
+\ `CLS0` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ The idea for `NORMAL` was taken from Lennart Benschop's
+  \ SPECTRUM FORTH83.
+
+.( CLS0 )
+
+: NORMAL  ( -- )
+  \ XXX TODO rename
+  0 INK 7 PAPER 0 FLASH 0 BRIGHT 7 BORDER 0 GOVER 0 INVERSE  ;
+
+: CLS0  ( -- )
+  NORMAL CLS  ;
+

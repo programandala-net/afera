@@ -16,8 +16,9 @@ FORTH DEFINITIONS DECIMAL
 
   \ System variables and addresses
 
-23677 CONSTANT COORDS
-COORDS CONSTANT X-COORD  COORDS 1+ CONSTANT Y-COORD
+
+SYS-COORDS    CONSTANT X-COORD
+SYS-COORDS 1+ CONSTANT Y-COORD
 
 22528 CONSTANT ATTRIBUTES
 
@@ -26,7 +27,7 @@ COORDS CONSTANT X-COORD  COORDS 1+ CONSTANT Y-COORD
   2SWAP PLOT DRAW  ;
 
 : RDRAW  ( inc-x inc-y -- )
-  \ Draw a line from to the current plot position
+  \ Draw a line from the current plot position
   Y-COORD C@ + SWAP X-COORD C@ + SWAP DRAW  ;
 
 : RDRAWL  ( x y inc-x inc-y -- )

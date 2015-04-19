@@ -1,5 +1,5 @@
-\ value.fsb
-\ `VALUE` for Abersoft Forth
+\ dminus.fsb
+\ `D-` for Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -7,26 +7,31 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+\ `DMINUS D+` can be used instead of `D-`, but `D-` is faster.
+
   \ -----------------------------------------------------------
   \ History of this file
-
-  \ 2015-04-15: Code extracted from the main file of the
-  \ library.
-
+  
+  \ 2015-04-18: Code adapted from Lennart Benschop's SPECTRUM
+  \ FORTH83.
+  
   \ -----------------------------------------------------------
 
-.( VALUE )
 
-: VALUE  ( n "name"  -- )
-  CONSTANT  ;
+( D- )
 
-: <TO>  ( n "name" -- )
-  [COMPILE] ' !  ;
-
-: [TO]  ( n "name" -- )
-  [COMPILE] ' [COMPILE] LITERAL COMPILE !  ; IMMEDIATE
-
-: TO  ( n "name" -- )
-  STATE @ IF  [COMPILE] [TO]  ELSE  <TO>  THEN  ; IMMEDIATE
+CODE D-  ( d1 d2 -- d3 )
+  EXX
+  BC POP
+  DE POP
+  HL POP
+  EXSP
+  DE SUBP
+  EXSP
+  BC SBCP
+  HL PUSH
+  EXX
+  NEXT JP
+END-CODE
 
   \ vim: filetype=abersoftforth

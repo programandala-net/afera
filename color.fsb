@@ -1,0 +1,78 @@
+\ color.fsb
+\ Safe and faster color words for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ The original `INK` and `PAPER` are too slow.  Beside, it
+  \ seems the original `INK` has a bug that causes `PLOT` to
+  \ use 0 instead the proper attribute in most cases.
+
+  \ These alternative definitions are adapted from Lennart
+  \ Benschop's SPECTRUM FORTH83.
+
+.( Faster INK and PAPER )
+
+  \ Note:
+  \ System variables:
+  \ 23695 = ATTR T -- temporary colors
+  \ 23693 = ATTR P -- permanent colors
+
+: INK  ( n -- )
+  \ Note: This runs in 79% the time  of the original word.
+  16 EMIT EMIT 23695 @ 23693 !  ;
+
+: PAPER  ( n -- )
+  \ Note: This runs in 49% the time  of the original word.
+  17 EMIT EMIT  23695 @ 23693 !  ;
+
+( COLOR )  \ XXX not used
+
+
+: COLOR  ( b "name" -- )
+  <BUILDS C,
+  DOES>  ( color | f -- )
+         ( pfa ) C@ EMIT EMIT  23695 @ 23693 !  ;
+
+  \ Note: INK runs in 79% the time of the original word.
+16 COLOR INK
+  \ Note: PAPER runs in 50% the time of the original word.
+17 COLOR PAPER
+
+  \ Note: FLASH runs in 234% the time of the original word.
+18 COLOR FLASH
+  \ Note: BRIGHT runs in 234% the time of the original word.
+19 COLOR BRIGHT
+
+( INVERSE GOVER )  \ XXX not used
+
+  \ Address 23697 is the system variable P FLAGS. It holds the
+  \ print flags.  Even bits are the temporary flags; odd bits
+  \ are the permanent flags.
+
+  \         {paper9 }{ ink9 }{ inv1 }{ over1}
+  \          ___ ___ ___ ___ ___ ___ ___ ___ 
+  \ P_FLAG  |   |   |   |   |   |   |   |   |
+  \         | p | t | p | t | p | t | p | t |
+  \         |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ (Information from the ZX Spectrum +3 manual transcribed by
+  \ Russell Marks et al.)
+
+: INVERSE  ( f -- )
+  \ Set the screen to inverse if f is true,
+  \ else sets to normal.
+  \ Note: INVERSE runs in 305% the time  of the original word.
+  23697 DUP C@ 243 AND ROT 12 * OR SWAP C!
+  ;
+: GOVER  ( f -- )
+  \ Set the screen to overprint mode if f is true,
+  \ else sets to normal.
+  23697 DUP C@ 252 AND ROT 3 * OR SWAP C!
+  ;
+  
+  \ vim: filetype=abersoftforth

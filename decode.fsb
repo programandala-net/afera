@@ -7,35 +7,36 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+\ Code extracted and adapted from:
+\   Z80 CP/M fig-Forth 1.1g.
+\ Original code from:
+\   FORTH DIMENSIONS IV,#2 p28.
+\ Original code by Robert Dudley Ackerman.
+\ Modified by Dennis Wilson.
+
   \ History of this file:
   \
-  \ 2015-04-17: Start. Code extracted and adapted from Z80 CP/M
+  \ 2015-04-17: Code extracted and adapted from Z80 CP/M
   \ fig-Forth 1.1g. It works fine.
   \
   \ XXX TODO -- show the addresses
 
+( DECODE )
 
-( Recursive Decompiler, FORTH DIMENSIONS IV,#2 p28)
-
-  \ Original by Robert Dudley Ackerman
-  \ Modified by Dennis Wilson
 
 FORTH DEFINITIONS DECIMAL
 
-: MARKS  ( n -- )
-  0 DO  [CHAR] - EMIT [CHAR] + EMIT  LOOP  ;
-
-0 VARIABLE INLEVEL  \ depth of nesting
+0 VARIABLE DECODE-LEVEL  \ depth of nesting
 
 : INDENT  ( -- )
-  CR INLEVEL @ -DUP IF  MARKS  THEN  SPACE  ;
+  CR DECODE-LEVEL @ 2 * SPACES  ;
 
 : INDENT+  ( -- )
-  1 INLEVEL +! INDENT ;
+  1 DECODE-LEVEL +! INDENT ;
 
 -->
 
-( Recursive Decompiler, FORTH DIMENSIONS IV,#2 p28)
+( DECODE )
 
 : GCHK
   DUP @ 2+ ' COMPILE =
@@ -45,42 +46,48 @@ FORTH DEFINITIONS DECIMAL
           OVER ' 0BRANCH = OR
           OVER ' (LOOP)  = OR
           SWAP ' (+LOOP) = OR
-    IF   2+ DUP @ SPACE   .  2+
-    ELSE    DUP @            2+ ' (.") =
-      IF   2+ DUP COUNT TYPE  DUP C@ 1+ +
-      ELSE 2+  THEN
+    IF    2+ DUP @ SPACE . 2+
+    ELSE  DUP @ 2+ ' (.") =
+          IF  2+ DUP COUNT TYPE  DUP C@ 1+ +  ELSE 2+  THEN
     THEN
-  THEN   -1 INLEVEL +!   ;    \ Handle special cases
+  THEN   -1 DECODE-LEVEL +!   ;    \ Handle special cases
 
 -->
 
-( Recursive Decompiler, FORTH DIMENSIONS IV,#2 p28)
+( DECODE )
 
 : (DECODE)  ( pfa --- )
 
   DUP CFA @ ' : CFA @ = OVER ' ERROR = 0= AND
   IF  \ colon definition & not `ERROR`
-    INDENT DUP NFA ." : "  ID.
+    INDENT
+    \ XXX INFORMER pfa of the word being decoded
+    \ DUP HEX U. DECIMAL
+    DUP NFA ." : " ID.
     BEGIN  DUP @ DUP ' ;S  CFA =  OVER ' (;CODE) CFA = OR 0=
-    WHILE      \ high level & NOT end of colon definition
+    WHILE  \ high level & NOT end of colon definition
+       \ XXX INFORMER cfa of the next word
+       \ DUP HEX U. DECIMAL
        2+ DUP INDENT+  NFA ID. KEY DUP [CHAR] Q =
-       IF     SP! QUIT
-       ELSE   BL =  IF  DROP  ELSE  RECURSE THEN
-       THEN   GCHK
+       IF    SP! QUIT
+       ELSE  BL =  IF  DROP  ELSE  RECURSE  THEN
+       THEN  GCHK
     REPEAT  2+ INDENT NFA ID. \ show last word
-  THEN DROP  ;
+  THEN  DROP  ;
 
 -->
 
-( Recursive Decompiler, FORTH DIMENSIONS IV,#2 p28)
+( DECODE )
 
 DECIMAL
 
 : DECODE  ( "name" -- )
-  -FIND IF    DROP 0 INLEVEL ! (DECODE)
-        ELSE  ." Not Found"
+  BASE @  \ XXX -- `-FIND` changes `BASE` to 10
+  -FIND IF    DROP SWAP BASE !  0 DECODE-LEVEL ! (DECODE)
+        ELSE  DROP ." Not Found"
         THEN  ;
 
+CR
 \  <------------------------------>
 ." DECODE installed." CR
 ." Use SPACE bar to show next word" CR

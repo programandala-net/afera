@@ -1,5 +1,5 @@
 \ plusscreen.fsb
-\ Whole screen support for ZX Spectrum's Abersoft Forth
+\ Whole screen support for Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -12,6 +12,9 @@
 
   \ 2015-04-15: Code extracted from the main file of the
   \ library.
+
+  \ 2015-04-19: The scroll control words are moved to
+  \ <scroll.fsb>.
 
   \ -----------------------------------------------------------
 
@@ -33,7 +36,7 @@
 
   \ Its original value must be restored before returning to
   \ BASIC, otherwise the system will crash:
- 
+
   : MON  ( -- )  -SCREEN MON  ;
   \ Patch `BYE` to use the new version of `MON`:
   ' MON CFA ' BYE !
@@ -44,19 +47,13 @@
 
   HEX  0DAF 75C0 !  DECIMAL
 
-  \ Two words to toggle the scroll prompt.
-
-  23692 CONSTANT SYS-SCR-CT
-  : +SCROLL  ( -- )    0 SYS-SCR-CT C!  ;
-  : -SCROLL  ( -- )  255 SYS-SCR-CT C!  ;  -SCROLL
-
 -->
 
 ( >CHAN )
 
 CREATE >CHAN  ( c -- )
   \ Send the character with ASCII code c to the current channel.
-  
+
   \ This word is adapted from Lennart Benschop's SPECTRUM
   \ FORTH83. It is needed by the new version of `AT`, because
   \ Abersoft Forth's `EMIT' changes the current channel and

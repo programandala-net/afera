@@ -62,6 +62,7 @@
 : DEFER!  ( pfa1 pfa2 -- )  SWAP CFA SWAP !  ;
 : <IS>  ( pfa "name" -- )  [COMPILE] ' DEFER!  ;
 : [IS]  ( pfa "name" -- )
+  \ XXX FIXME -- it fails
   [COMPILE] ' [COMPILE] LITERAL COMPILE DEFER!  ; IMMEDIATE
 : IS  ( pfa "name" -- )
   STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE

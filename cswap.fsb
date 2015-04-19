@@ -1,0 +1,43 @@
+\ cswap.fsb
+\ `CSWAP` for Abersoft Forth.
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03-13: Adapted from Lennart Benschop's SPECTRUM
+  \ FORTH83.
+  \
+  \ 2015-04-17:
+  \
+  \ Renamed to `CSWAP`, after a Z80 fig-Forth implementation by
+  \ Dennis L. Wilson (1980). `><` is the name in the
+  \ "Uncontrolled Reference Words" of the FORTH-83 Standard,
+  \ but `CSWAP` is clearer.
+  \
+  \ Converted from assembler to op-codes, to make it
+  \ independent from the assembler.
+
+  \ -----------------------------------------------------------
+
+.( CSWAP)
+
+HEX
+
+CREATE CSWAP  ( n1 -- n2 )
+  \ Swap the low and high bytes within n1.
+  E1 C,           \ pop hl
+  78 04 + C,      \ ld a,h
+  60 05 + C,      \ ld h,l
+  68 07 + C,      \ ld l,a
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE
+
+DECIMAL
+
+  \ vim: filetype=abersoftforth

@@ -1,0 +1,43 @@
+\ flags.fsb
+\ Boolean flags for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+  
+  \ 2015-04-16: Extracted from the main file of the library.
+  \ `ON` and `OFF` are rewritten in Z80.
+
+.( FALSE TRUE ) CR
+
+       0 CONSTANT FALSE
+FALSE 0= CONSTANT TRUE
+
+-->
+
+.( ON OFF )
+
+CREATE ON   ( a -- )          HEX
+  \ TRUE SWAP !
+  E1 C,        \ pop hl
+  36 C, 01 C,  \ ld (hl),1
+  23 C,        \ inc hl
+  36 C, 00 C,  \ ld (hl),0
+  C3 C, NEXT , \ jp NEXT
+  SMUDGE
+
+CREATE OFF  ( a -- )
+  \ FALSE SWAP !
+  E1 C,        \ pop hl
+  36 C, 00 C,  \ ld (hl),0
+  23 C,        \ inc hl
+  36 C, 00 C,  \ ld (hl),0
+  C3 C, NEXT , \ jp NEXT
+  SMUDGE                      DECIMAL
+
+  \ vim: filetype=abersoftforth

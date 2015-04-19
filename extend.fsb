@@ -1,5 +1,5 @@
 \ extend.fsb
-\ Main extensions for ZX Spectrum Abersoft Forth
+\ Main extensions for Abersoft Forth
 
 \ Copyright (C) 1985-1987,2015 Marcos Cruz (programandala.net)
 
@@ -32,14 +32,6 @@ FORTH DEFINITIONS
   \   [CHAR] ) PARSE-TEXT TYPE  ; IMMEDIATE
 
   \ ............................................
-  \ Booleans
-
-0 CONSTANT FALSE  FALSE 0= CONSTANT TRUE
-
-: ON   ( a -- )  TRUE  SWAP !  ;
-: OFF  ( a -- )  FALSE SWAP !  ;
-
-  \ ............................................
   \ Bugs found in Abersoft Forth
   \ during the development of Afera
 
@@ -50,12 +42,33 @@ FORTH DEFINITIONS
 /RAM-DISC 30182 11 + !        \ patch the load tape header
 /RAM-DISC ' INIT-DISC 6 + !   \ patch `INIT-DISC`
 
- \ `EXIT` must do `R> DROP`, not `>R DROP`:
+  \ `2OVER` must do `R> R>` at the end, not `>R >R`
+  \
+  \ As Don Thomasson's _Advanced Spectrum Forth_ (1984) says
+  \ (page 131), early versions of Abersoft Forth contained an
+  \ error in the word `2OVER`, that hangs the system. So just
+  \ in case:
 
- ' R> CFA ' EXIT !
+' R> CFA ' 2OVER 10 + 2DUP ! 2+ !
 
-  \ Bug not fixed yet: `MESSAGE` does not work with negative
-  \ values.
+  \ `EXIT` must do `R> DROP`, not `>R DROP`
+  \
+  \ Even Don Thomasson's _Advanced Spectrum Forth_ (1984) shows
+  \ the wrong definition of `EXIT` (page 131)... with the
+  \ following notice: "This word needs to be used with extreme
+  \ care." In fact it crashes the system.
+
+' R> CFA ' EXIT !
+
+  \ Bugs not fixed yet:
+  \
+  \ `MESSAGE` does not work with negative values.
+  \
+  \ `-FIND` sets `BASE` to 10.
+  \
+  \ `INK` has a bug that causes `PLOT` to use 0 instead the
+  \ proper attribute in most cases. Until the bug is found, an
+  \ alternative definition is provided in <ink.fsb>.
 
 -->
 
@@ -114,11 +127,10 @@ CREATE 1-  ( n1 -- n2 )
 CREATE 2/  ( n1 -- n2 )
 
   \ Adapted from the `PICK` written on 1985-05-07 by Edmund
-  \ Ramm (P.O.Box 38, 2358 Kaltenkirchen, Fed. Rep. of Germany)
-  \ for the Z80 fig-Forth implementation written by Dennis L.
-  \ Wilson (1980-09-07).
+  \ Ramm for the Z80 fig-Forth implementation written by Dennis
+  \ L. Wilson (1980-09-07).
 
-  \ XXX FIXME does not work fine with negative numbers
+  \ XXX FIXME it does not work fine with negative numbers
 
   E1 C,           \ pop hl
   CB C, 7C C,     \ bit 7,h ; negative?
@@ -191,6 +203,16 @@ DECIMAL -->
 
   \ ............................................
   \ Specific extensions
+
+: RUNT  ( -- )
+
+  \ Read a new RAM-disc from tape and load its first block.
+
+  \ This word makes it possible to chain several RAM disk files
+  \ from tape, allowing the automatic compilation of sources
+  \ larger than 10 blocks.
+
+  FLUSH INIT-DISC LOADT 1 LOAD  ;
 
 B/SCR B/BUF * CONSTANT /BLOCK  \ bytes per block
 
@@ -319,6 +341,12 @@ B/SCR B/BUF * CONSTANT /BLOCK  \ bytes per block
   \
   \ New: `2/`, written in Z80 (still not working fine with
   \ negative numbers).
+  \
+  \ Change: `FALSE`, `TRUE`, `ON` and `OFF` are moved to
+  \ <flags.fsb>.
+  \
+  \ 2015-04-17: `RUNT` moved back; its current definition is
+  \ useful to make loaders.
 
   \ -----------------------------------------------------------
 
