@@ -1,0 +1,66 @@
+\ point.fsb
+\ Faster `POINT` for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ History of this file:
+  \ 
+  \ 2015-05-01: Start.
+
+  \ XXX TODO
+
+.( Faster POINT )
+
+CREATE POINT  ( x y -- )
+
+  \ XXX OLD
+  \ ; original routine:
+  \ E1 C, \ pop hl
+  \ D1 C, \ pop de
+  \ C5 C, \ push bc
+  \ DD C, E5 C, \ push ix
+  \ ld c,e
+  \ ld b,l ; XXX?
+  \ ld a,l
+  \ ; if not a>0xAF then ld a,0xAF
+  \ ld b.a
+  \ call 22CE ; POINT-SUB
+  \ call 1E94 ; FIND-INT, fetch the result from the calculator!
+  \ ld h,0
+  \ ld l,a
+  \ pop ix
+  \ pop bc
+  \ push hl
+  \ jp next
+
+  HEX
+
+  D9                  \ exx ; save bc
+  E1 C,               \ pop bc ; c = y coordinate
+  D1 C,               \ pop de
+  40 03 + C,          \ ld b,e ; b = x coordinate
+  DD C, E5 C,         \ push ix
+  CD C, 22AA ,        \ call 0x22AA ; pixel-add
+  \ ; HL = screen address
+  \ ; A = pixel position in HL
+  -->
+
+( POINT -- part 2 )
+
+  40 07 + C,          \ ld b,a
+  04 C,               \ inc b
+  7E C,               \ ld a,(hl)
+  \ label:
+  07 C,               \ rlca
+  10 C, FD C,         \ djnz label
+  \ and 1
+  DD C, E1 C,         \ pop ix
+  D9                  \ exx ; restore bc
+  C3 C, PUSHHL ,      \ jp PUSHHL
+
+  SMUDGE DECIMAL
+
