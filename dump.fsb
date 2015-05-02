@@ -18,6 +18,8 @@
   \
   \ 2015-04-17: The code from SPECTRUM FORTH83 has been
   \ adapted, with `IF ... DO` instead of `?DO`.
+  \
+  \ 2015-04-20: Fix in `H.`.
 
   \ -----------------------------------------------------------
 
@@ -31,7 +33,7 @@
 
 : H.  ( n -- )
   \ Print n in hexadecimal with four digits.
-  BASE @ SWAP S->D <# # # # # #> TYPE SPACE BASE !  ;
+  BASE @ HEX SWAP S->D <# # # # # #> TYPE SPACE BASE !  ;
 
 HEX
 

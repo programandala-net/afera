@@ -16,7 +16,7 @@
   \ 2015-04-16: Reference of the Brodie's implementation.
 
 
-.( Random numbers extensions )
+.( Random number generator )
 
   \ Code of `RND`is adapted from Bertie, the demo program
   \ bundled with Abersoft Forth:

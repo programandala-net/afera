@@ -1,0 +1,206 @@
+\ g+dos_1.fsb
+\ G+DOS support for ZX Spectrum Abersoft Forth (part 1)
+
+\ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+\ Requirements:
+\ XXX todo
+\ fsb:
+\   (http://programandala.net/en.program.fsb.html)
+\ Afera's main file
+\   (http://programandala.net/en.program.afera.html)
+\ Pleonasmo AF
+\   (http://programandala.net/en.program.pleonasmo.html)
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03-13: Start, based on code already written in 1988
+  \ and 1994.
+  \
+  \ 2015-04-01: Checks.
+  \
+  \ 2015-04-02: First succesful compilation, after some fixes
+  \ in the assembler. Some words renamed. New: alternative
+  \ words that don't use `?ERROR` but return the error
+  \ parameters.
+  \
+  \ 2015-04-07: Renamed to <gdos.fsb> (formerly
+  \ <gplusdos.fsb>).
+  \
+  \ 2015-04-14: New: the list of hooks has been completed;
+  \ `GDOS?` and `G+DOS?+'.
+  \
+  \ 2015-04-16: Change: `GDOS?` and `G+DOS?+' are removed.  It
+  \ doesn't worth the effort to make the code compatible with
+  \ both GDOS and G+DOS, because all low level operations
+  \ should be duplicated. Even the word `GDOS?` should use a
+  \ different port to page the interface out, DISCiPLE or +D,
+  \ depending on its own result!  Only G+DOS will be supported.
+  \ File renamed to <g+dos_1.fsb>.
+
+  \ -----------------------------------------------------------
+  \ Todo
+
+  \ XXX FIXME still not working fine: it seems some control
+  \ chars are included in filenames.
+
+.( G+DOS extensions -- part 1)
+
+FORTH DEFINITIONS DECIMAL
+
+10 CONSTANT /FILENAME  \ max filename length
+1 VARIABLE DRIVE \ 1 or 2
+[CHAR] d VARIABLE DEVICE \ "d" or "D"
+
+2 10 THRU
+
+( UFIA: User File Information Area)
+
+24 DUP CONSTANT /UFIA  BUFFER: UFIA
+
+UFIA      CONSTANT DSTR1 \ drive: 1 or 2
+UFIA 1+   CONSTANT FSTR1 \ program number
+UFIA 2+   CONSTANT SSTR1 \ stream number
+UFIA 3 +  CONSTANT LSTR1 \ device: "D" or "d"
+UFIA 4 +  CONSTANT NSTR1 \ directory description
+UFIA 5 +  CONSTANT NSTR2 \ file name
+UFIA 15 + CONSTANT HD00  \ file type
+UFIA 16 + CONSTANT HD0B  \ file length
+UFIA 18 + CONSTANT HD0D  \ file start address
+UFIA 20 + CONSTANT HD0F  \ BASIC length without variables
+UFIA 22 + CONSTANT HD11  \ BASIC autorun line
+
+( File types, directory descriptions and hook codes)
+
+  \ XXX TODO move all this constants to another file, as
+  \ reference. They ocuppy a lot and most of them not
+  \ necessary.
+
+  \ File types
+
+  \ 0 CONSTANT BASIC-FILETYPE
+  \ 1 CONSTANT DATA-ARRAY-FILETYPE
+  \ 2 CONSTANT STRING-ARRAY-FILETYPE
+  3 CONSTANT CODE-FILETYPE
+
+  \ Directory descriptions
+
+  \ 01 CONSTANT BASIC-FILE
+  \ 02 CONSTANT DATA-ARRAY
+  \ 03 CONSTANT STRING-ARRAY
+  \ 04 CONSTANT CODE-FILE
+  \ 05 CONSTANT SNAPSHOT-48K
+  \ 06 CONSTANT MICRODRIVE-FILE
+  \ 07 CONSTANT SCREENS$-FILE
+  08 CONSTANT SPECIAL-FILE
+  \ 09 CONSTANT SNAPSHOT-128K
+  \ 10 CONSTANT OPENTYPE-FILE
+  \ 11 CONSTANT EXECUTE-FILE
+
+  \ Hook codes
+
+HEX
+33 CONSTANT HXFER 34 CONSTANT OFSM  35 CONSTANT HOFLE
+36 CONSTANT SBYT  37 CONSTANT HSVBK 38 CONSTANT CFSM
+39 CONSTANT PNTP  3A CONSTANT COPS  3B CONSTANT HGFLE
+3C CONSTANT LBYT  3D CONSTANT HLDBK 3E CONSTANT WSAD
+3F CONSTANT SAD   40 CONSTANT REST  41 CONSTANT HERAZ
+42 CONSTANT COPS2 43 CONSTANT PCAT  44 CONSTANT HRSAD
+45 CONSTANT HWSAD 46 CONSTANT OTFOC 47 CONSTANT PATCH  DECIMAL
+
+( Error checking)
+
+: IOR>ERROR  ( ior -- f n )
+
+  \ Convert a DOS ior to a Forth error number.
+
+  \ ior = the AF register returned by a DOS command:
+  \     bit 0     = set: error
+  \     bits 8-14 = error code
+  \     bit 15    = set: ZX Spectrum error; unset: DOS error
+  \ f = error?
+  \ n = error number:
+  \     n<0  = ZX Spectrum error number (negative)
+  \     n>99 = DOS error number (plus 100)
+
+  DUP 1 AND    \ error?
+  SWAP 255 /   \ error code
+  DUP 128 AND  \ ZX Spectrum error?
+  IF  MINUS  ELSE  100 +  THEN   ;
+
+: ?DOS-ERROR  ( ior -- )
+
+  \ ior = the AF register returned by a DOS command:
+  \     bit 0     = set: error
+  \     bits 8-14 = error code
+  \     bit 15    = set: ZX Spectrum error; unset: DOS error
+
+  IOR>ERROR ?ERROR  ;
+
+( Drive)
+
+  \ XXX Note: this is for G+DOS only
+  \ XXX TODO -- check if this works with `CAT` when available
+
+CODE DRIVE@  ( -- n )
+  \ Get the current drive (1 or 2).
+  BC PUSH  IX PUSH  \ save the Forth registers
+  PATCH HOOK  3E01 LDA
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  0 H LD#  A L LD  PUSHHL JP  END-CODE
+
+CODE DRIVE!  ( n -- )
+  \ Set the current drive (1 or 2).
+  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH
+  PATCH HOOK  HL POP  L A LD  3E01 STA
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP  END-CODE
+
+( UFIA manipulation)
+
+: -FILENAME  ( -- )
+
+  \ Blank the filename area.
+
+  NSTR2 /FILENAME BLANKS  ;
+
+: FILENAME!  ( ca len -- )
+
+  \ Store a filename into the NSTR2 field of UFIA.
+
+  \ ca len = filename
+
+  -FILENAME /FILENAME MIN NSTR2 SWAP CMOVE  ;
+
+
+: >UFIA  ( a1 len1 ca2 len2 dir -- )
+
+  \ Set the User File Information Area
+
+  \ a1 len1   = memory region
+  \ ca2 len2  = filename
+  \ dir       = directory description
+
+  NSTR1 C!  FILENAME!  HD0B !  HD0D !
+  DEVICE @ LSTR1 C!  DRIVE @ DSTR1 C!
+  CODE-FILETYPE HD00 C!  ;
+
+: RAM-DISC>UFIA  ( ca len -- )
+
+  \ Init the User File Information Area
+  \ to load or save the Forth RAM-disc.
+
+  \ ca1 len1 = filename
+
+  FLUSH LO /RAM-DISC 2SWAP SPECIAL-FILE >UFIA  ;
+
+  \ vim: filetype=abersoftforth

@@ -1,0 +1,19 @@
+\ at-fetch.fsb
+\ Current cursor position for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ History of this file:
+  \ 
+  \ 2015-04-27: Start.
+
+.( AT@ )
+
+: AT@  ( -- line col )
+  \ Line and column of the current print position.
+  24 23689 C@ -
+  33 23688 C@ -  ;

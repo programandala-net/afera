@@ -1,0 +1,51 @@
+\ plot.fsb
+\ Faster `PLOT` for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ History of this file:
+  \ 
+  \ 2015-05-01: Start.
+ 
+  \ XXX TODO
+
+( Faster PLOT )
+
+CREATE PLOT  ( x y -- )
+
+  \ XXX OLD
+  \ ; original routine:
+  \ pop hl
+  \ pop de
+  \ push bc
+  \ push ix
+  \ ; if h or d is nonzero, exit
+  \ ; if l>0xAF, exit
+  \ call 0x22DF
+  \ pop ix
+  \ pop bc
+  \ jp next
+
+  \ XXX NEW
+
+  \ pop hl
+  \ pop de
+  \ push bc
+  \ push ix
+  \ ld b,e
+  \ ld c,l
+  \ call 0x22AA ; pixel-add
+  \ ; HL = screen address
+  \ ; A = pixel position in HL
+  \ call 0x22DF
+  \ pop ix
+  \ pop bc
+  \ jp next
+
+  SMUDGE DECIMAL
+
+  \ vim: filetype=abersoftforth

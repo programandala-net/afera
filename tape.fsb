@@ -11,7 +11,13 @@
   \ History of this file
 
   \ 2015-03-26: Start.
+  \
   \ 2015-03-28: First working version.
+  \
+  \ 2015-04-23: Some comments are improved.
+  \
+  \ 2015-04-30: `'BLOCK` instead of `BLOCK>A`, after the change
+  \ in the main file of the library.
 
   \ -----------------------------------------------------------
   \ Documentation
@@ -102,8 +108,8 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   LOADT-HEADER >T-FILENAME SWAP CMOVE  ;
 
 : ANY-T-FILENAME  ( -- )
+  \ Configure the load header to load any filename.
   255 LOADT-HEADER >T-FILENAME C!  ;
-
 
 : T-LENGTH!  ( len -- )
   \ Set the given code length for the next tape loading,
@@ -145,19 +151,19 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   \ a2 len2 = filename
   T-FILENAME! T-LENGTH! T-START!  0 (TAPE)  T-RESTORE  ;
 
-( BLOCK>A /LOADT /SAVET )
+( /LOADT /SAVET )
 
 : /LOADT  ( n -- )
-  \ Load a RAM-disc from tape, at address of block n.
+  \ Load the Forth RAM-disc from tape, at address of block n.
   \ Warning: the file will be loaded, no matter its length.
   \ n = first block (0..10)
-  FLUSH BLOCK>A 0 S" DISC" TAPE>MEM  ;
+  FLUSH 'BLOCK 0 S" DISC" TAPE>MEM  ;
 
 : /SAVET  ( n1 n2 -- )
-  \ Save a RAM-disc to tape, from block n1 to block n2.
+  \ Save the Forth RAM-disc to tape, from block n1 to block n2.
   \ n1 = first block (0..10)
   \ n2 = last block (0..10)
-  FLUSH 1+ BLOCK>A SWAP BLOCK>A DUP ROT SWAP -
+  FLUSH 1+ 'BLOCK SWAP 'BLOCK DUP ROT SWAP -
   S" DISC" MEM>TAPE  ;
 
 : INCLUDET  ( -- )
@@ -167,6 +173,7 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   \ to load all modules of an application.
   \ Warning: the file will be loaded, no matter its length.
   \ XXX TODO test
+  \ XXX Note: not very useful with tapes.
   2 /LOADT 3 LOAD  ;
 
   \ vim: filetype=abersoftforth

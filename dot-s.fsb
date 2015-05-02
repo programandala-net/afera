@@ -7,20 +7,24 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 
 \ 2015-03-30: First version.
-\ 2015-04-14: Second version.
+\ 2015-04-14: Second version, from Matteo Vitturi's vForth.
+\ 2015-04-19: Combined version.
 
 .( .S )
 
 : .S   ( -- )
+
   DEPTH S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
-  
+
   \ First version:
-  
   \ DEPTH -DUP IF  0 DO  DEPTH I - 1 - PICK .  LOOP  THEN
-  
-  \ Second simpler version, copied from Matteo Vitturi's
-  \ vForth:
-  
-  SP@ 2 - S0 @ 2 - DO I @ . -2 +LOOP ; 
+
+  \ Second version, from Matteo Vitturi's vForth:
+  \ SP@ 2 - S0 @ 2 - DO I @ . -2 +LOOP
+
+  \ Combined version:
+  DEPTH IF  SP@ 2 - S0 @ 2 - DO I @ . -2 +LOOP  THEN
+
+  ;
 
   \ vim: ft=abersoftforth

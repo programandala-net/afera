@@ -25,8 +25,8 @@
 ." Logo-like graphics"
 
 23677 CONSTANT SYS-COORDS  \ ZX Spectrum system variable
-COORDS CONSTANT X-COORD
-COORDS 1+ CONSTANT Y-COORD
+SYS-COORDS    CONSTANT X-COORD
+SYS-COORDS 1+ CONSTANT Y-COORD
 
 : X@  ( -- b )  X-COORD C@  ;
 : Y@  ( -- b )  Y-COORD C@  ;

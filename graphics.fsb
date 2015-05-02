@@ -9,6 +9,7 @@
 \ http://programandala.net/en.program.afera.html
 
 \ 2015-03-28: Code extracted from the main file of the library.
+\ 2015-04-22: `UDG!` is moved to its own file <udg-store.fsb>.
 
 .( Graphic extensions )
 
@@ -16,7 +17,7 @@ FORTH DEFINITIONS DECIMAL
 
   \ System variables and addresses
 
-
+23677 CONSTANT SYS-COORDS  \ ZX Spectrum system variable
 SYS-COORDS    CONSTANT X-COORD
 SYS-COORDS 1+ CONSTANT Y-COORD
 
@@ -34,16 +35,8 @@ SYS-COORDS 1+ CONSTANT Y-COORD
   \ Draw a line from x1 y1
   2SWAP PLOT RDRAW  ;
 
-: UDG!  ( b0..b7 c -- )
-  \ Store the given 8 bytes into the c UDG char
-  \ b0 = first (top) scan
-  \ b7 = last (bottom) scan
-  \ c = 144..164
-  144 - 8 * UDG + 1 - DUP 8 + DO  I C!  -1 +LOOP  ;
-
 : XY>ATTRA  ( x y -- a )
   \ Convert a pixel coordinate to its attribute address.
   175 SWAP - 8 / 32 *  SWAP 8 /  + ATTRIBUTES +  ;
-
 
   \ vim: filetype=abersoftforth

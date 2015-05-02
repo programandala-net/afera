@@ -8,6 +8,12 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
+  \ Requirements
+
+  \ extend.fsb
+  \ flags.fsb
+
+  \ -----------------------------------------------------------
   \ History of this file
   
   \ 2015-03:

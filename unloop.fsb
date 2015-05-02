@@ -1,0 +1,34 @@
+\ unloop.fsb
+\ `UNLOOP` for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-04-21: First draft.
+  \ 2015-04-25: First working version.
+
+  \ -----------------------------------------------------------
+
+.( UNLOOP )
+
+HEX  CREATE UNLOOP  ( R: x1 x2 -- )
+  \ The high level version needs to preserve the return
+  \ address of the inner interpreter:
+  \   R> R> DROP R> DROP >R
+  \ The low level version doesn't:
+  2A C, 5E68 ,  \ ld hl,(RP)
+  23 C,         \ inc hl
+  23 C,         \ inc hl
+  23 C,         \ inc hl
+  23 C,         \ inc hl
+  22 C, 5E68 ,  \ ld (RP),hl ; update the pointer
+  C3 C, NEXT ,  \ jp NEXT
+  SMUDGE  DECIMAL
+  
+  \ vim: filetype=abersoftforth

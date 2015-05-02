@@ -1,0 +1,36 @@
+\ upperc.fsb
+\ `UPPERC` for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+  
+  \ 2015-04-23: First version.
+
+.( UPPERC )
+
+HEX
+
+CREATE UPPERC   ( c -- c' )
+  \ Convert an ASCII character to uppercase.
+  E1 C,           \ pop hl
+  78 05 + C,      \ ld a,l
+  FE C, 61 C,     \ cp 'a'
+  38 C, 06 C,     \ jr c,end
+  FE C, 7B C,     \ cp 'z'+1
+  30 C, 02 C,     \ jr nc,end
+  E6 C, DF C,     \ and %11011111 ; reset bit 5
+  \ end:
+  68 07 + C,      \ ld l,a
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE
+  
+DECIMAL
+
+  \ vim: filetype=abersoftforth
+

@@ -16,10 +16,13 @@
   \ History of this file
 
   \ 2015-03-28: Start, with code adapted from Forth 5mx
-  \ (http://programandala.net/en.program.forth_5mx.html),
-  \ that was already adapted from pForth.
+  \ (http://programandala.net/en.program.forth_5mx.html), that
+  \ was already adapted from pForth.
   \
   \ 2015-04-08: Changes.
+  \
+  \ 2015-04-27: New: `?-->` and `?;S`, as a simple alternative
+  \ to the unfinished `[IF]`.
 
 \ XXX FIXME still not working fine.
 
@@ -36,6 +39,12 @@
 
 : [UNDEFINED]  ( "name" -- f )
   [COMPILE] [DEFINED] 0=  ; IMMEDIATE
+
+: ?-->  ( f -- )
+  IF  [COMPILE] -->  THEN  ; IMMEDIATE
+
+: ?;S  ( f -- )
+  IF  [COMPILE] ;S  THEN  ; IMMEDIATE
 
 ( [ELSE] )
 
@@ -62,5 +71,21 @@
   0= IF  [COMPILE] [ELSE]  THEN  ; IMMEDIATE
 
 : [THEN]  ( -- )  ; IMMEDIATE
+
+( [IF] ] [ELSE] [THEN] ) \ AvdH A2oct22
+
+\ From lina
+\ Copyright (c) 2000-2004 Albert van der Horst, The Netherlands
+
+: SKIPPING
+1 BEGIN (WORD) DUP WHILE
+   2DUP "[IF]" COMPARE 0= IF 2DROP 1+ ELSE
+   2DUP "[ELSE]" COMPARE 0= IF 2DROP 1- DUP IF 1+ THEN ELSE
+        "[THEN]" COMPARE 0= IF 1- THEN THEN THEN
+   ?DUP 0= IF EXIT THEN
+REPEAT 2DROP DROP ;
+: [IF] 0= IF SKIPPING THEN ; IMMEDIATE
+: [ELSE] SKIPPING ; IMMEDIATE
+: [THEN] ; IMMEDIATE
 
   \ vim: filetype=abersoftforth

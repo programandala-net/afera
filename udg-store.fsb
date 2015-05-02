@@ -1,0 +1,26 @@
+\ udg-store.fsb
+\ `UDG!` for Abersoft Forth By Marcos Cruz
+
+\ Copyright (C) 1985,1986,1987,2015
+\ Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+\ 2015-03: Code written.
+\ 2015-03-28: Code moved from the main file of the library
+\ to <graphics.fsb>.
+\ 2015-04-22: Code moved to its own file.
+
+.( UDG! )
+
+: UDG!  ( b0..b7 c -- )
+  \ Store the given 8 bytes into the c UDG char
+  \ b0 = first (top) scan
+  \ b7 = last (bottom) scan
+  \ c = 144..164
+  144 - 8 * UDG + 1 - DUP 8 + DO  I C!  -1 +LOOP  ;
+
+  \ vim: filetype=abersoftforth
+

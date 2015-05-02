@@ -22,7 +22,11 @@
   \ whose pfa is given.
   \ NOTE: This works only for code words.
   \ XXX TODO make it work with any kind of word.
-  [COMPILE] : [COMPILE] ;  LATEST PFA CFA !  ;
+  \ XXX OLD -- first version:
+  \ [COMPILE] : [COMPILE] ;  LATEST PFA CFA !  ;
+  \ XXX second version,
+  \ the alias needs less space in the dictionary:
+  CREATE SMUDGE  LATEST PFA CFA !  ;
 
   \ XXX TODO Improved alternative:
   \ : ALIAS  ( pfa "name" -- )

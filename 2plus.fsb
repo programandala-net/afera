@@ -1,0 +1,30 @@
+\ 2plus.fsb
+\ Faster `2+` for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-04-20: Created.
+
+  \ In Abersoft Forth `2+` is a colon word.  That's why, for
+  \ the sake of speed, and alternative definition in Z80 is
+  \ provided.
+
+.( Faster 2+ )
+
+  \ XXX TODO when `[IF]` is available, use it to check if
+  \ `CELL+` is already defined, and reuse it.
+
+CREATE 2+  ( n1 -- n2 )
+  \ 2 +
+  E1 C,           \ pop hl
+  23 C,           \ inc hl
+  23 C,           \ inc hl
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE

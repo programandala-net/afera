@@ -12,10 +12,24 @@
 
   \ 2015-04-15: Code extracted from the main file of the
   \ library.
+  \
+  \ 2015-04-21: Fix: `[TO]` does not need to compile `LITERAL`,
+  \ because in fig-Forth `'` compiles its result.
+  \
+  \ 2015-04-30: Three alternative non-parsing versions.
 
   \ -----------------------------------------------------------
 
 .( VALUE )
+
+3 LOAD
+
+.( VALUE with parsing and state-smart TO )
+
+\ This implementation, with parsing and state-smart `TO`,
+\ was inspired by Gforth.
+
+  \ 71 bytes of dictionary space.
 
 : VALUE  ( n "name"  -- )
   CONSTANT  ;
@@ -24,9 +38,46 @@
   [COMPILE] ' !  ;
 
 : [TO]  ( n "name" -- )
-  [COMPILE] ' [COMPILE] LITERAL COMPILE !  ; IMMEDIATE
+  [COMPILE] ' COMPILE !  ; IMMEDIATE
 
 : TO  ( n "name" -- )
   STATE @ IF  [COMPILE] [TO]  ELSE  <TO>  THEN  ; IMMEDIATE
+
+( VALUE with non-parsing TO -- version with flag )
+
+\ This alternative implementation is adapted from lina:
+\ Copyright (c) 2000-2004 Albert van der Horst, The Netherlands
+
+  \ 85 bytes of dictionary space
+
+0 VARIABLE TO-MESSAGE
+: FROM  ( -- )  0 TO-MESSAGE !  ;
+: TO    ( -- )  1 TO-MESSAGE !  ;
+: VALUE  ( "name" -- )
+  <BUILDS ,  DOES>  TO-MESSAGE @ IF  !  ELSE  @  THEN  FROM  ;
+
+( VALUE with non-parsing TO -- version with EXECUTE )
+
+\ This alternative implementation is a modified version
+\ of the lina implementation above.
+
+  \ 82 bytes of dictionary space
+ 
+0 VARIABLE (VALUE)
+: FROM  ( -- )  ' @ CFA (VALUE) !  ;  FROM
+: TO    ( -- )  ' ! CFA (VALUE) !  ;
+: VALUE  ( "name" -- )
+  <BUILDS ,  DOES>   (VALUE) @ EXECUTE  FROM  ;
+
+( VALUE with non-parsing TO -- version with DEFER )
+
+\ This non-parsing alternative is a modified version
+\ of the lina implementation above.
+
+DEFER (VALUE)
+: FROM  ( -- )  ' @ ' (VALUE) DEFER!  ;  FROM
+: TO    ( -- )  ' ! ' (VALUE) DEFER!  ;
+: VALUE  ( "name" -- )
+  <BUILDS ,  DOES>  (VALUE) FROM  ;
 
   \ vim: filetype=abersoftforth

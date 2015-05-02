@@ -9,7 +9,7 @@
 
   \ History of this file: see at the end of the file.
 
-( Line comments, booleans, bug fixes)
+( Line comments)
 
 ." Main extensions "
 
@@ -30,6 +30,10 @@ FORTH DEFINITIONS
   \
   \ : .(  ( "ccc<paren>" -- )
   \   [CHAR] ) PARSE-TEXT TYPE  ; IMMEDIATE
+
+-->
+
+( Bug fixes)
 
   \ ............................................
   \ Bugs found in Abersoft Forth
@@ -64,21 +68,43 @@ FORTH DEFINITIONS
   \
   \ `MESSAGE` does not work with negative values.
   \
-  \ `-FIND` sets `BASE` to 10.
-  \
   \ `INK` has a bug that causes `PLOT` to use 0 instead the
   \ proper attribute in most cases. Until the bug is found, an
-  \ alternative definition is provided in <ink.fsb>.
+  \ alternative definition is provided in <color.fsb>.
 
 -->
 
 ( Flow control)
 
+: RECURSE  ( -- )
   \ Compile a call to the word being defined.
-: RECURSE  ( -- )  LATEST PFA CFA ,  ; IMMEDIATE
+  LATEST PFA CFA ,  ; IMMEDIATE
 
-  \ Exit the current word if the given flag is not zero.
+CREATE UNLOOP  ( R: loop-limit loop-index -- )
+
+  \ Discard the loop control parameters for the current nesting
+  \ level. An `UNLOOP` is required for each nesting level
+  \ before the definition may be exited with `EXIT`.
+  \
+  \ In fig-Forth, the top of the return stack is the loop
+  \ index, and the value below it is the loop limit.
+  \
+  \ A high level version of `UNLOOP` would need to preserve the
+  \ return address of the word:
+  \
+  \   R> R> DROP R> DROP >R
+  \
+  \ But the low level version doesn't:
+
+  HEX   2A C, 5E68 ,  \ ld hl,(RP)
+        23 C, 23 C,   \ inc hl  / inc hl
+        23 C, 23 C,   \ inc hl  / inc hl
+        22 C, 5E68 ,  \ ld (RP),hl
+        C3 C, NEXT ,  \ jp NEXT
+  DECIMAL  SMUDGE
+
 : ?EXIT  ( f -- )
+  \ Exit the current word if the given flag is not zero.
   [COMPILE] IF  COMPILE EXIT  [COMPILE] THEN  ; IMMEDIATE
 
 : BYE  ( -- )  MON  ;
@@ -94,15 +120,33 @@ FORTH DEFINITIONS
 : BOUNDS  ( a1 len1 -- a2 a1 )  OVER + SWAP  ;
 : >=  ( n1 n2 -- f )  SWAP < 0=  ;
 : <=  ( n1 n2 -- f )  SWAP > 0=  ;
-  \ `-` is faster than `<>`, but does not return `TRUE`:
-: <>  ( n1 n2 -- f )  = 0=  ;   
+: <>  ( n1 n2 -- f )
+  \ Note: `-` is faster than `<>`,
+  \ but does not return `TRUE`.
+  = 0=  ;   
 : SGN  ( n1 -- -1|0|1 )  DUP IF  0< 2 * 1+  THEN  ;
 
 -->
 
-( 2* 2- 1- )
+( 2- 1- )
 
 HEX 
+
+CREATE 2-  ( n1 -- n2 )
+  \ 2 -
+  E1 C, 2B C, 2B C,  \ pop hl / dec hl / dec hl
+  C3 C, PUSHHL ,     \ jp PUSHHL
+  SMUDGE
+
+CREATE 1-  ( n1 -- n2 )
+  \ 1 -
+  E1 C, 2B C,         \ pop hl / dec hl
+  C3 C, PUSHHL ,      \ jp PUSHHL
+  SMUDGE
+
+-->
+
+( 2* 2/ )
 
 CREATE 2*  ( n1 -- n2 )
   \ DUP +
@@ -110,31 +154,17 @@ CREATE 2*  ( n1 -- n2 )
   C3 C, PUSHHL ,     \ jp PUSHHL
   SMUDGE
 
-CREATE 2-  ( n1 -- n2 )
-  E1 C, 2B C, 2B C,  \ pop hl / dec hl / dec hl
-  C3 C, PUSHHL ,     \ jp PUSHHL
-  SMUDGE
-
-CREATE 1-  ( n1 -- n2 )
-  E1 C, 2B C,         \ pop hl / dec hl
-  C3 C, PUSHHL ,      \ jp PUSHHL
-  SMUDGE
-
--->
-
-( 2/ )
-
 CREATE 2/  ( n1 -- n2 )
 
-  \ Adapted from the `PICK` written on 1985-05-07 by Edmund
+  \ 2 /
+
+  \ Adapted from the `2/` written on 1985-05-07 by Edmund
   \ Ramm for the Z80 fig-Forth implementation written by Dennis
   \ L. Wilson (1980-09-07).
 
-  \ XXX FIXME it does not work fine with negative numbers
-
   E1 C,           \ pop hl
   CB C, 7C C,     \ bit 7,h ; negative?
-  18 C, 03 C,     \ jr z,twosl1 ; no
+  18 C, 01 C,     \ jr z,twosl1 ; no
   23 C,           \ inc hl ; yes, add 1
   \ twosl1:
   CB C, 2C C,     \ sra h 
@@ -148,12 +178,11 @@ CREATE 2/  ( n1 -- n2 )
 
 CREATE PICK  ( u -- x )
 
-  \ 2 * 2 + SP@ + @
+  \ 1+ 2 * SP@ + @
 
   \ Adapted from the `PICK` written on 1985-05-07 by Edmund
-  \ Ramm (P.O.Box 38, 2358 Kaltenkirchen, Fed. Rep. of Germany)
-  \ for the Z80 fig-Forth implementation written by Dennis L.
-  \ Wilson (1980-09-07).
+  \ Ramm for the Z80 fig-Forth implementation written by Dennis
+  \ L.  Wilson (1980-09-07).
  
   E1 C, 29 C,          \ pop hl / add hl,hl
   39 C,                \ add hl,sp  ; offset into stack
@@ -177,15 +206,23 @@ DECIMAL -->
 
 ( Data stack)
 
-: -ROT  ( x1 x2 x3 -- x3 x1 x2 )  ROT ROT  ;
+CREATE -ROT  ( x1 x2 x3 -- x3 x1 x2 )
+  \ ROT ROT
+  HEX
+  D9 C,              \ exx
+  C1 C, D1 C, E1 C,  \ pop bc / pop de / pop hl
+  C5 C, E5 C, D5 C,  \ push bc / push hl / push de
+  D9 C,              \ exx
+  C3 C, NEXT ,       \ jp NEXT
+  DECIMAL  SMUDGE
   
   \ XXX TODO -- `2>R` and `2R>` in assembler
 
   \ XXX OLD -- unfinished version
-  \ : ROLL  ( u -- )
+  \ : ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
   \ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 -
   \ CMOVE DROP  ;
-: ROLL  ( u -- )
+: ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
   DUP 1 < IF  DROP  ELSE  SWAP >R 1 - RECURSE R> SWAP THEN  ;
 
 : DEPTH  ( -- u )  SP@ S0 @ - -2 /  ;
@@ -204,6 +241,16 @@ DECIMAL -->
   \ ............................................
   \ Specific extensions
 
+: /RUNT  ( n -- )
+
+  \ Read a new RAM-disc from tape and load block 'n'.
+
+  \ This word makes it possible to chain several RAM disk files
+  \ from tape, allowing the automatic compilation of sources
+  \ larger than 10 blocks.
+
+  FLUSH INIT-DISC LOADT LOAD  ;
+
 : RUNT  ( -- )
 
   \ Read a new RAM-disc from tape and load its first block.
@@ -212,7 +259,9 @@ DECIMAL -->
   \ from tape, allowing the automatic compilation of sources
   \ larger than 10 blocks.
 
-  FLUSH INIT-DISC LOADT 1 LOAD  ;
+  1 /RUNT  ;
+
+  \ XXX TODO -- The following words are not definitive.
 
 B/SCR B/BUF * CONSTANT /BLOCK  \ bytes per block
 
@@ -220,9 +269,8 @@ B/SCR B/BUF * CONSTANT /BLOCK  \ bytes per block
   \ Blank the init disc from the given block number.
   /BLOCK * DUP >R /RAM-DISC SWAP - LO R> + SWAP BLANKS  ;
 
-: BLOCK>A  ( block -- a )
-  \ Convert a block number (0..10) to its address in the
-  \ Forth RAM-disc.
+: 'BLOCK  ( n -- a )
+  \ Address of block n (0..10) in the Forth RAM-disc.
   /BLOCK * LO +  ;
 
   \ -----------------------------------------------------------
@@ -246,9 +294,9 @@ B/SCR B/BUF * CONSTANT /BLOCK  \ bytes per block
   \ 2015-03-28:
   \
   \ The graphics and strings extensions are moved to their own
-  \ files. New: `[UNDEFINED]`. Fixes of Abersoft Forth's bugs:
-  \ the RAM disk length and `EXIT`. Fix: `RDROP` was wrong.
-  \ New: `/INIT-DISC`, `TUCK`.
+  \ files. Fixes of Abersoft Forth's bugs: the RAM disk length
+  \ and `EXIT`. Fix: `RDROP` was wrong.  New: `/INIT-DISC`,
+  \ `TUCK`.
   \
   \ 2015-03-29:
   \
@@ -346,7 +394,18 @@ B/SCR B/BUF * CONSTANT /BLOCK  \ bytes per block
   \ <flags.fsb>.
   \
   \ 2015-04-17: `RUNT` moved back; its current definition is
-  \ useful to make loaders.
+  \ useful to write loaders.
+  \ 
+  \ 2015-04-21: New: `UNLOOP`. 
+  \
+  \ 2015-04-23: New: `/RUNT`, as a factor of `RUNT`.  Fix: `2/`
+  \ now works fine with negative numbers; the bug was a wrong
+  \ relative jump.
+  \
+  \ 2015-04-25: Change: `UNLOOP` and `-ROT` are rewritten in
+  \ Z80.
+  \
+  \ 2015-04-30: Change: `BLOCK>A` is renamed to `'BLOCK`.
 
   \ -----------------------------------------------------------
 

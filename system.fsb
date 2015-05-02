@@ -1,0 +1,41 @@
+\ system.fsb
+\ A system-saving for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03-13: Start as part of the G+DOS module.
+  \
+  \ 2015-03-16: Moved to its own file, in order to share it
+  \ with the +3DOS module.
+  \
+  \ 2015-04-29: `SAVE-SYSTEM` is renamed to `SYSTEM`; it does
+  \ not save, just prepares the system and returns the
+  \ parameters; this way also the tape module can be used to
+  \ save the system.
+
+  \ XXX TODO accept a boot word to patch `COLD` with.
+
+.( SYSTEM )
+
+: SYSTEM ( -- a len )
+
+  \ Prepare the system in order to save a copy.  Return its
+  \ start address and length, to be used as parameters for the
+  \ tape or disk saving command.
+
+  LATEST 12 +ORIGIN !
+  HERE 28 +ORIGIN !
+  HERE 30 +ORIGIN !
+  HERE FENCE !
+  ' FORTH 8 +  \ XXX or other vocabulary and `6 +`
+  32 +ORIGIN !
+  0 +ORIGIN SIZE 10 + ;
+
+  \ vim: filetype=abersoftforth

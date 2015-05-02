@@ -1,0 +1,63 @@
+\ transient.fsb
+\ Transient code tools for Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ History of this file:
+
+  \ 2015-03-15: Start. Code adapted from the <TASM> file of
+  \ Lennart Benschop's ZX Spectrum Forth-83.
+  \
+  \ 2015-05-01: Rewritten. New approach to make it a generic
+  \ tool.
+
+( TRANSIENT )
+
+0 VARIABLE PREVIOUS-DP
+0 VARIABLE PREVIOUS-LATEST
+0 VARIABLE PREVIOUS-VOC-LINK
+
+: TRANSIENT[  ( u -- )
+
+  \ Start transient code, reserving u bytes for it (including
+  \ dictionary space and data stack). This word must be used
+  \ before compiling the transient code.  The compiled size of
+  \ the transient code must be known in advance, and sum say
+  \ 128 bytes to it for the data stack.
+
+  HERE        PREVIOUS-DP !
+  LATEST      PREVIOUS-LATEST !
+  VOC-LINK @  PREVIOUS-VOC-LINK !
+  SP@ SWAP - DP !  ;
+
+: ]TRANSIENT  ( -- )
+
+  \ End the transient code.  This word must be used after
+  \ compiling the transient code.
+
+  PREVIOUS-DP @ DP !  ;
+
+: -TRANSIENT  ( -- )
+
+  \ Remove the transient code, unlinking the dictionary space
+  \ that was reserved for it.  This word must be used when the
+  \ transient code is not going to be used any more.
+
+  PREVIOUS-VOC-LINK @ VOC-LINK !
+
+  \ XXX FIXME this makes the system unusable, no word
+  \ is recognized any more:
+    \ PREVIOUS-LATEST @ PREVIOUS-DP @ !
+  \ But without it the words of transient code still can be
+  \ found.
+
+  \ What's is the point storing the nfa of the previous latest
+  \ word in the previous DP?
+
+  ;
+
+  \ vim: filetype=abersoftforth

@@ -17,6 +17,16 @@
 
 CREATE POINT  ( x y -- )
 
+  HEX
+
+  \ The original code of `POINT` is slow for several reasons:
+  \ it makes sure the y coordinate is less than 0xB0; then
+  \ calls the ROM routine POINT-SUB (0x22CE), that stores its
+  \ result in the BASIC calculator stack; then calls FIND-INT
+  \ (0x1E94) to fetch the result from it; finally, it doesn't
+  \ jump directly to PUSHHL, but first pushes HL and then jumps
+  \ to NEXT...
+
   \ XXX OLD
   \ ; original routine:
   \ E1 C, \ pop hl
@@ -24,7 +34,7 @@ CREATE POINT  ( x y -- )
   \ C5 C, \ push bc
   \ DD C, E5 C, \ push ix
   \ ld c,e
-  \ ld b,l ; XXX?
+  \ ld b,l
   \ ld a,l
   \ ; if not a>0xAF then ld a,0xAF
   \ ld b.a
@@ -37,14 +47,24 @@ CREATE POINT  ( x y -- )
   \ push hl
   \ jp next
 
-  HEX
+  \ This alternative is faster because the y coordinate is not
+  \ forced (the program must do it, if needed); the POINT-SUB
+  \ ROM routine is replicated without using the BASIC
+  \ calculator stack at the end; and PUSHHL is used as Forth
+  \ re-entry point:
 
-  D9                  \ exx ; save bc
-  E1 C,               \ pop bc ; c = y coordinate
-  D1 C,               \ pop de
-  40 03 + C,          \ ld b,e ; b = x coordinate
+  E1 C,               \ pop hl ; l = y coordinate
+  D1 C,               \ pop de ; e = x coordinate
   DD C, E5 C,         \ push ix
-  CD C, 22AA ,        \ call 0x22AA ; pixel-add
+  C5 C,               \ push bc
+  40 05 + C,          \ ld b,l ; b = y coordinate
+  48 03 + C,          \ ld c,e ; c = x coordinate
+  3E C, AF C,         \ ld a,0xAF
+  90 00 + C,          \ sub b ; y>0xAF?
+  38 C, 0B C,         \ jr c,finish ; if so, finish
+  \ ; C = x coordinate
+  \ ; B = y coordinate
+  CD C, 22AA 6 + ,    \ call PIXELADD ; +6 to skip BASIC error
   \ ; HL = screen address
   \ ; A = pixel position in HL
   -->
@@ -54,13 +74,17 @@ CREATE POINT  ( x y -- )
   40 07 + C,          \ ld b,a
   04 C,               \ inc b
   7E C,               \ ld a,(hl)
-  \ label:
+  \ rotate:
   07 C,               \ rlca
-  10 C, FD C,         \ djnz label
-  \ and 1
+  10 C, FD C,         \ djnz rotate
+  E6 C, 01 C,         \ and 1
+  \ finish:
+  26 C, 00 C,         \ ld h,0
+  68 07 + C,          \ ld l,a
+  C1 C,               \ pop bc
   DD C, E1 C,         \ pop ix
-  D9                  \ exx ; restore bc
   C3 C, PUSHHL ,      \ jp PUSHHL
 
   SMUDGE DECIMAL
 
+  \ vim: filetype=abersoftforth

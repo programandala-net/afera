@@ -12,13 +12,42 @@
 
   \ 2015-04-15: Code extracted from the main file of the
   \ library.
+  \
+  \ 2015-04-20: `CELL+` and `CELLS+` are rewritten in machine
+  \ code.
 
   \ -----------------------------------------------------------
 
 .( CELL CELL+ CELLS )
 
 2 CONSTANT CELL
-: CELL+  ( n1 -- n2 )  2+  ;
-: CELLS ( n1 -- n2 )  CELL *  ;
+
+HEX
+
+  \ In Abersoft Forth `2+` is a colon word.  That's why, for
+  \ the sake of speed, it's not used to define `CELL+`.
+  \ Alternative Z80 definitions for `2+` and `1+` are provided
+  \ in the library.
+
+  \ XXX TODO when `[IF]` is available, use it to check if `2+`
+  \ is already defined, and reuse it.
+
+CREATE CELL+  ( n1 -- n2 )
+  \ 2+
+  E1 C,           \ pop hl
+  23 C,           \ inc hl
+  23 C,           \ inc hl
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE
+
+  \ `CELLS+` executes the code of `2*`, already defined in Z80
+  \ in the main file of the library.
+
+
+CREATE CELLS  ( n1 -- n2 )
+  SMUDGE
+' 2* LATEST PFA CFA !
+
+DECIMAL
 
   \ vim: filetype=abersoftforth

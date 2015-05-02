@@ -12,8 +12,10 @@
   
   \ 2015-04-16: Extracted from the main file of the library.
   \ `ON` and `OFF` are rewritten in Z80.
+  \
+  \ 2015-04-23: Faster and smaller version of `OFF`.
 
-.( FALSE TRUE ) CR
+.( FALSE TRUE )
 
        0 CONSTANT FALSE
 FALSE 0= CONSTANT TRUE
@@ -25,18 +27,19 @@ FALSE 0= CONSTANT TRUE
 CREATE ON   ( a -- )          HEX
   \ TRUE SWAP !
   E1 C,        \ pop hl
-  36 C, 01 C,  \ ld (hl),1
-  23 C,        \ inc hl
-  36 C, 00 C,  \ ld (hl),0
+  36 C, 01 C,  \ ld (hl),1  ; 10T
+  23 C,        \ inc hl     ; 06T
+  36 C, 00 C,  \ ld (hl),0  ; 10T
   C3 C, NEXT , \ jp NEXT
   SMUDGE
 
 CREATE OFF  ( a -- )
   \ FALSE SWAP !
   E1 C,        \ pop hl
-  36 C, 00 C,  \ ld (hl),0
-  23 C,        \ inc hl
-  36 C, 00 C,  \ ld (hl),0
+  A8 07 + C,   \ xor a      ; 04T
+  70 07 + C,   \ ld (hl),a  ; 07T
+  23 C,        \ inc hl     ; 06T
+  70 07 + C,   \ ld (hl),a  ; 07T
   C3 C, NEXT , \ jp NEXT
   SMUDGE                      DECIMAL
 

@@ -14,6 +14,8 @@
 
 .( Return stack extensions )
 
+24168 CONSTANT RP  \ address of the return stack pointer
+
 : RDEPTH  ( -- u )  RP@ R0 @ - -2 /  ;
 
 : ?RSTACK  ( -- )
@@ -25,5 +27,18 @@
   RP@ @ S0 U< 7 ?ERROR  ;   \ stack full
 
 : RDROP  ( -- ) ( R: x -- )  R> DROP  ;
+
+\ Adapted from lina:
+\ Copyright (c) 2000-2004 Albert van der Horst, The Netherlands
+
+\ XXX TODO test
+
+: 2>R  ( d -- ) ( R: -- d )
+  COMPILE SWAP COMPILE >R COMPILE >R  ; IMMEDIATE
+: 2R>  ( -- d ) ( R: d -- )
+  COMPILE R>  COMPILE R> COMPILE SWAP  ;  IMMEDIATE
+: 2R  ( -- d ) ( R: d -- d )
+  \ XXX TODO rewrite using `RP`
+  [COMPILE] 2R> COMPILE 2DUP [COMPILE] 2>R  ; IMMEDIATE
 
   \ vim: filetype=abersoftforth

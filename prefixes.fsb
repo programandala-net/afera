@@ -1,0 +1,44 @@
+\ prefixes.fsb
+\ Number prefixes for Abersoft Forth
+
+\ Original code taken from lina:
+\ Copyright (c) 2000-2004 Albert van der Horst,
+\ The Netherlands
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ History of this file:
+  \
+  \ 2015-05-01: Code copied from lina.
+
+.( Number prefixes )
+
+
+HEX
+
+: TOH  ( c -- n )
+  \ Convert a character to its hexadecimal value.
+  30 - DUP 9 > IF 7 - THEN  ;
+
+  \ The fig-Forth `WIDTH` trick:
+
+1 WIDTH !
+
+: ".  \ Leave ASCII character; example: "A leaves 41H
+  HERE 2 + C@ [COMPILE] LITERAL  ; IMMEDIATE
+
+: ^.  \ Leave control character; example: ^A leaves 01H
+  HERE 2 + C@ 1F AND [COMPILE] LITERAL  ; IMMEDIATE
+
+: $..  \ Leave hex number; example: $0A leaves 0AH
+  HERE 2 + C@ TOH 10 * HERE 3 + C@ TOH + [COMPILE] LITERAL
+  ; IMMEDIATE
+
+: $.... \ Leave 16-bit hex number
+   0 HERE 6 + HERE 2 + DO 10 * I C@ TOH + LOOP
+   [COMPILE] LITERAL
+   ; IMMEDIATE
+
+1F WIDTH ! DECIMAL
