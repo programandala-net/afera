@@ -54,10 +54,8 @@
 
 -->
 
-( Lower memory -- Method 1 )
+( Lower data stack -- Method 1 )
 
-
-  \ 24168 CONSTANT RP  \ address of the return stack pointer
 
   \ Definition of `?STACK` in _Systems Guide to figFORTH_:
 
@@ -84,37 +82,99 @@
   \ The lower bound has to be changed: instead of `HERE 128 +`
   \ it must be the new fixed address.
   \
-  \ First approach: The new code is shorter (4 bytes instead of
-  \ 8): For the sake of execution speed, the rest of the
-  \ original code, `< 7 ?ERROR ;` will be moved, instead of
-  \ filling the gap with `NOOP`.
+  \ The new code is shorter (4 bytes instead of 8): For the
+  \ sake of execution speed, the rest of the original code, `<
+  \ 7 ?ERROR ;` will be moved, instead of filling the gap with
+  \ `NOOP`.
   \
-  \ Second, temporary approach: The whole definition is
-  \ patched.
+  \ Beside, the first `?ERROR` has to be temporary deactivated
+  \ until the new stack is ready; this is done by overwritting
+  \ it with `2DROP`.
 
-HEX  HERE  ( a ) \ new lower bound of the stack
+HEX  HERE  ( a )
 
-  \ Patch for `?STACK`:
-\ ' S0 CFA , ' @ CFA , ' SP@ CFA , ' U< CFA ,
-' SP@ CFA , ' S0 CFA , ' @ CFA , ' SWAP CFA , ' U< CFA ,
-' 1 CFA , ' 2DROP CFA ,
-' SP@ CFA , ' LIT CFA , DUP ,
-  \ The rest of the code:
+  \ The current dictionary pointer is both the start of the
+  \ patch and the new lower bound of the data stack.
+
+  \ Compile the patch for `?STACK`
+  \
+  \ The first `?ERROR` in `?STACK` is temporarily substited
+  \ with `2DROP` to prevent an error to be issued later during
+  \ the init of the new data stack pointers.
+
+' 2DROP CFA , ' SP@ CFA , ' LIT CFA , DUP ,
 ' < CFA , ' LIT CFA , 7 , ' ?ERROR CFA , ' ;S CFA ,
 
-DUP  \ origin
-  \ 6C3D  \ destination: address of `HERE` in `?STACK`
-' ?STACK  \ destination: pfa
+  \ Copy the patch
+
+DUP   \ origin: start of the compiled patch
+6C39  \ destination: address of first `?ERROR` in `?STACK`
 OVER HERE SWAP - CMOVE  \ do it
 
-80 HERE ROT - -  \ 80 minus the bytes used by the patch
-ALLOT HERE 5E06 ! SP! \ init S0 and SP
+  \ Allocate space for the new data stack
 
-  \ Restore the first `?ERROR` of `?STACK`:
+80 HERE ROT - - ALLOT  \ 80 minus the bytes used by the patch
+
+  \ Init the new data stack pointers
+
+  \ 5E06 holds S0
+  \ 5E54 holds its initial value
+
+HERE DUP 5E06 ! 5E52 ! SP!
+
+  \ Restore the first `?ERROR` of `?STACK`,
+  \ that was substituted by a `2DROP`
+
   ' ?ERROR CFA ' ?STACK 0C + !
 
-  \  HERE 5E0A ! 52 ALLOT \ TIB
-  \  80 ALLOT HERE 5E08 ! RP! \ R0
 DECIMAL
+
+-->
+
+( Lower return stack -- Method 1 )
+
+
+HEX
+
+80 ALLOT \ space for the new return stack
+
+  \ Init the new return stack pointers
+
+  \ 5E08 holds R0
+  \ 5E54 holds its initial value
+
+HERE 5E54 !
+
+  \ RP!  \ XXX FIXME crash!
+  \ XXX how to change the RP safely, beside `QUIT`?
+
+  \ QUIT
+
+  \ : >R<  ( -- )
+  \   \ XXX works!
+  \   RDEPTH . KEY DROP
+  \   R> R> R> R> R> R> R> R> R> R> R> R>
+  \   5E54 @ 5E08 !  RP!
+  \   >R >R >R >R >R >R >R >R >R >R >R >R
+  \   ;
+: TASK ; 0 VARIABLE SAVED
+: RDEPTH  ( -- u )  RP@ R0 @ - -2 /  ;
+
+
+  : >R<  ( -- )
+    \ XXX works!
+    RDEPTH DUP SAVED !
+    ." Save " DUP . ." elements..." CR KEY DROP
+    0 DO  I . R> R> R> ROT ROT >R >R  LOOP CR
+    ." Set stack..." CR KEY DROP
+    5E54 @ 5E08 !  RP!
+    ." And restore the elements..." CR KEY DROP
+    SAVED @ 0 DO  I . R> R> ROT >R >R >R  LOOP CR KEY DROP
+    ;
+
+>R< FORGET TASK  DECIMAL
+
+  \ 5E68 =
+  \ 24168 CONSTANT RP  \ address of the return stack pointer
 
   \ vim: filetype=abersoftforth
