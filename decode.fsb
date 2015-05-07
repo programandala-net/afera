@@ -1,3 +1,5 @@
+.( DECODE )
+
 \ decode.fsb
 \ `DECODE` for ZX Spectrum Abersoft Forth
 
@@ -7,92 +9,174 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-\ Code extracted and adapted from:
-\   Z80 CP/M fig-Forth 1.1g.
-\ Original code from:
-\   FORTH DIMENSIONS IV,#2 p28.
-\ Original code by Robert Dudley Ackerman.
-\ Modified by Dennis Wilson.
+\ Original code by Robert Dudley Ackerman, published in:
+\   FORTH DIMENSIONS IV,#2 p28 (July/August 1982)
+\ Modified by Dennis Wilson for Z80 CP/M fig-Forth 1.1g
 
-  \ History of this file:
-  \
-  \ 2015-04-17: Code extracted and adapted from Z80 CP/M
-  \ fig-Forth 1.1g. It works fine.
-  \
-  \ XXX TODO -- show the addresses
+  \ -----------------------------------------------------------
+  \ History of this file
 
-( DECODE )
+  \ 2015-04-17: Code copied and adapted from Z80 CP/M fig-Forth
+  \ 1.1g. It works fine.
+  \
+  \ 2015-05-03: Improvement: The current address is shown, in
+  \ hex.  Clearer instructions.
+  \
+  \ 2015-05-04: No hex forced, the current base is used.
+  \
+  \ 2015-05-07:
+  \
+  \ The code that handles the special decoding cases and the
+  \ key selection have been rewritten with `CASE` structures,
+  \ easier to read, maintain and extend.
+  \
+  \ The check that prevented from decoding `ERROR` has been
+  \ removed.
+  \
+  \ Improvement: The destination address of branches is shown
+  \ after the relative value.
+  \
+  \ The main code has been divided in smaller pieces, easier to
+  \ understand and maintain.
+  
+  \ XXX TODO -- finish: 2015-05-07: key pause.
+
+-->
+
+( DECODE -- variables, indentation and pause control )
 
 
 FORTH DEFINITIONS DECIMAL
 
-0 VARIABLE DECODE-LEVEL  \ depth of nesting
+: TASK ;
+
+0 VARIABLE DECODE-LEVEL    \ depth of nesting
+0 VARIABLE DECODE-ADDRESS  \ in the word being decoded
 
 : INDENT  ( -- )
-  CR DECODE-LEVEL @ 2 * SPACES  ;
+  CR  DECODE-ADDRESS @ -DUP IF  U.  ELSE  6 SPACES  THEN
+  DECODE-LEVEL @ 2 * SPACES  ;
 
 : INDENT+  ( -- )
   1 DECODE-LEVEL +! INDENT ;
 
+1 VARIABLE WAIT?  \ flag: ask for a key to be pressed?
+: AKEY  ( -- c )
+  WAIT? @ IF  KEY  ELSE  BL  THEN  1 WAIT? !  ;
+
 -->
 
-( DECODE )
+( DECODE -- Special cases )
 
-: GCHK
+: DECODE-COMPILE  ( a1 -- a2 )
+  2+ DUP @ 2+ NFA ID.  ;
+
+: (DECODE-LITERAL)  ( a1 -- a2 )
+  2+ DUP @ .  ;
+
+: DECODE-LITERAL  ( a1 -- a2 )
+  (DECODE-LITERAL)  0 WAIT? !  ;
+
+: DECODE-BRANCH  ( a1 -- a2 )
+  (DECODE-LITERAL)  ."  \ to " DUP DUP @ + U.  0 WAIT? !  ;
+
+: DECODE-DOT-QUOTE  ( a1 -- a2 )
+  2+ DUP COUNT TYPE  DUP C@ + 1 -  ;
+
+-->
+
+( DECODE -- Special cases dispatcher )
+
+: DECODE-SPECIAL-CASES  ( a1 -- a1 | a2 )
+  DUP @
+  CASE
+    [ ' COMPILE CFA ] LITERAL OF  DECODE-COMPILE    ENDOF
+    [ ' LIT     CFA ] LITERAL OF  DECODE-LITERAL    ENDOF
+    [ ' BRANCH  CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+    [ ' 0BRANCH CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+    [ ' (LOOP)  CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+    [ ' (+LOOP) CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+    [ ' (.")    CFA ] LITERAL OF  DECODE-DOT-QUOTE  ENDOF
+  ENDCASE  ;
+
+-->
+
+( DECODE -- checks of the main code )
+
+: DECODE-END?  ( cfa -- f )
+  \ Is the given cfa the end of a definition?
+  DUP  ' ;S CFA =  SWAP ' (;CODE) CFA =  OR  ;
+
+: COLON-PFA?  ( pfa -- f )
+  \ Is the given pfa a colon definition?
+  CFA @ ' : CFA @ =  ;
+
+-->
+
+( DECODE -- main code )
+
+: (DECODE)  ( pfa --- )
+
+  \ Decode the definition at the given pfa.
+
+  DUP COLON-PFA? IF
+    INDENT  ." : " DUP NFA ID.
+    BEGIN   DUP DECODE-ADDRESS !
+            DUP @ DUP DECODE-END? 0=
+    WHILE  \ high level & NOT end of colon definition
+      ( cfa ) 2+ ( pfa ) DUP INDENT+  NFA ID.
+      AKEY CASE  [CHAR] Q   OF  SP! QUIT  ENDOF
+                 BL         OF  DROP      ENDOF
+                 SWAP RECURSE  \ default
+           ENDCASE  DECODE-SPECIAL-CASES
+      2+  -1 DECODE-LEVEL +!  ;
+    REPEAT  INDENT 2+ NFA ID. \ show the last word
+  THEN  DROP  ;  -->
+
+( DECODE -- interface )
+
+: DECODE  ( "name" -- )
+  1 WAIT? !
+  -FIND IF    DROP 0 DECODE-LEVEL ! (DECODE)
+        ELSE  ." Not Found"  THEN  ;
+
+-->
+
+( DECODE -- instructions )
+
+CR
+
+ \ <------------------------------>
+." Usage:" CR
+."   DECODE word" CR
+." Keys:" CR
+."   Space:  Show next word" CR
+."           at same level;" CR
+."   Return: Decode last word shown"
+."           (except primitives);" CR
+."   Q :      Quit." CR
+ \ <------------------------------>
+
+( DECODE -- old code )  \ XXX OLD
+
+;S  : DECODE-SPECIAL-CASES
+  \ Handle special cases.
   DUP @ 2+ ' COMPILE =
-  IF   2+ DUP @ 2+ NFA ID. 2+
+  IF   2+ DUP  @ 2+ NFA ID. 2+
   ELSE    DUP @ 2+ DUP ' LIT =
           OVER ' BRANCH  = OR
           OVER ' 0BRANCH = OR
           OVER ' (LOOP)  = OR
           SWAP ' (+LOOP) = OR
-    IF    2+ DUP @ SPACE . 2+
+    IF    2+ DUP @ SPACE .
+          \ ." \ to " DUP DUP @ + . 
+          2+
+          \ 0 WAIT? !
     ELSE  DUP @ 2+ ' (.") =
-          IF  2+ DUP COUNT TYPE  DUP C@ 1+ +  ELSE 2+  THEN
+          IF  2+ DUP COUNT TYPE  DUP C@ 1+ +
+          \ 0 WAIT? !
+          ELSE 2+  THEN
     THEN
-  THEN   -1 DECODE-LEVEL +!   ;    \ Handle special cases
-
--->
-
-( DECODE )
-
-: (DECODE)  ( pfa --- )
-
-  DUP CFA @ ' : CFA @ = OVER ' ERROR = 0= AND
-  IF  \ colon definition & not `ERROR`
-    INDENT
-    \ XXX INFORMER pfa of the word being decoded
-    \ DUP HEX U. DECIMAL
-    DUP NFA ." : " ID.
-    BEGIN  DUP @ DUP ' ;S  CFA =  OVER ' (;CODE) CFA = OR 0=
-    WHILE  \ high level & NOT end of colon definition
-       \ XXX INFORMER cfa of the next word
-       \ DUP HEX U. DECIMAL
-       2+ DUP INDENT+  NFA ID. KEY DUP [CHAR] Q =
-       IF    SP! QUIT
-       ELSE  BL =  IF  DROP  ELSE  RECURSE  THEN
-       THEN  GCHK
-    REPEAT  2+ INDENT NFA ID. \ show last word
-  THEN  DROP  ;
-
--->
-
-( DECODE )
-
-DECIMAL
-
-: DECODE  ( "name" -- )
-  BASE @  \ XXX -- `-FIND` changes `BASE` to 10
-  -FIND IF    DROP SWAP BASE !  0 DECODE-LEVEL ! (DECODE)
-        ELSE  DROP ." Not Found"
-        THEN  ;
-
-CR
-\  <------------------------------>
-." DECODE installed." CR
-." Use SPACE bar to show next word" CR
-." at same level; RETURN key to" CR
-." DECODE last word shown (except" CR
-." primitives); Q to Quit." CR
+  THEN   -1 DECODE-LEVEL +!  ; -->
 
   \ vim: filetype=abersoftforth
