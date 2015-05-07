@@ -1,0 +1,120 @@
+\ lowermem.fsb
+\ Move ZX Spectrum Abersoft Forth below address 0xC000
+
+\ Copyright (C) 1985-1987,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Abersoft Forth is a fig-Forth system and so is its
+  \ memory map:
+
+  \ Address         Returned by  Description
+  \ --------------  -----------  -------------------------- 
+  \ 0xFFFF (65535)               Top of memory
+  \ 0xFF58 (65368)  `UDG`        User defined graphics
+  \ 0xFBFF (64256)  `HI`         End of screens area
+  \                                (RAM-disc)
+  \ 0xD000 (53248)  `LO`         Start of screens area
+  \                                (RAM-disc)
+  \ 0xD000 (53248)  `LIMIT`      End of buffer area plus 1
+  \ 0xCBE0 (52192)  `FIRST`      Start of buffer area
+  \                                (lowest buffer start)
+  \ 0xCBE0 (52192)  `R0 @`       Initial location (bottom)
+  \                                of the return stack
+  \                                (grows toward low memory)
+  \ ?               `RP@`        Return stack pointer
+  \ 0xCB40 (52032)  `TIB @`      Terminal input buffer
+  \ 0xCB40 (52032)  `S0 @`       Initial location (bottom)
+  \                                of the data stack
+  \                                (grows toward low memory)
+  \ ?               `SP@`        Data stack pointer
+  \ ...                          Free space
+  \ 0x819D (33181)  `PAD`        Text output buffer
+  \ 0x8159 (33113)  `HERE`       Dictionary pointer
+  \ 0x5E40 (24128)  `0 +ORIGIN`  Start of the system
+
+
+  \ The problem is ZX Spectrum 128 models page the additional
+  \ RAM banks on the upper 16 KiB of the memory.  In order to
+  \ use this extra memory, some parts of the Forth system have
+  \ to be moved below address 0xC000.
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-05-06: Start.
+  
+  \ -----------------------------------------------------------
+
+-->
+
+( Lower memory -- Method 1 )
+
+
+  \ 24168 CONSTANT RP  \ address of the return stack pointer
+
+  \ Definition of `?STACK` in _Systems Guide to figFORTH_:
+
+  \ : ?STACK  ( -- )
+  \   \ Issue error message
+  \   \ if the data stack is out of bounds.
+  \   SP@ S0 @ >        \ out of upper bound?
+  \   1 ?ERROR          \ stack underflow
+  \   SP@ HERE 128 + <  \ out of lower bound?
+  \   7 ?ERROR          \ stack overflow
+  \   ;
+  
+  \ Definition of `?STACK` in Abersoft Forth:
+ 
+  \ : ?STACK  ( -- )
+  \   \ Issue error message
+  \   \ if the data stack is out of bounds.
+  \   SP@ S0 @ SWAP U<  \ out of upper bound?
+  \   1 ?ERROR          \ stack underflow
+  \   SP@ HERE 128 + <  \ out of lower bound?
+  \   7 ?ERROR          \ stack overflow
+  \   ;
+
+  \ The lower bound has to be changed: instead of `HERE 128 +`
+  \ it must be the new fixed address.
+  \
+  \ First approach: The new code is shorter (4 bytes instead of
+  \ 8): For the sake of execution speed, the rest of the
+  \ original code, `< 7 ?ERROR ;` will be moved, instead of
+  \ filling the gap with `NOOP`.
+  \
+  \ Second, temporary approach: The whole definition is
+  \ patched.
+
+HEX  HERE  ( a ) \ new lower bound of the stack
+
+  \ Patch for `?STACK`:
+\ ' S0 CFA , ' @ CFA , ' SP@ CFA , ' U< CFA ,
+' SP@ CFA , ' S0 CFA , ' @ CFA , ' SWAP CFA , ' U< CFA ,
+' 1 CFA , ' 2DROP CFA ,
+' SP@ CFA , ' LIT CFA , DUP ,
+  \ The rest of the code:
+' < CFA , ' LIT CFA , 7 , ' ?ERROR CFA , ' ;S CFA ,
+
+DUP  \ origin
+  \ 6C3D  \ destination: address of `HERE` in `?STACK`
+' ?STACK  \ destination: pfa
+OVER HERE SWAP - CMOVE  \ do it
+
+80 HERE ROT - -  \ 80 minus the bytes used by the patch
+ALLOT HERE 5E06 ! SP! \ init S0 and SP
+
+  \ Restore the first `?ERROR` of `?STACK`:
+  ' ?ERROR CFA ' ?STACK 0C + !
+
+  \  HERE 5E0A ! 52 ALLOT \ TIB
+  \  80 ALLOT HERE 5E08 ! RP! \ R0
+DECIMAL
+
+  \ vim: filetype=abersoftforth
