@@ -1,3 +1,5 @@
+.( lowermem )
+
 \ lowermem.fsb
 \ Move ZX Spectrum Abersoft Forth below address 0xC000
 
@@ -11,8 +13,7 @@
   \ -----------------------------------------------------------
   \ Description
 
-  \ Abersoft Forth is a fig-Forth system and so is its
-  \ memory map:
+  \ Abersoft Forth is a fig-Forth system and so its memory map:
 
   \ Address         Returned by  Description
   \ --------------  -----------  -------------------------- 
@@ -36,28 +37,33 @@
   \ ?               `SP@`        Data stack pointer
   \ ...                          Free space
   \ 0x819D (33181)  `PAD`        Text output buffer
+  \ 0x8159 (33113)  `HERE`       `WORD` buffer
   \ 0x8159 (33113)  `HERE`       Dictionary pointer
   \ 0x5E40 (24128)  `0 +ORIGIN`  Start of the system
 
 
-  \ The problem is ZX Spectrum 128 models page the additional
-  \ RAM banks on the upper 16 KiB of the memory.  In order to
-  \ use this extra memory, some parts of the Forth system have
-  \ to be moved below address 0xC000.
+  \ The problem is the ZX Spectrum 128 models page the
+  \ additional RAM banks on the upper 16 KiB of the memory
+  \ (0xC000-0xFFFF).  In order to use this extra memory, the
+  \ vital parts of the Forth system (the data stack, the
+  \ terminal input buffer, the return stack and the disk block
+  \ buffers) have to be moved below address 0xC000.
 
   \ -----------------------------------------------------------
   \ History of this file
 
   \ 2015-05-06: Start.
+  \ 2015-05-07: Data stack, Return stack and TIB completed.
   
   \ -----------------------------------------------------------
 
 -->
 
-( Lower data stack -- Method 1 )
+( Lower the data stack )
 
 
-  \ Definition of `?STACK` in _Systems Guide to figFORTH_:
+  \ Definition of `?STACK` in C. H. Ting's book _Systems Guide
+  \ to figFORTH_:
 
   \ : ?STACK  ( -- )
   \   \ Issue error message
@@ -88,15 +94,15 @@
   \ `NOOP`.
   \
   \ Beside, the first `?ERROR` has to be temporary deactivated
-  \ until the new stack is ready; this is done by overwritting
-  \ it with `2DROP`.
+  \ until the new stack is ready, otherwise an error will
+  \ happen; this is done by overwritting it with `2DROP`.
 
 HEX  HERE  ( a )
 
   \ The current dictionary pointer is both the start of the
   \ patch and the new lower bound of the data stack.
 
-  \ Compile the patch for `?STACK`
+  \ Step 0: Compile the patch for `?STACK`
   \
   \ The first `?ERROR` in `?STACK` is temporarily substited
   \ with `2DROP` to prevent an error to be issued later during
@@ -105,24 +111,25 @@ HEX  HERE  ( a )
 ' 2DROP CFA , ' SP@ CFA , ' LIT CFA , DUP ,
 ' < CFA , ' LIT CFA , 7 , ' ?ERROR CFA , ' ;S CFA ,
 
-  \ Copy the patch
+  \ Step 1: Copy the patch
 
 DUP   \ origin: start of the compiled patch
 6C39  \ destination: address of first `?ERROR` in `?STACK`
 OVER HERE SWAP - CMOVE  \ do it
 
-  \ Allocate space for the new data stack
+  \ Step 2: Allocate space for the new data stack
+  \ (80 bytes minus the bytes reused from the patch)
 
-80 HERE ROT - - ALLOT  \ 80 minus the bytes used by the patch
+80 HERE ROT - - ALLOT
 
-  \ Init the new data stack pointers
+  \ Step 3: Init the new data stack pointers
 
   \ 5E06 holds S0
   \ 5E54 holds its initial value
 
 HERE DUP 5E06 ! 5E52 ! SP!
 
-  \ Restore the first `?ERROR` of `?STACK`,
+  \ Step 4: Restore the first `?ERROR` of `?STACK`,
   \ that was substituted by a `2DROP`
 
   ' ?ERROR CFA ' ?STACK 0C + !
@@ -131,50 +138,110 @@ DECIMAL
 
 -->
 
-( Lower return stack -- Method 1 )
+( Lower the terminal input buffer )
 
+  \ 5E0A holds the address of TIB
+  \ 5E56 holds its initial value
 
 HEX
 
-80 ALLOT \ space for the new return stack
+HERE DUP 5E0A ! 5E56 !
+52 ALLOT
 
-  \ Init the new return stack pointers
+DECIMAL
+
+-->
+
+( Lower the return stack )
+
+HEX  80 ALLOT \ space for the new return stack
 
   \ 5E08 holds R0
   \ 5E54 holds its initial value
 
-HERE 5E54 !
+HERE 5E54 !  \ used only by `COLD`; it's safe to change it now
 
-  \ RP!  \ XXX FIXME crash!
-  \ XXX how to change the RP safely, beside `QUIT`?
-
-  \ QUIT
-
-  \ : >R<  ( -- )
-  \   \ XXX works!
-  \   RDEPTH . KEY DROP
-  \   R> R> R> R> R> R> R> R> R> R> R> R>
-  \   5E54 @ 5E08 !  RP!
-  \   >R >R >R >R >R >R >R >R >R >R >R >R
-  \   ;
-: TASK ; 0 VARIABLE SAVED
+: TASK ;
 : RDEPTH  ( -- u )  RP@ R0 @ - -2 /  ;
+0 VARIABLE SAVED  \ elements saved from the old return stack
+: >R<  ( -- )
+  \ Init the new return stack,
+  \ copying the contents of the old one,
+  \ and start using it.
+  RDEPTH DUP SAVED !
+  0 DO  R> R> R> ROT ROT >R >R  LOOP
+  5E54 @ 5E08 !  RP!
+  SAVED @ 0 DO  R> R> ROT >R >R >R  LOOP  ;
 
+>R<  FORGET TASK  \ do it and forget the code
 
-  : >R<  ( -- )
-    \ XXX works!
-    RDEPTH DUP SAVED !
-    ." Save " DUP . ." elements..." CR KEY DROP
-    0 DO  I . R> R> R> ROT ROT >R >R  LOOP CR
-    ." Set stack..." CR KEY DROP
-    5E54 @ 5E08 !  RP!
-    ." And restore the elements..." CR KEY DROP
-    SAVED @ 0 DO  I . R> R> ROT >R >R >R  LOOP CR KEY DROP
-    ;
+DECIMAL 
 
->R< FORGET TASK  DECIMAL
+( Lower the disk block buffers and update FREE )
 
-  \ 5E68 =
-  \ 24168 CONSTANT RP  \ address of the return stack pointer
+  \ XXX FIXME the buffers causes problems
+  \ XXX something missing?
+
+HERE  \ address of the new buffers
+DUP FIRST -  \ negative offset from the old buffers
+
+  \ Important:
+  \
+  \ The fig-Forth model describes `LIMIT` as:
+  \
+  \ "the address just above the highest memory available for a
+  \ disc buffer. Usually this is the highest system memory."
+  \ (Forth Interest Group, Release 1 of fig-FORTH, 1979-05;
+  \ OCR-ed by Albert van der Horst DFW The Netherlands 2000-03)
+  \ 
+  \ Or:
+  \
+  \ "Address of the last byte of disk buffers plus one,
+  \ pointing to the free memory not used by the Forth system."
+  \ (C. H. Ting, "Systems Guide to figFORTH", second edition,
+  \ 1989-05)
+  \
+  \ The definition in the Abersoft Forth manual is simply plain
+  \ wrong:
+  \
+  \ "A constant leaving the address just above the highest
+  \ memory address used by the system."
+  \
+  \ XXX FIXME -- I'm wrong:
+  \ Actually, `LIMIT` returns the address of the tail cell of
+  \ the last disk buffer; and all disk buffer tails must
+  \ contain 0.
+  \ Somehow this cell is not erased by `EMPTY-BUFFERS`
+  \ (probably because it's supposed to be harcoded during the
+  \ building of the system) so in order to make sure it's zero,
+  \ it's not calculated in the space allocated by `ALLOT`, but
+  \ compiled after it:
+
+LIMIT FIRST -  ALLOT 0 ,  \ space for the new buffers
+
+  \ XXX Done with a word, to prevent the code to spread on two
+  \ disk blocks, but tt makes no difference:
+
+: TASK ;
+: >BUF<  ( -n a -- )
+  \ a = address of the new buffers
+  \ -n = offset from the old buffers to the new ones
+  FIRST OVER LIMIT FIRST - CMOVE  \ copy the old buffers
+  ' FIRST !  HERE ' LIMIT !  \ update the constants
+  DUP PREV @ +! USE +!  \ update the variables with the offset
+  ;
+SWAP >BUF<  FORGET TASK  \ do it and forget the code
+
+  \ The word `FREE` returns the free dictionary space,
+  \ according to the original memory map:
+  \
+  \   : FREE  ( -- n )  SP@ HERE -  ;
+  \
+  \ It has to be modified because the top limit of the free
+  \ dictionary space is not the stack pointer any more, but the
+  \ start of the RAM disk, returned by `LO`:
+
+' LO CFA ' FREE !
+
 
   \ vim: filetype=abersoftforth
