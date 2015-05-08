@@ -1,0 +1,140 @@
+.( 512 B/BUF )
+
+\ XXX Unfinished. Under development.
+
+\ 512bbuf.fsb
+\ 512-bytes disk blocks for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ The disk blocks of Abersoft Forth follow the fig-Forth
+  \ model:
+
+  \ B/BUF = 128 bytes per buffer
+  \ B/SCR = 8 blocks per screen
+  \ #BUFF = 8 disk buffers
+
+  \ But, in order to use a G+DOS disk as mass storage, with
+  \ 512-bytes disk sectors, this is more efficient, and doesn't
+  \ increase the space used by the buffers:
+
+  \ B/BUF = 512 bytes per buffer
+  \ B/SCR = 2 block per screen
+  \ #BUFF = 2 disk buffers
+
+  \ In order to make this change, some constants have to be
+  \ updated, and two words must be patched: `EMPTY-BUFFERS` and
+  \ `+BUF`:
+
+  \ The ordinary definition of fig-Forth `EMPTY-BUFFERS` is:
+  \
+  \ : EMPTY-BUFFERS  ( -- )
+  \   FIRST LIMIT OVER - ERASE  ;
+
+  \ But the definition implemented by Abersoft Forth is:
+
+  \ : EMPTY-BUFFERS  ( -- )
+  \   FIRST LIMIT OVER - ERASE
+  \   LIMIT FIRST DO
+  \     32767 I !
+  \   132 +LOOP  ;
+
+  \ The loop sets the disk block number of every buffer to
+  \ 32767 (bit 16, the update bit, is set to 0).
+  \
+  \ The problem is the loop step, the length of a disk buffer,
+  \ is hardcoded, not calculated (`B/BUF 4 +`).
+
+  \ Also the definition of `+BUF` must be patched, because the
+  \ length of a disk buffer is hardcoded in it:
+
+  \ : +BUF  ( a1 -- a2 f )
+  \   132 DUP LIMIT = IF  DROP FIRST  THEN  DUP PREV @ -  ;
+  
+  \ XXX TMP
+  \ This patch removes the final loop from `EMPTY-BUFFERS`:
+  \ ' ;S CFA ' EMPTY-BUFFERS 10 + !
+  
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-05-08: Start, with the code of the unfinished
+  \ module <1024bbuf.fsb>.
+  \
+  \ 2015-05-09: Bug fixed. First working version.
+
+
+-->
+( 512B )
+
+: 512B  ( -- )
+
+  \ Change the constants:
+  512 ' B/BUF !  2 ' B/SCR !  2 ' #BUFF !
+
+  \ Patch `EMPTY-BUFFERS` and `+BUF`
+  \ with the new value of `B/BUF`:
+  B/BUF 4 + ' EMPTY-BUFFERS 26 + !
+  B/BUF 4 + ' +BUF 2 + !
+
+  \ Update `LIMIT`:
+  FIRST B/BUF 4 + #BUFF * + ' LIMIT !
+
+  \ Init the whole thing:
+  EMPTY-BUFFERS  FIRST PREV !  FIRST USE !
+  
+  ." 512 B disk blocks are ready." CR  
+  2 BUFFER USE !
+  3 LOAD 
+  ;
+
+." The word 512B is compiled." CR
+." Please execute it and forget it:" CR
+."   512B FORGET 512B" CR
+512B \ FORGET 512B
+." HELLO"
+
+
+( XXXBUFFER )  \ XXX TMP copy of the original
+
+." Jen mi!" ;S
+
+HEX
+: XXXBUFFER  ( n -- a )
+  USE @ DUP >R
+  BEGIN  0 0 AT [CHAR] - EMIT +BUF 1 0 AT .S
+         0 0 AT [CHAR] | EMIT
+  UNTIL  USE !
+  R @ 0<  IF
+    R 2+
+    R @ 7FFF AND 0 R/W
+  THEN
+  R !  R PREV !
+  R> 2+  ;  DECIMAL
+
+-->
+
+( XXXBLOCK )  \ XXX TMP copy of the original
+
+: XXXBLOCK  ( n -- a )
+OFFSET @ + >R
+PREV @ DUP @
+R - DUP +
+IF ." XXX1"
+  BEGIN +BUF 0=  ." XXX2"
+    IF  ." XXX3"
+       DROP R XXXBUFFER
+       DUP R 1 R/W 2 -
+     THEN  DUP @ R -  DUP + 0=
+  UNTIL  DUP PREV !
+THEN
+R> DROP 2+ ;
+
+  \ vim: filetype=abersoftforth
