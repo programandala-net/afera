@@ -1,9 +1,7 @@
 .( 512 B/BUF )
 
-\ XXX Unfinished. Under development.
-
 \ 512bbuf.fsb
-\ 512-bytes disk blocks for ZX Spectrum Abersoft Forth
+\ 512-byte disk buffers for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -14,22 +12,22 @@
   \ -----------------------------------------------------------
   \ Description
 
-  \ The disk blocks of Abersoft Forth follow the fig-Forth
+  \ The disk buffers of Abersoft Forth follow the fig-Forth
   \ model:
 
   \ B/BUF = 128 bytes per buffer
   \ B/SCR = 8 blocks per screen
   \ #BUFF = 8 disk buffers
 
-  \ But, in order to use a G+DOS disk as mass storage, with
-  \ 512-bytes disk sectors, this is more efficient, and doesn't
+  \ But, in order to use G+DOS disks as mass storage, with
+  \ 512-byte sectors, this is more efficient, and doesn't
   \ increase the space used by the buffers:
 
   \ B/BUF = 512 bytes per buffer
   \ B/SCR = 2 block per screen
   \ #BUFF = 2 disk buffers
 
-  \ In order to make this change, some constants have to be
+  \ In order to make this change, those constants have to be
   \ updated, and two words must be patched: `EMPTY-BUFFERS` and
   \ `+BUF`:
 
@@ -49,32 +47,72 @@
   \ The loop sets the disk block number of every buffer to
   \ 32767 (bit 16, the update bit, is set to 0).
   \
-  \ The problem is the loop step, the length of a disk buffer,
-  \ is hardcoded, not calculated (`B/BUF 4 +`).
+  \ The problem is the loop step, the original length of a disk
+  \ buffer (132) is hardcoded, not calculated (`B/BUF 4 +`).
 
-  \ Also the definition of `+BUF` must be patched, because the
-  \ length of a disk buffer is hardcoded in it:
+  \ Also the definition of `+BUF` must be patched for the same
+  \ reason:
 
   \ : +BUF  ( a1 -- a2 f )
   \   132 DUP LIMIT = IF  DROP FIRST  THEN  DUP PREV @ -  ;
-  
-  \ XXX TMP
-  \ This patch removes the final loop from `EMPTY-BUFFERS`:
-  \ ' ;S CFA ' EMPTY-BUFFERS 10 + !
-  
-  \ -----------------------------------------------------------
-  \ History of this file
 
-  \ 2015-05-08: Start, with the code of the unfinished
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-08: Start, based on the code of the unfinished
   \ module <1024bbuf.fsb>.
   \
-  \ 2015-05-09: Bug fixed. First working version.
-
+  \ 2015-05-09: Bug fixed. First working version.  Now trying
+  \ to make it possible to automatically load other modules
+  \ after this one.
 
 -->
+
+( XXXBUFFER )  \ XXX TMP copy of the original
+
+HEX
+: XXXBUFFER  ( n -- a )
+  USE @ DUP >R
+  BEGIN  
+         0 0 AT [CHAR] - EMIT +BUF 1 0 AT .S
+         0 0 AT [CHAR] | EMIT
+  UNTIL  USE !
+  R @ 0<
+  IF
+    R 2+
+    R @ 7FFF AND 0 R/W
+  THEN
+  R !  R PREV !
+  R> 2+  ;  DECIMAL -->
+
+( XXXBLOCK )  \ XXX TMP copy of the original
+
+: XXXBLOCK  ( n -- a )
+  OFFSET @ + >R
+  PREV @ DUP @  ( [prev] prevblock )
+  R -  \ Compare to the block number saved on return stack.
+
+  \ Ting says `DUP +` discards the left most bit, which is the
+  \ update indicator. I don't understand why this is needed
+  \ _after_ the comparation: the only combination whose result
+  \ is zero is when both blocks are equal.
+
+  DUP +
+  IF ." XXX1" \ n <> previous block
+    BEGIN  +BUF 0=  ." XXX2" 
+      IF  ." XXX3"
+         DROP R XXXBUFFER
+         DUP R 1 R/W 2 -
+       THEN  DUP @ R -  DUP + 0=
+    UNTIL  DUP PREV !
+  THEN  R> DROP 2+ ;  -->
+
 ( 512B )
 
 : 512B  ( -- )
+
+  \ XXX OLD
+  \ B/BUF \ current value, 128, for later
 
   \ Change the constants:
   512 ' B/BUF !  2 ' B/SCR !  2 ' #BUFF !
@@ -89,52 +127,55 @@
 
   \ Init the whole thing:
   EMPTY-BUFFERS  FIRST PREV !  FIRST USE !
+
+  CR ." 2 512-byte buffers installed." CR
+
+  \ After doing the changes, the interpreter can not return to
+  \ this screen (at least without a complex hacking; maybe some
+  \ day...) but a new one can be loaded:
+
   
-  ." 512 B disk blocks are ready." CR  
-  2 BUFFER USE !
-  3 LOAD 
+  \ 5 LOAD
+ 
+  \ XXX OLD
+  \ Update the current disk block 
+  \ ( n ) B/BUF SWAP / BLK @ DUP . SWAP / DUP . CR BLK !
+
+  \ Make `512B` to forget itself:
+  \ XXX It works
+  \   [ LATEST ] LITERAL DUP DP ! PFA LFA @ CURRENT @ !
+  \   ." I forgot myself!"
+
+  \ RP! 
+  \ LOADER
+  \ EMPTY-BUFFERS INIT-DISC LOADT
+  \ 2 XXXBLOCK U. QUIT
   ;
 
-." The word 512B is compiled." CR
-." Please execute it and forget it:" CR
-."   512B FORGET 512B" CR
-512B \ FORGET 512B
-." HELLO"
-
-
-( XXXBUFFER )  \ XXX TMP copy of the original
-
-." Jen mi!" ;S
-
-HEX
-: XXXBUFFER  ( n -- a )
-  USE @ DUP >R
-  BEGIN  0 0 AT [CHAR] - EMIT +BUF 1 0 AT .S
-         0 0 AT [CHAR] | EMIT
-  UNTIL  USE !
-  R @ 0<  IF
-    R 2+
-    R @ 7FFF AND 0 R/W
-  THEN
-  R !  R PREV !
-  R> 2+  ;  DECIMAL
-
 -->
+( Forget the code and quit )
 
-( XXXBLOCK )  \ XXX TMP copy of the original
+  \ BLK @ B/BUF 128 / / BLK !
+  \ ." about to execute " 512B ." done" 
 
-: XXXBLOCK  ( n -- a )
-OFFSET @ + >R
-PREV @ DUP @
-R - DUP +
-IF ." XXX1"
-  BEGIN +BUF 0=  ." XXX2"
-    IF  ." XXX3"
-       DROP R XXXBUFFER
-       DUP R 1 R/W 2 -
-     THEN  DUP @ R -  DUP + 0=
-  UNTIL  DUP PREV !
-THEN
-R> DROP 2+ ;
+  \ XXX FIXME the loader hangs here, why?:
+  \ FORGET 512B ." forgot" CR LOADER QUIT
+
+512 B FORGET 512B ." forgot" CR RP! LOADER QUIT
+
+  \ Unfortunately, `QUIT` is necessary (at least without a
+  \ complex hacking; maybe some day...), so more modules can be
+  \ automatically loaded after this one.
+
+  \ XXX TMP
+  \ QUIT
+
+  \ XXX NEW try
+  \ RP!
+  \ ." hola"  FLUSH
+  \
+  \ XXX FIXME the loader hangs here, why?
+
+  \  LOADER
 
   \ vim: filetype=abersoftforth
