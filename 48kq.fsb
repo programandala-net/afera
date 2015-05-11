@@ -1,0 +1,102 @@
+.( 48K? 128K? )
+
+\ 48kq.fsb
+\ Memory size checks for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ <bank.fsb>
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-07: Start. Code adapted from Lennart Benschop's
+  \ Spectrum FORTH-83.
+  \ 
+  \ 2015-05-07: Code moved to its own file, separated from
+  \ `BANK`.
+  \
+  \ 2015-05-11: New: `CPUK`, `.CPUK` and patch for `.CPU`.
+
+  \ -----------------------------------------------------------
+
+HEX
+
+: 48K?  (  -- f )
+  \ Running on a 48K Spectrum?
+  0 BANK FFFE @ 0 FFFE !
+  1 BANK FFFE @ 1 FFFE !
+  0 BANK FFFE @ >R
+  1 BANK FFFE !  0 BANK FFFE !  \ restore
+  R>  ;
+
+: 128K?  (  -- f )  48K? 0=  ;
+
+DECIMAL  -->
+
+( CPUK .CPUK )
+
+: CPUK  ( -- n )
+  \ KiB of the machine.
+  \ Named after Abersoft Forth's `.CPU`
+  48 128K? 80 * + ;
+
+: .CPUK  ( -- )
+
+  \ Print the KiB of the CPU.
+  \ Named after Abersoft Forth's `.CPU`
+
+  \ First version:
+  
+  \ 48K? IF  ." 48K" ELSE  ." 128K"  THEN  ;
+
+  \ Second version:
+  \ 3 bytes shorter than the first version,
+  \ but prints an space:
+
+  \ 48 128K? 80 * + . ." K"  ;
+
+  \ Third version:
+  \ Still 1 byte shorter, and no space:
+  
+  \ 48 128K? 80 * + 2 .R ." K"  ;
+
+  \ Version 4th: factorized, modern units:
+  SPACE CPUK . ." KiB"  ;
+
+  \ The word `.CPU` prints "48K SPECTRUM", so it has to be
+  \ patched. The space of the patch is exacly the same than the
+  \ original code. The patched text is stored letter by letter
+  \ in order to make this module independent from the strings
+  \ module.
+
+HEX
+
+0B 75D6 C!  \ string length
+
+  \ String "ZX Spectrum":
+5A 75D7 C!  58 75D8 C!  BL 75D9 C!  53 75DA C!  70 75DB C!
+65 75DC C!  63 75DD C!  74 75DE C!  72 75DF C!  75 75E0 C!
+6D 75E1 C!
+
+  \ And at the end call `.CPUK`:
+  ' .CPUK CFA 75E2 !
+
+  \ Also `ABORT` needs a little patch:
+  \ change the order of `.CPU` and `CR`:
+  ' .CPU CFA 6D62 !  ' CR CFA 6D64 !
+
+  \ A system word has been patched with new words, so the
+  \ dictionary must be protected at this point:
+HERE FENCE !
+
+DECIMAL
+
+  \ vim: filetype=abersoftforth
