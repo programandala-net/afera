@@ -1,3 +1,5 @@
+.( Renamings)
+
 \ renamings.fsb
 \ Renaming of some words of ZX Spectrum Abersoft Forth
 
@@ -21,12 +23,6 @@
 
   \ -----------------------------------------------------------
 
-( Load)
-
-: TASK ;
-
-2 10 THRU
-
 ( MON>BYE )
 
 : MON>BYE  ( -- )
@@ -35,7 +31,9 @@
   ' MON NFA 1+  [CHAR] B OVER C!
                 [CHAR] Y OVER 1+ C!
                 [CHAR] E 128 + SWAP 2+ C!
-  ;  MON>BYE
+  ;  MON>BYE  FORGET MON>BYE
+
+-->
 
 ( VLIST>WORDS )
 
@@ -48,7 +46,9 @@
                   [CHAR] R OVER 2+ C!
                   [CHAR] D OVER 3 + C!
                   [CHAR] S 128 + SWAP 4 + C!
-  ;  VLIST>WORDS
+  ;  VLIST>WORDS  FORGET VLIST>WORDS
+
+-->
 
 ( -DUP>?DUP )
 
@@ -56,9 +56,7 @@
   \ Rename `-DUP` to `?DUP`:
   [ -FIND -DUP ] 0= ?EXIT
   ' -DUP NFA 1+  [CHAR] ? SWAP C!
-  ;  -DUP>?DUP
+  ;  -DUP>?DUP  FORGET -DUP>?DUP
 
-  FORGET TASK
- 
   \ vim: filetype=abersoftforth
 

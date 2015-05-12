@@ -7,31 +7,60 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-\
-\ Requirements:
-\ fsb:
-\   (http://programandala.net/en.program.fsb.html)
-\ AF extend
-\   (http://programandala.net/en.program.af_extend.html)
-\ Pleonasmo AF
-\   http://programandala.net/en.program.pleonasmo.html
-\
-\ 2015-02-13: Start.
+  \ Requirements:
+
+  \ fsb:
+  \   (http://programandala.net/en.program.fsb.html)
+  \ AF extend
+  \   (http://programandala.net/en.program.af_extend.html)
+  \ Pleonasmo AF
+  \   http://programandala.net/en.program.pleonasmo.html
+
+  \ History:
+
+  \ 2015-02-13: Start.
+  \ 2015-04-03: Some words renamed, after the G+DOS module.
+  \ 2015-04-06: Constants with DOS routines.
 
 ( Init )
 
 CR ." Loading +3DOS extensions" CR
 
+FORTH DEFINITIONS
+
   \ RAM/ROM switching system variable:
-CONSTANT SYS-BANKM
+23388 CONSTANT SYS-BANKM
   \ Port for horizontal ROM switch and RAM paging:
-CONSTANT BANK1-PORT
+32765 CONSTANT BANK1-PORT
+
+VOCABULARY DOS IMMEDIATE
+DOS DEFINITIONS DECIMAL
+
+2 10 THRU
+RUNT
+
+( DOS routines )
+
+268 CONSTANT DOS-ABANDON          298 CONSTANT DOS-BOOT
+280 CONSTANT DOS-BYTE-READ        283 CONSTANT DOS-BYTE-WRITE
+286 CONSTANT DOS-CATALOG          265 CONSTANT DOS-CLOSE
+292 CONSTANT DOS-DELETE           322 CONSTANT DOS-FLUSH
+289 CONSTANT DOS-FREE-SPACE       313 CONSTANT DOS-GET-EOF
+307 CONSTANT DOS-GET-POSITION     256 CONSTANT DOS-INITIALISE
+340 CONSTANT DOS-MAP-B            262 CONSTANT DOS-OPEN
+331 CONSTANT DOS-OPEN-DRIVE       274 CONSTANT DOS-READ
+271 CONSTANT DOS-REF-HEAD         337 CONSTANT DOS-REF-XDPB
+295 CONSTANT DOS-RENAME           325 CONSTANT DOS-SET-ACCESS
+328 CONSTANT DOS-SET-ATTRIBUTES   301 CONSTANT DOS-SET-DRIVE
+334 CONSTANT DOS-SET-MESSAGE      310 CONSTANT DOS-SET-POSITION
+304 CONSTANT DOS-SET-USER         259 CONSTANT DOS-VERSION
+277 CONSTANT DOS-WRITE 
 
 ( DOS calling routine )
 
 LABEL DOS.IX  JPIX
 
-LABEL DOS
+LABEL DO-DOS
 
   \ Adapted from the ZX Spectrum +3 manual.
 
@@ -42,13 +71,17 @@ LABEL DOS
   \ Stack must be somewhere in central 32K (conforming to DOS
   \ requirements), so saved AF and BC will not be switched out.
 
-  AF PUSH  BC PUSH  SYS-BANKM LDA
+  AF PUSH  BC PUSH
+  SYS-BANKM LDA
   7 OR#  \ want RAM page 7
   4 A RES  \ and DOS ROM
   BANK1-PORT BC LDP#
-  DI  SYS-BANKM STA  \ keep system variables up to date
-  A OUTBC  EI  \ RAM page 7 to top and DOS ROM
-  BC POP  AF POP
+
+  \ Keep system variables up to date,
+  \ RAM page 7 to top and DOS ROM:
+  DI  SYS-BANKM STA  A OUTBC  EI
+
+  EI  BC POP  AF POP
   DOS.IX CALL
   AF PUSH  BC PUSH
   -->
@@ -56,37 +89,38 @@ LABEL DOS
 ( DOS calling routine )
 
   SYS-BANKM LDA
-  F8 AND  \ reset bits for page 0
-  4 A SET
+  F8 AND  \ reset bits for RAM page 0
+  4 A SET  \ no DOS ROM
   BANK1-PORT BC LDP#
-  \ switch back to RAM page 0 and 48 BASIC
+
+  \ Keep system variables up to date,
+  \ RAM page 0 to top and 48 BASIC ROM:
   DI  SYS-BANKM STA  A OUTBC  EI
+
   BC POP  AF POP  RET
   END-CODE
 
-( Filenames )
+( Filenames and file access methods )
 
 16 CONSTANT /FILENAME \ max lenght
 
-0 VARIABLE FILENAME /FILENAME 2- ALLOT \ filename area
+/FILENAME BUFFER: FILENAME1  /FILENAME BUFFER: FILENAME2
 
-: -FILENAME ( -- )
-  \ Init the filename area
-  FILENAME /FILENAME 255 FILL ;
+FILENAME1 VALUE FILENAME  \ pointer to the current filename
 
-: FILENAME! ( ca len -- )
-  \ Store a filename into the filename area
-  -FILENAME /FILENAME MAX FILENAME SWAP CMOVE ;
+: -FILENAME  ( -- )
+  \ Init the current filename area.
+  FILENAME /FILENAME 255 FILL  ;
 
--->
-
-( File access methods )
+: FILENAME!  ( ca len -- )
+  \ Store a filename into a the current filename area.
+  -FILENAME /FILENAME MIN FILENAME SWAP CMOVE  ;
 
 1 CONSTANT R/O  2 CONSTANT W/O  3 CONSTANT R/W  5 CONSTANT S/R
 
-: BIN ( fam -- fam ) NOOP ;
+: BIN  ( fam -- fam ) NOOP  ;
 
-CODE HEADED ( fam -- fam' )
+CODE HEADED  ( fam -- fam' )
   HL POP  7 L SET HL PUSH 
   END-CODE
 
@@ -94,42 +128,97 @@ CODE HEADED ( fam -- fam' )
 
 ( Save a file)
 
-CODE (SAVE-FILE) ( -- ior )
+CODE PAGE-WRITE-FILE  ( -- ior )
   \ XXX TODO
 END-CODE --> 
 
 ( Load a file)
 
-CODE (LOAD-FILE) ( -- ior )
-  \ XXX TODO
+CODE PAGE-READ-FILE  ( -- ior )
+
+  HL POP  L A LD  \ bank
+  SAVE_IP CALL
+  A C LD  HL POP
+  L B LD \  fid
+  DE POP \ len
+  HL POP \ ca
+  DE PUSH  \ len
+  DOS-READ IX LDP#
+
+  DO-DOS CALL
+  HL POP  \ len
+  RESTORE_IP CALL
+  AF PUSH
+
 END-CODE --> 
 
 ( Delete a file)
 
-CODE (DELETE-FILE) ( -- ior )
+CODE (DELETE-FILE)  ( -- ior )
   \ XXX TODO
 END-CODE -->
+
+( User interface: Forth RAM-disk )
+
+: SAVED  ( ca len -- )
+  \ Save the Forth RAM-disk to disk
+  \ (word named after Abersoft Forth's `SAVET`.)
+  \ ca len = filename
+  \ XXX TODO
+  (>DISK) ?DOS-ERROR  ;
+
+: LOADD  ( ca len -- )
+  \ Load a Forth RAM-disk from disk.
+  \ (word named after Abersoft Forth's `LOADT`.)
+  \ ca len = filename
+  \ XXX TODO
+  (DISK>MEM) ?DOS-ERROR  ;
+
+: RUND  ( ca len -- )
+
+  \ Read a new RAM-disk from disk and load its fist block.
+  
+  \ ca len = filename
+
+  \ `DEPTH` is checked to prevent a RAM-disk from leaving
+  \ something on the stack, and also to make it possible to
+  \ load individual files of the library, when the ZX Spectrum
+  \ emulator automatically rewinds the tape file (like Fuse),
+  \ what causes the same file to be loaded in an endless loop.
+  \
+  \ `RP!` is neded before `LOAD` because every `LOAD` saves the
+  \ contents of `BLK` `IN` into the return stack, beside its
+  \ own return address; chained loading of several RAM-disks
+  \ would fill it.
+  \
+  \ `QUIT` is needed at the end because otherwise the `LOAD`
+  \ that loaded the block of `RUND` would continue to interpret
+  \ after `RUND`, but the contents of the block would had
+  \ already been changed.
+
+  DEPTH IF  BLK @ IF  ." Stack not empty " 20 ERROR  THEN  THEN
+  FLUSH INIT-DISC LOADD RP! 1 LOAD  ." ok" QUIT  ;
 
 ( User interface)
 
  \ XXX TODO
 
-: SAVE-FILE ( ca1 len1 ca2 len2 -- )
+: WRITE-FILE  ( ca1 len1 ca2 len2 -- )
 
   \ Save a file
 
   \ ca1 len1 = memory region to save
   \ ca2 len2 = filename
 
-  >UFIA (SAVE-FILE) ?DOS-ERROR ;
+  \ XXX TODO
+  (>DISK) ?DOS-ERROR  ;
 
-: SAVE-BLOCKS-FILE ( ca len -- )
-  BLOCKS>UFIA (SAVE-FILE) ?DOS-ERROR ;
+: DELETE-FILE  ( ca len -- )
+  \ XXX TODO
+  (DELETE-FILE) ?DOS-ERROR  ;
 
-: LOAD-BLOCKS-FILE ( ca len -- )
-  BLOCKS>UFIA (LOAD-FILE) ?DOS-ERROR ;
+: RENAME-FILE  ( ca1 len1 ca2 len2 -- )
+  \ XXX TODO
+  (RENAME-FILE) ?DOS-ERROR  ;
 
-: DELETE-FILE ( ca len -- )
-  (DELETE-FILE) ?DOS-ERROR ;
-
-
+  \ vim: filetype=abersoftforth

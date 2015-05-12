@@ -1,0 +1,100 @@
+\ 2r.fsb
+\ `2R`, `2>R` and `2R>` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ High level version adapted from lina:
+\ Copyright (c) 2000-2004 Albert van der Horst, The Netherlands
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: First version written in the main file of the
+  \ library.
+  \
+  \ 2015-04-14: Code moved to <rstack.fsb> with all return
+  \ stack words.
+  \
+  \ 2015-05-10: Code moved to this file and rewritten in Z80.
+
+  \ -----------------------------------------------------------
+
+HEX
+5E68 CONSTANT RP  \ address of the return stack pointer
+DECIMAL
+
+-->
+
+( 2R )
+
+CREATE 2R  ( -- d ) ( R: d -- d )
+
+  HEX
+
+  D9 C,               \ exx ; preserve bc
+  2A C, RP ,          \ ld hl,(RP) ; return stack pointer
+  4E C, 23 C,         \ ld c,(hl) / inc hl
+  46 C, 23 C,         \ ld b,(hl) / inc hl
+  5E C, 23 C,         \ ld e,(hl) / inc hl
+  56 C, 23 C,         \ ld d,(hl) / inc hl
+  D5 C,               \ push de ; high part
+  C5 C,               \ push bc ; low part
+  D9 C,               \ exx ; restore bc
+  C3 C, NEXT ,        \ jp NEXT
+
+  SMUDGE DECIMAL -->
+
+  \ High level version:
+  \ : 2R  ( -- d ) ( R: d -- d )  RP @ 2@  ;
+
+( 2>R )
+
+CREATE 2>R  ( d -- ) ( R: -- d )
+
+  HEX
+
+  D9 C,               \ exx ; preserve bc
+  C1 C, D1 C,         \ pop bc / pop de
+  \ bc = low part, de = high part
+  2A C, RP ,          \ ld hl,(RP) ; return stack pointer
+  2B C, 70 02 + C,    \ dec hl / ld (hl),d
+  2B C, 70 03 + C,    \ dec hl / ld (hl),e
+  2B C, 70 00 + C,    \ dec hl / ld (hl),b
+  2B C, 70 01 + C,    \ dec hl / ld (hl),c
+  22 C, RP ,          \ ld (RP),hl ; update the pointer
+  D9 C,               \ exx ; restore bc
+  C3 C, NEXT ,        \ jp NEXT
+
+  SMUDGE DECIMAL -->
+
+  \ High level version:
+  \ : 2>R  ( d -- ) ( R: -- d )
+  \   COMPILE SWAP COMPILE >R COMPILE >R  ; IMMEDIATE
+
+( 2R> )
+
+CREATE 2R>  ( -- d ) ( R: d -- )
+
+  HEX
+
+  D9 C,               \ exx ; preserve bc
+  2A C, RP ,          \ ld hl,(RP) ; return stack pointer
+  4E C, 23 C,         \ ld c,(hl) / inc hl
+  46 C, 23 C,         \ ld b,(hl) / inc hl
+  5E C, 23 C,         \ ld e,(hl) / inc hl
+  56 C, 23 C,         \ ld d,(hl) / inc hl
+  D5 C,               \ push de ; high part
+  C5 C,               \ push bc ; low part
+  22 C, RP ,          \ ld (RP),hl ; update the pointer
+  D9 C,               \ exx ; restore bc
+  C3 C, NEXT ,        \ jp NEXT
+
+  SMUDGE DECIMAL
+
+  \ High level version:
+  \ : 2R>  ( -- d ) ( R: d -- )
+  \  COMPILE R>  COMPILE R> COMPILE SWAP  ;  IMMEDIATE

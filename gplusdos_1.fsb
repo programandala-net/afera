@@ -1,3 +1,5 @@
+.( G+DOS support -- part 1)
+
 \ gplusdos_1.fsb
 \ G+DOS support for ZX Spectrum Abersoft Forth (part 1)
 
@@ -36,29 +38,29 @@
   \
   \ 2015-05-08: Renamed to <gplusdos_1.fsb>, because of an
   \ issue with Makefile.
-
--->
-
-.( G+DOS support -- part 1)
+  \
+  \ 2015-05-12: Improvement: `DEVICE` is not a variable to
+  \ update UFIA with anymore, but the address of the
+  \ correspondent byte in UFIA, faster and shorter.
 
 FORTH DEFINITIONS DECIMAL
 
 10 CONSTANT /FILENAME  \ max filename length
-  \ XXX OLD -- now `DRIVE@` and `DRIVE!`
-  \ 1 VARIABLE DRIVE \ 1 or 2
-CHAR d VARIABLE DEVICE \ "d" or "D"
 
-3 11 THRU
+2 6 THRU
 
 ( UFIA: User File Information Area)
 
-24 DUP CONSTANT /UFIA  BUFFER: UFIA
-UFIA /UFIA ERASE
+24 CONSTANT /UFIA  /UFIA BUFFER: UFIA  UFIA /UFIA ERASE
+
+  \ Note: The original field names are used, except `DEVICE`,
+  \ whose original name is "LSTR1".
 
 UFIA      CONSTANT DSTR1 \ drive: 1 or 2
 UFIA 1+   CONSTANT FSTR1 \ program number
-UFIA 2+   CONSTANT SSTR1 \ stream number
-UFIA 3 +  CONSTANT LSTR1 \ device: "D" or "d"
+  \ XXX OLD -- not needed
+  \ UFIA 2+   CONSTANT SSTR1 \ stream number
+UFIA 3 +  CONSTANT DEVICE \ device: "D" or "d"
 UFIA 4 +  CONSTANT NSTR1 \ directory description
 UFIA 5 +  CONSTANT NSTR2 \ file name
 UFIA 15 + CONSTANT HD00  \ file type
@@ -67,6 +69,13 @@ UFIA 18 + CONSTANT HD0D  \ file start address
   \ XXX OLD -- not needed
   \ UFIA 20 + CONSTANT HD0F  \ BASIC length without variables
   \ UFIA 22 + CONSTANT HD11  \ BASIC autorun line
+
+CHAR d DEVICE C! \ "d" or "D"
+
+  \ These variables hold a copy of the HD0B and HD0D UFIA
+  \ fields. They are used by `(<DISK)`.
+0 VARIABLE FILE-LENGTH
+0 VARIABLE FILE-ADDRESS
 
 ( File types, directory descriptions and hook codes)
 
@@ -150,20 +159,22 @@ CODE DRIVE!  ( n -- )
 ( UFIA manipulation)
 
 : -FILENAME  ( -- )
-  \ Blank the filename area.
+  \ Blank the filename in UFIA.
   NSTR2 /FILENAME BLANKS  ;
 
 : FILENAME!  ( ca len -- )
-  \ Store a filename into the NSTR2 field of UFIA.
+  \ Store a filename into UFIA.
   \ ca len = filename
   -FILENAME /FILENAME MIN NSTR2 SWAP CMOVE  ;
 
 : >UFIA  ( a1 len1 ca2 len2 -- )
-  \ Set the User File Information Area
+  \ Set the UFIA.
   \ a1 len1   = memory region
   \ ca2 len2  = filename
   3 HD00 C! 4 NSTR1 C! \ code filetype and dir description
-  FILENAME!  HD0B !  HD0D !
-  DEVICE @ LSTR1 C!  DRIVE@ DSTR1 C!  ;
+  FILENAME!
+  DUP HD0B ! FILE-LENGTH !
+  DUP HD0D ! FILE-ADDRESS !
+  DRIVE@ DSTR1 C!  ;
 
   \ vim: filetype=abersoftforth

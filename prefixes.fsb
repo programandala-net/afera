@@ -1,9 +1,13 @@
 \ prefixes.fsb
-\ Number prefixes for Abersoft Forth
+\ Number prefixes for ZX Spectrum Abersoft Forth
 
-\ Original code taken from lina:
-\ Copyright (c) 2000-2004 Albert van der Horst,
-\ The Netherlands
+\ Original code from:
+\   lina
+\   Copyright (c) 2000-2004 Albert van der Horst,
+\   The Netherlands
+\   Published under GPL
+
+\ This file is published under GPL
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -12,33 +16,67 @@
   \ History of this file:
   \
   \ 2015-05-01: Code copied from lina.
+  \ 2015-05-07: New: Prefix "0x" for hex.
 
 .( Number prefixes )
 
-
 HEX
 
-: TOH  ( c -- n )
+: C>HEX  ( c -- n )
   \ Convert a character to its hexadecimal value.
   30 - DUP 9 > IF 7 - THEN  ;
 
-  \ The fig-Forth `WIDTH` trick:
+DECIMAL
+
+( " character prefix )
+
+HEX  1 WIDTH !
+
+: ".
+  \ Leave ASCII character; example: "A leaves 41H
+  HERE 2 + C@ [COMPILE] LITERAL  ; IMMEDIATE
+
+1F WIDTH ! DECIMAL
+
+( 0x hex prefix )
 
 1 WIDTH !
 
-: ".  \ Leave ASCII character; example: "A leaves 41H
-  HERE 2 + C@ [COMPILE] LITERAL  ; IMMEDIATE
+: $..
+  \ Leave hex number; example: $0A leaves 0AH
+  HERE 2 + C@ C>HEX 10 * HERE 3 + C@ C>HEX + [COMPILE] LITERAL
+  ; IMMEDIATE
+
+: $....
+  \ Leave 16-bit hex number; example: $0AFF leaves 0AFFH
+  0 HERE 6 + HERE 2 + DO 10 * I C@ C>HEX + LOOP
+  [COMPILE] LITERAL
+  ; IMMEDIATE
+
+1F WIDTH ! DECIMAL
+
+( ^ control prefix )
+
+HEX  1 WIDTH !
 
 : ^.  \ Leave control character; example: ^A leaves 01H
   HERE 2 + C@ 1F AND [COMPILE] LITERAL  ; IMMEDIATE
 
-: $..  \ Leave hex number; example: $0A leaves 0AH
-  HERE 2 + C@ TOH 10 * HERE 3 + C@ TOH + [COMPILE] LITERAL
+1F WIDTH ! DECIMAL
+
+( 0x hex prefix )
+
+HEX  2 WIDTH !
+
+: 0x..  \ Leave hex number; example: 0x0A leaves 0AH
+  HERE 3 + C@ C>HEX 10 * HERE 4 + C@ C>HEX + [COMPILE] LITERAL
   ; IMMEDIATE
 
-: $.... \ Leave 16-bit hex number
-   0 HERE 6 + HERE 2 + DO 10 * I C@ TOH + LOOP
-   [COMPILE] LITERAL
-   ; IMMEDIATE
+: 0x....  \ Leave hex number; example: 0x0AFF leaves 0AFFH
+  0 HERE 7 + HERE 3 + DO 10 * I C@ C>HEX + LOOP
+  [COMPILE] LITERAL
+  ; IMMEDIATE
 
 1F WIDTH ! DECIMAL
+
+  \ vim: filetype=abersoftforth

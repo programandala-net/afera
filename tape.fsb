@@ -1,3 +1,5 @@
+.( Tape extensions )
+
 \ tape.fsb
 \ Tape extensions for ZX Spectrum Abersoft Forth.
 
@@ -8,7 +10,31 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ Description
+
+  \ Abersoft Forth only includes two tape words: `LOADT` and
+  \ `SAVET`, that load and save its 11-KiB RAM-disk with the
+  \ name "DISC".
+  \
+  \ No word is provided to load or save any ordinary code file,
+  \ any name and size.  Loading files is especially useful in
+  \ order to include graphics during the compilation of a Forth
+  \ program.
+  \
+  \ This module defines `>TAPE` ("to tape") and `<TAPE` ("from
+  \ tape"). The approach used was to patch the tape load header
+  \ of Abersoft Forth, passed to the ROM routine, and restore
+  \ its default values after the operation. Two more words,
+  \ `/LOADT` and `/SAVET`, let improved manipulation of the RAM
+  \ disk.
+  
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ <strings.fsb>
+
+  \ -----------------------------------------------------------
+  \ History
 
   \ 2015-03-26: Start.
   \
@@ -18,6 +44,17 @@
   \
   \ 2015-04-30: `'BLOCK` instead of `BLOCK>A`, after the change
   \ in the main file of the library.
+  \
+  \ 2015-05-03: Simpler word names: no "MEM" affix.
+  \
+  \ 2015-05-08: Some words are renamed.
+  \
+  \ 2015-05-10: `INCLUDET` is removed; not useful with tapes.
+  \ `'SCR` instead of `'BLOCK`, after the change in the main
+  \ file of the library.
+  \
+  \ 2015-05-12: Change: `'SCR` renamed to `DISC-SCR`, after the
+  \ changes in the library.
 
   \ -----------------------------------------------------------
   \ Documentation
@@ -51,7 +88,7 @@
   \ 0 (TAPE)
 
   \ The load header (pointed by IX before calling the ROM
-  \ routine) is at address 30182 (0x75E6).  Its containts are:
+  \ routine) is at address 30182 (0x75E6).  Its contents are:
 
   \ +00 : 3 (identifier of code file type)
   \ +01 : "DISC      " = 10-char filename, padded with spaces
@@ -61,11 +98,9 @@
 
   \ The save header (pointed by the ROM routine, by adding 0x11
   \ to IX) is right after the save header, at address 30199
-  \ (0x75F7). It doe
+  \ (0x75F7).
 
   \ -----------------------------------------------------------
-
-.( Tape extensions )
 
 2 6 THRU
 
@@ -88,7 +123,7 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
 
 ( Tools )
 
-  \ Address of the file length
+  \ Address of the file start address
    \ in the code of the word `(TAPE)`:
 30233 CONSTANT (TAPE)-START
 
@@ -133,10 +168,10 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   \   SAVET-HEADER /T-HEADER DUMP
   \   CR ." (TAPE) start: " (TAPE)-START @ U.  ;
 
-( TAPE>MEM MEM>TAPE )
+( <TAPE >TAPE )
 
-: TAPE>MEM  ( a1 len1 a2 len2 -- )
-  \ Load a file from tape into memory.
+: <TAPE  ( a1 len1 a2 len2 -- )
+  \ Load a file from tape.
   \ a1      = destination address
   \ len1    = length (or zero if unspecified)
   \ a2 len2 = filename (len2 is zero if unspecified) 
@@ -144,7 +179,7 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   IF  T-FILENAME!  ELSE  2DROP ANY-T-FILENAME  THEN
   T-LENGTH! T-START!  1 (TAPE)  T-RESTORE   ;
 
-: MEM>TAPE  ( a1 len1 a2 len2 -- )
+: >TAPE  ( a1 len1 a2 len2 -- )
   \ Save a memory region into a tape file.
   \ a1      = address of the code
   \ len1    = length of the code
@@ -154,26 +189,17 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
 ( /LOADT /SAVET )
 
 : /LOADT  ( n -- )
-  \ Load the Forth RAM-disc from tape, at address of block n.
+  \ Load the Forth RAM-disk from tape, at address of screen n.
   \ Warning: the file will be loaded, no matter its length.
-  \ n = first block (0..10)
-  FLUSH 'BLOCK 0 S" DISC" TAPE>MEM  ;
+  \ n = first screen
+  EMPTY-BUFFERS DISC-SCR 0 S" DISC" <TAPE  ;
 
 : /SAVET  ( n1 n2 -- )
-  \ Save the Forth RAM-disc to tape, from block n1 to block n2.
-  \ n1 = first block (0..10)
-  \ n2 = last block (0..10)
-  FLUSH 1+ 'BLOCK SWAP 'BLOCK DUP ROT SWAP -
-  S" DISC" MEM>TAPE  ;
-
-: INCLUDET  ( -- )
-  \ Load a RAM-disc from tape, at address of block 2,
-  \ and loads its first block.
-  \ This word is intended to be used in block 1 in order
-  \ to load all modules of an application.
-  \ Warning: the file will be loaded, no matter its length.
-  \ XXX TODO test
-  \ XXX Note: not very useful with tapes.
-  2 /LOADT 3 LOAD  ;
+  \ Save the Forth RAM-disk to tape,
+  \ from screen n1 to screen n2.
+  \ n1 = first screen
+  \ n2 = last screen
+  FLUSH 1+ DISC-SCR SWAP DISC-SCR
+  DUP ROT SWAP -  S" DISC" >TAPE  ;
 
   \ vim: filetype=abersoftforth

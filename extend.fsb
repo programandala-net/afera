@@ -95,6 +95,18 @@ HI LO - 1+ CONSTANT /DISC
   ' NOOP CFA ' COLD 0A + !  ' FIRST CFA ' COLD 0C + !
 
   \ ............................................
+  \ Safer `MON`
+
+  \ The word `MON` does nothing when the address 0x5CB0
+  \ contains a value other than 0. It seems an undocumented way
+  \ to deactivate the exit to BASIC.  0x5CB0 is an unused
+  \ system variable in ZX Spectrum, except the +3 model, where
+  \ it's NMIADD.
+
+  \ Make `MON` to return to BASIC, without checking NMIADD:
+  763D ' MON CFA !
+
+  \ ............................................
   \ Bugs not fixed yet
 
   \ `MESSAGE` does not work with odd negative numbers: they
@@ -106,9 +118,14 @@ HI LO - 1+ CONSTANT /DISC
   \ seems to be in Abersoft Forth's `U/MOD`, written in
   \ assembler.
   \
+  \ Sometimes the delete key causes invisible corruption of the
+  \ command line, and words written after it are not
+  \ recognized.
+  \
   \ `INK` has a bug that causes `PLOT` to use 0 instead the
   \ proper attribute in most cases. The alternative definition
   \ provided in <color.fsb> works fine.
+
                                                     DECIMAL -->
 ( Patches )
                                                             HEX
@@ -172,9 +189,9 @@ B/SCR B/BUF * CONSTANT /SCR  \ bytes per screen (1024)
   \ ." Patching... " ' BUF* CFA 7223 ! ." Patched" CR
   ' BUF* CFA 7223 !  B/SCR BLK +!
 
+  \ XXX OLD
   \ Because of the patch, the current screen would be
   \ interpreted twice, so this is needed:
-
   \ B/SCR BLK +! \ this screen is loaded twice (partially)
   \ This screen is #3 after the patch
   \ 3 LOAD  \ this screen is loaded forever
@@ -222,14 +239,15 @@ CREATE 2-  ( n1 -- n2 )
   \
   \ The new code can not be compiled directly into the
   \ destination address, by pointing `DP` to the definition to
-  \ be patched, because `WORD` does `HERE 34 SPACES`, what
-  \ would corrupt the dictionary. That's why the code is
-  \ compiled at `HERE` and then moved. Beside, some of the
-  \ words internally used during the patching (`WORD` and
-  \ others) call `1+` or `2+`.  That's why the original names
-  \ can be "ticked" only before patching the original code; and
-  \ the new code, including the new cfa, must overwrite the old
-  \ definition in one single operation, with `CMOVE`.
+  \ be patched, because `WORD` uses `HERE` as buffer (and first
+  \ it does `HERE 34 SPACES`), what would corrupt the
+  \ dictionary.  That's why the code is compiled at `HERE` and
+  \ then moved.  Beside, some of the words internally used
+  \ during the patching (`WORD` and others) call `1+` or `2+`.
+  \ That's why the original names can be "ticked" only before
+  \ patching the original code; and the new code, including the
+  \ new cfa, must overwrite the old definition in one single
+  \ operation, with `CMOVE`.
 
 HERE ' 1+  ( a pfa )
   DUP , \ the new cfa points to the code at pfa:
@@ -328,7 +346,7 @@ CREATE TUCK  ( n1 n2 -- n2 n1 n2 )
   /SCR * DUP >R /DISC SWAP - LO R> + SWAP BLANKS  ;
 
   \ XXX OLD
-  \ : 48K'SCR  ( n -- a )
+  \ : 48KDISC-SCR  ( n -- a )
   \   \ Address of screen n in the Forth RAM-disk,
   \   \ for the Spectrum 48K.
   \   \ n = 1..11
@@ -336,7 +354,7 @@ CREATE TUCK  ( n1 n2 -- n2 n1 n2 )
 
 11 CONSTANT SCR/DR  \ screens per RAM-disk
 
-: 'SCR  ( n -- a ) 
+: DISC-SCR  ( n -- a ) 
   \ Address of screen n in the Forth RAM-disk.
   \ n = 1..11 for 48K
   \     1..16 for 128K (with the <16kramdisks.fsb> module)
@@ -352,17 +370,17 @@ CREATE TUCK  ( n1 n2 -- n2 n1 n2 )
   \ ' +BUFXXX CFA 29131 ! \ patch BLOCK
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
   
   \ 1985, 1986, 1987:
+  \ 
+  \ Some words written and compiled to extend Abersoft Forth:
+  \ `\`, `INVERT`, `>=`, `<=`, `<>`, `SGN` (after the manual),
+  \ `NOR`, `NAND`, `NXOR`, `DEPTH`, `PICK`, `DRAWL`, `RDRAW`,
+  \ `RDRAWL`...
   \
-  \ `\`, `INVERT`, `>=`, `<=`, `<>`, `SGN` (from the Abersoft
-  \ Forth manual), `NOR`, `NAND`, `NXOR`, `DEPTH`, `PICK`,
-  \ `DRAWL`, `RDRAW`, `RDRAWL`.
-  \
-  \ 2015-03:
-  \
-  \ `CHAR`, `[CHAR]`, `PARSE-TEXT`, `PARSE-NAME`, `SLIT`, `S,`,
+  \ 2015-03: Start of the Afera library. New words: `CHAR`,
+  \ `[CHAR]`, `PARSE-TEXT`, `PARSE-NAME`, `SLIT`, `S,`,
   \ `SLITERAL`, `.(`, `(S)`, `S"`, `S'`, `TLOAD`, `RUNT`,
   \ `BOUNDS`, `NIP`, `[DEFINED]`, `BYE`, `UDG!`, `AKEY`,
   \ `THRU`, `+LOAD` (after Gforth), `+THRU` (after Gforth),
@@ -517,9 +535,14 @@ CREATE TUCK  ( n1 n2 -- n2 n1 n2 )
   \ 2015-05-11: `SGN`, `RECURSE` and `?EXIT` are moved to their
   \ own files.
   \
-  \ 2015-05-12: `<>`, is moved to its own file and rewritten in
-  \ Z80. `?(` is moved to drafts, because it can not work yet,
-  \ without `EVALUATE` or other method.
+  \ 2015-05-12:
+  \
+  \ `<>`, is moved to its own file and rewritten in Z80. `?(`
+  \ is moved to drafts, because it can not work yet, without
+  \ `EVALUATE` or other method.
+  \
+  \ Change: `'SCR` renamed to `DISC-SCR`, after `DISC-BLOCK` in
+  \ the <16kramdisks.fsb> module.
 
   \ -----------------------------------------------------------
 

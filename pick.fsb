@@ -1,0 +1,39 @@
+\ pick.fsb
+\ `PICK` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 1987,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 1987-01-09: Code written.
+  \ 2015-03: Code included in the main file of the library.
+  \ 2015-04-16: Code rewritten in Z80.
+  \ 2015-05-02: Code moved to this file.
+
+-->
+
+.( PICK )
+ 
+CREATE PICK  ( u -- x )
+
+  \ 1+ 2 * SP@ + @
+
+  \ Adapted from the `PICK` written on 1985-05-07 by Edmund
+  \ Ramm for the Z80 fig-Forth implementation written by Dennis
+  \ L.  Wilson (1980-09-07).
+ 
+  HEX
+  E1 C, 29 C,          \ pop hl / add hl,hl
+  39 C,                \ add hl,sp  ; offset into stack
+  5E C, 23 C, 56 C,    \ ld e,(hl) / inc hl / ld d,(hl)
+  EB C, C3 C, PUSHHL , \ ex de, hl / jp PUSHHL
+  SMUDGE
+  DECIMAL
+  
+  \ vim: filetype=abersoftforth
+

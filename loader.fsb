@@ -1,0 +1,85 @@
+--> \ loader.fsb
+
+\ Part of a
+\ tape source loader for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This module defines an executes a tape source loader. It is
+  \ intended to make it easy to load sources of any length, in
+  \ other words, TAP files that contain any number of Forth
+  \ RAM-disk files with sources to be compiled in certain
+  \ order.
+  \
+  \ The loader gets every RAM-disk file from tape and loads its
+  \ screen #1.  The process repeats until the `LOADED?`
+  \ variable is not zero. The modules <loaded.fsb> or
+  \ <loaded_execute.fsb> can be used to stop the process.
+  \
+  \ In some cases <loaded.fsb> or <loaded_execute.fsb> can not
+  \ be used. For example, when the RAM-disk is used as storage
+  \ for binary data loaded from tape at the end of the sources.
+  \ Then the application itself must stop the loader at the end
+  \ of the compilation process: Setting `LOADED?` to 1 (stop)
+  \ or -1 (stop and execute the latest word defined) is enough;
+  \ an alternative method is to clear the return stack with
+  \ `RP!` and then to execute the boot word.
+
+  \ Note: This file is the first one to be loaded, even before
+  \ the <extend.fsb> module.  That's why it can not use any
+  \ word defined by the Afera library, or use the first screen
+  \ for code.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-08: Start, based on the loader of Tron 0xF
+  \ (http://programandala.net/en.program.tron_0xf.html).
+
+( Library modules loader )
+
+." Loader "
+
+FORTH DEFINITIONS
+
+0 VARIABLE LOADED?
+  \ Flag: Have all sources been loaded?
+  \ It's set in the last source file.
+  \ Possible values:
+  \ 0  = keep on loading sources
+  \ -1 = stop the loader and execute the latest word defined
+  \ other  = stop the loader
+
+: LOADER  ( -- )
+  \ Get and compile every RAM-disk from tape, until `LOADED?`
+  \ is on, and then, depending of its value, execute the latest
+  \ word defined.
+
+  \ XXX TMP benchmark -- reset the system frames counter
+  \ 0 23672 ! 0 23674 C!
+
+  BEGIN  LOADED? @ 0=  WHILE
+    255 23692 C!  ( avoid the "scroll?" prompt)
+    \ ." XXXloaderbeforeflush "
+    EMPTY-BUFFERS INIT-DISC LOADT
+    \ CR ." PREV = " PREV @ DUP U. @ . CR
+    \   ." USE =" USE @ DUP U. @ . CR
+    1 LOAD
+    \ ." XXXloaderafterload "
+  REPEAT
+
+  \ XXX TMP benchmark -- result
+  \ 23672 @ 23674 C@ D. ." FRAMES" CR
+
+  LOADED? @ -1 = IF  RP! LATEST PFA CFA EXECUTE  THEN  ;
+
+LOADER
+  
+  \ vim: filetype=abersoftforth

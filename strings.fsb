@@ -1,5 +1,7 @@
+.( Strings )
+
 \ strings.fsb
-\ Strings extensions for Abersoft Forth
+\ Strings extensions for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -46,7 +48,6 @@
   \
   \ New: `CMOVE>`, `MOVE`.
 
-.( Strings )
 
 2 8 THRU 
 
@@ -54,7 +55,7 @@
 
 CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
 
-  \ Note: Adapted from Lennart Benschop's SPECTRUM FORTH83.
+  \ Adapted from Lennart Benschop's Spectrum Forth-83.
 
   HEX
   D9 C,         \ exx

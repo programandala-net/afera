@@ -1,5 +1,7 @@
+.( HERE: BUFFER: )
+
 \ buffercol.fsb
-\ `BUFFER:` for Abersoft Forth
+\ `BUFFER:` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -13,8 +15,6 @@
   \ 2015-04-14: Extracted from the main file of the library.
   
   \ -----------------------------------------------------------
-
-.( HERE: BUFFER: )
 
 : HERE:  ( "name" -- )
   \ Create a word for "name" that will return its pfa.

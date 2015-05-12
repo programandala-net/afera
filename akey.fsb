@@ -1,0 +1,30 @@
+.( AKEY )
+
+\ akey.fsb
+\ `AKEY` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03: Code written in the main file of the library.
+  \ 2015-04-09: Code extracted from the main file of the
+  \ library. Moved to a keyboard module.
+  \ 2015-05-03: Code moved to its own file.
+
+  \ -----------------------------------------------------------
+
+: AKEY  ( -- c )
+  \ Wait for a key to be pressed and return its code.
+  \ This is an alternative to 'KEY', because 'KEY'
+  \ always shows the flashing cursor, even if the
+  \ current attributes are changed.
+  BEGIN  INKEY DUP 255 =  WHILE  DROP  REPEAT  ;
+
+  \ vim: filetype=abersoftforth
+

@@ -1,0 +1,30 @@
+\ minus-rot.fsb
+\ `-ROT` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+  
+  \ 2015-03-29: Code written in the main file of the library.
+  \ 2015-04-25: Code rewritten in Z80.
+  \ 2015-05-02: Code moved to this file.
+
+-->
+
+.( -ROT )
+
+CREATE -ROT  ( x1 x2 x3 -- x3 x1 x2 )
+  \ ROT ROT
+  HEX
+  D9 C,              \ exx
+  C1 C, D1 C, E1 C,  \ pop bc / pop de / pop hl
+  C5 C, E5 C, D5 C,  \ push bc / push hl / push de
+  D9 C,              \ exx
+  C3 C, NEXT ,       \ jp NEXT
+  DECIMAL  SMUDGE
+

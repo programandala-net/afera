@@ -1,0 +1,27 @@
+.( RDEPTH )
+
+\ rdepth.fsb
+\ `RDEPTH` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History
+  
+  \ 2015-03: Code written in the main file of the library.
+  \
+  \ 2015-04-14: Code moved to <rstack.fsb> with all return
+  \ stack words.
+  \
+  \ 2015-05-10: Code moved to its own file.
+
+  \ -----------------------------------------------------------
+
+: RDEPTH  ( -- n )
+  RP@ R0 @ - -2 /  ;
+
+  \ vim: filetype=abersoftforth

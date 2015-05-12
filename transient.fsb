@@ -1,5 +1,6 @@
+.( TRANSIENT )
 \ transient.fsb
-\ Transient code tools for Abersoft Forth
+\ Transient code for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -10,54 +11,80 @@
   \ History of this file:
 
   \ 2015-03-15: Start. Code adapted from the <TASM> file of
-  \ Lennart Benschop's ZX Spectrum Forth-83.
+  \ Lennart Benschop's Spectrum Forth-83 (1988).
   \
   \ 2015-05-01: Rewritten. New approach to make it a generic
   \ tool.
+  \
+  \ 2015-05-08: Improved to work also when the system has been
+  \ lowered below 0xC000 by the <lowersys.fsb> module.
+  \
+  \ 2015-05-09: The unlinking done by `-TRANSIENT` was fixed
+  \ and adapted to fig-Forth with the help of Lennart Benschop.
 
-( TRANSIENT )
+-->
+
+( TRANSIENT -- variables )
 
 0 VARIABLE PREVIOUS-DP
 0 VARIABLE PREVIOUS-LATEST
 0 VARIABLE PREVIOUS-VOC-LINK
 
+-->
+
+( TRANSIENT -- main )
+
 : TRANSIENT[  ( u -- )
 
   \ Start transient code, reserving u bytes for it (including
-  \ dictionary space and data stack). This word must be used
-  \ before compiling the transient code.  The compiled size of
-  \ the transient code must be known in advance, and sum say
-  \ 128 bytes to it for the data stack.
+  \ dictionary space and data stack).
+  \
+  \ This word must be used before compiling the transient code.
+  \ The compiled size of the transient code must be known in
+  \ advance, and sum say 128 bytes to it for the data stack.
+  \
+  \ Note: Adding data stack space to u is unnecessary when the
+  \ system has been lowered below 0xC000 by the <lowersys.fsb>
+  \ module.
 
   HERE        PREVIOUS-DP !
   LATEST      PREVIOUS-LATEST !
   VOC-LINK @  PREVIOUS-VOC-LINK !
-  SP@ SWAP - DP !  ;
+
+  \ The free dictionary space top limit is `SP@` in the
+  \ standard memory map. But when the system has been lowered
+  \ by the <lowersys.fsb> module, it's `LO` instead (the start
+  \ of RAM-disk). `FREE` is used to get the current value,
+  \ because the first word compiled in its pfa is either the
+  \ original `SP@` or the patched `LO`:
+
+  ' FREE @ EXECUTE \ execute SP@ or LO
+
+  SWAP - DP !  ;
 
 : ]TRANSIENT  ( -- )
 
-  \ End the transient code.  This word must be used after
-  \ compiling the transient code.
+  \ End the transient code.
+  \
+  \ This word must be used after compiling the transient code.
 
   PREVIOUS-DP @ DP !  ;
 
 : -TRANSIENT  ( -- )
 
   \ Remove the transient code, unlinking the dictionary space
-  \ that was reserved for it.  This word must be used when the
-  \ transient code is not going to be used any more.
+  \ that was reserved for it.
+  \
+  \ This word must be used when the transient code is not going
+  \ to be used any more.
 
   PREVIOUS-VOC-LINK @ VOC-LINK !
 
-  \ XXX FIXME this makes the system unusable, no word
-  \ is recognized any more:
-    \ PREVIOUS-LATEST @ PREVIOUS-DP @ !
-  \ But without it the words of transient code still can be
-  \ found.
-
-  \ What's is the point storing the nfa of the previous latest
-  \ word in the previous DP?
-
-  ;
+  \ Store the nfa of the latest word created
+  \ before compiling the transient code,
+  \ into the lfa of the first word created
+  \ after the transient code was finished
+  \ by `]TRANSIENT`.
+  PREVIOUS-LATEST @ PREVIOUS-DP @ PFA LFA !  ;
 
   \ vim: filetype=abersoftforth

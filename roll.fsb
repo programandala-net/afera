@@ -1,0 +1,31 @@
+.( ROLL )
+ 
+\ roll.fsb
+\ `ROLL` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03: Code written in the main file of the library,
+  \ using `RECURSE`, after the definition of `ROLL` in Gforth.
+  \ A faster version with `CMOVE` is unfinished.
+  \
+  \ 2015-05-02: Code moved to this file.
+ 
+  \ XXX OLD -- unfinished version
+  \ : ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
+  \ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 -
+  \ CMOVE DROP  ;
+
+: ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
+  DUP 1 <
+  IF    DROP
+  ELSE  SWAP >R 1 - RECURSE R> SWAP
+  THEN  ;
+

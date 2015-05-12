@@ -1,5 +1,5 @@
 \ plot.fsb
-\ Faster `PLOT` for Abersoft Forth
+\ Faster `PLOT` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -7,45 +7,41 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-  \ History of this file:
-  \ 
+  \ -----------------------------------------------------------
+  \ History of this file
+
   \ 2015-05-01: Start.
+  \
+  \ 2015-05-04: Adapted from Lennart Benschop's Spectrum
+  \ Forth-83.  Benchmark: it runs in 84% the time of the
+  \ original version. Change: Instead of creating a new word,
+  \ the cfa of the original word is patched with the address of
+  \ the new code.
+  \
+  \ 2015-05-06: New method: the original definition is
+  \ overwritten with the new code. No space used.
+
+-->
  
-  \ XXX TODO
+.( Faster PLOT )
 
-( Faster PLOT )
+HERE ' PLOT  ( pfa a )
+  DUP , \ the new cfa points to the code at pfa:
+  HEX
 
-CREATE PLOT  ( x y -- )
+  D9 C,           \ exx
+  E1 C,           \ pop hl
+  C1 C,           \ pop bc
+  40 05 + C,      \ ld b,l
+  DD C, E5 C,     \ push ix
+  CD C, 22E5 ,    \ call 0x22E5 ; plot-sub
+  DD C, E1 C,     \ pop ix
+  D9 C,           \ exx
+  C3 C, NEXT ,    \ jp next
 
-  \ XXX OLD
-  \ ; original routine:
-  \ pop hl
-  \ pop de
-  \ push bc
-  \ push ix
-  \ ; if h or d is nonzero, exit
-  \ ; if l>0xAF, exit
-  \ call 0x22DF
-  \ pop ix
-  \ pop bc
-  \ jp next
+  CFA OVER SWAP OVER HERE SWAP - CMOVE  \ overwrite the word
+  ( a ) DP !  \ restore the dictionary pointer
 
-  \ XXX NEW
-
-  \ pop hl
-  \ pop de
-  \ push bc
-  \ push ix
-  \ ld b,e
-  \ ld c,l
-  \ call 0x22AA ; pixel-add
-  \ ; HL = screen address
-  \ ; A = pixel position in HL
-  \ call 0x22DF
-  \ pop ix
-  \ pop bc
-  \ jp next
-
-  SMUDGE DECIMAL
+DECIMAL
 
   \ vim: filetype=abersoftforth

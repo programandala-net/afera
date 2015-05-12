@@ -1,0 +1,26 @@
+.( :NONAME )
+\ noname.fsb
+\ `:NONAME` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-04-15: First draft.
+  \ 2015-05-04: First working version.
+
+  \ -----------------------------------------------------------
+
+: :NONAME  ( -- cfa )
+  ?EXEC  CURRENT @ CONTEXT !
+  SMUDGE  \ deactivate the effect of the next `SMUDGE` in `;`
+  HERE !CSP
+  25350 , \ cfa = colon definition
+  ]  ;
+
+  \ vim: filetype=abersoftforth

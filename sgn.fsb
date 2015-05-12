@@ -1,0 +1,26 @@
+.( SGN )
+
+\ sgn.fsb
+\ `SGN` for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: Written.
+  \ 2015-05-11: Extracted from the main file of the library.
+  \ Modified to use `2*` if defined.
+
+: SGN  ( n1 -- -1|0|1 )
+  DUP IF  0< 
+  [DEFINED]   2* ?\ 2 *
+  [UNDEFINED] 2* ?\ 2*
+  1+  THEN  ;
+
+  \ vim: filetype=abersoftforth
+

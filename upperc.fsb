@@ -1,5 +1,5 @@
 \ upperc.fsb
-\ `UPPERC` for Abersoft Forth
+\ `UPPERC` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -11,6 +11,8 @@
   \ History of this file
   
   \ 2015-04-23: First version.
+
+-->
 
 .( UPPERC )
 
@@ -29,7 +31,7 @@ CREATE UPPERC   ( c -- c' )
   68 07 + C,      \ ld l,a
   C3 C, PUSHHL ,  \ jp PUSHHL
   SMUDGE
-  
+
 DECIMAL
 
   \ vim: filetype=abersoftforth

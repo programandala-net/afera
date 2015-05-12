@@ -1,0 +1,22 @@
+.( ?EXIT )
+
+\ qexit.fsb
+\ `?EXIT` for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-29: Written, after Gforth.
+  \ 2015-05-11: Extracted from the main file of the library.
+
+: ?EXIT  ( f -- )
+  \ Exit the current word if the given flag is not zero.
+  [COMPILE] IF  COMPILE EXIT  [COMPILE] THEN  ; IMMEDIATE
+
+  \ vim: filetype=abersoftforth

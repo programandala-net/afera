@@ -1,5 +1,7 @@
+.( CLS0 )
+
 \ cls0.fsb
-\ `CLS0` for ZX Spectrum Abersoft Forth
+\ `CLS` with defaoult colors for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -7,15 +9,15 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-  \ The idea for `NORMAL` was taken from Lennart Benschop's
-  \ SPECTRUM FORTH83.
+  \ The idea for `COLORS0` was taken from the word `NORMAL` of
+  \ Lennart Benschop's Spectrum Forth-83.
 
-.( CLS0 )
+  \ 2015-04-19: First version. 
+  \ 2015-05-05: Words renamed.
 
-: NORMAL  ( -- )
-  \ XXX TODO rename
+: COLORS0  ( -- )
   0 INK 7 PAPER 0 FLASH 0 BRIGHT 7 BORDER 0 GOVER 0 INVERSE  ;
 
-: CLS0  ( -- )
-  NORMAL CLS  ;
+: CLS0  ( -- )  COLORS0 CLS  ;
 
+  \ vim: filetype=abersoftforth

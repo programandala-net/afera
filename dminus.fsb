@@ -1,5 +1,5 @@
 \ dminus.fsb
-\ `D-` for Abersoft Forth
+\ `D-` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -12,13 +12,16 @@
   \ -----------------------------------------------------------
   \ History of this file
   
-  \ 2015-04-18: Code adapted from Lennart Benschop's SPECTRUM
-  \ FORTH83.
+  \ 2015-04-18: Code adapted from Lennart Benschop's Spectrum
+  \ Forth-83.
   
   \ -----------------------------------------------------------
 
+-->
 
 ( D- )
+
+\ XXX TODO rewrite without assembler, with opcodes
 
 CODE D-  ( d1 d2 -- d3 )
   EXX

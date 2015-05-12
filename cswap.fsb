@@ -1,5 +1,7 @@
+.( CSWAP)
+
 \ cswap.fsb
-\ `CSWAP` for Abersoft Forth.
+\ `CSWAP` for ZX Spectrum Abersoft Forth.
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -10,22 +12,20 @@
   \ -----------------------------------------------------------
   \ History of this file
 
-  \ 2015-03-13: Adapted from Lennart Benschop's SPECTRUM
-  \ FORTH83.
+  \ 2015-03-13: Adapted from Lennart Benschop's Spectrum
+  \ Forth-83.
   \
   \ 2015-04-17:
   \
   \ Renamed to `CSWAP`, after a Z80 fig-Forth implementation by
   \ Dennis L. Wilson (1980). `><` is the name in the
-  \ "Uncontrolled Reference Words" of the FORTH-83 Standard,
+  \ "Uncontrolled Reference Words" of the Forth-83 Standard,
   \ but `CSWAP` is clearer.
   \
   \ Converted from assembler to op-codes, to make it
   \ independent from the assembler.
 
   \ -----------------------------------------------------------
-
-.( CSWAP)
 
 HEX
 

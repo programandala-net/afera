@@ -1,5 +1,7 @@
+.( Faster POINT )
+
 \ point.fsb
-\ Faster `POINT` for Abersoft Forth
+\ Faster `POINT` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -7,69 +9,63 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-  \ History of this file:
-  \ 
-  \ 2015-05-01: Start.
+  \ -----------------------------------------------------------
+  \ Description
 
-  \ XXX TODO
+  \ The original code of `POINT` is slow: it makes sure the y
+  \ coordinate is less than 0xB0; then calls the ROM routine
+  \ POINT-SUB (0x22CE), that stores its result on the BASIC
+  \ calculator stack; then calls FIND-INT (0x1E94) to fetch the
+  \ result; finally, it doesn't jump directly to PUSHHL, but
+  \ first pushes HL and then jumps to NEXT...
 
-.( Faster POINT )
-
-CREATE POINT  ( x y -- )
-
-  HEX
-
-  \ The original code of `POINT` is slow for several reasons:
-  \ it makes sure the y coordinate is less than 0xB0; then
-  \ calls the ROM routine POINT-SUB (0x22CE), that stores its
-  \ result in the BASIC calculator stack; then calls FIND-INT
-  \ (0x1E94) to fetch the result from it; finally, it doesn't
-  \ jump directly to PUSHHL, but first pushes HL and then jumps
-  \ to NEXT...
-
-  \ XXX OLD
-  \ ; original routine:
-  \ E1 C, \ pop hl
-  \ D1 C, \ pop de
-  \ C5 C, \ push bc
-  \ DD C, E5 C, \ push ix
-  \ ld c,e
-  \ ld b,l
-  \ ld a,l
-  \ ; if not a>0xAF then ld a,0xAF
-  \ ld b.a
-  \ call 22CE ; POINT-SUB
-  \ call 1E94 ; FIND-INT, fetch the result from the calculator!
-  \ ld h,0
-  \ ld l,a
-  \ pop ix
-  \ pop bc
-  \ push hl
-  \ jp next
-
-  \ This alternative is faster because the y coordinate is not
-  \ forced (the program must do it, if needed); the POINT-SUB
-  \ ROM routine is replicated without using the BASIC
+  \ This alternative is much faster because the y coordinate is
+  \ not forced (the program must do it, if needed); the
+  \ POINT-SUB ROM routine is replicated without using the BASIC
   \ calculator stack at the end; and PUSHHL is used as Forth
-  \ re-entry point:
+  \ re-entry point.
 
+  \ -----------------------------------------------------------
+  \ History of this file
+  \
+  \ 2015-05-01: Start.
+  \
+  \ 2015-05-02: Tested.
+  \
+  \ 2015-05-04: Benchmark: it runs in 32% the time of the
+  \ original version. Change: Instead of creating a new word,
+  \ the cfa of the original word is patched with the address of
+  \ the new code.
+  \
+  \ 2015-05-06: Improved: There was no need to save the IX
+  \ register. The Y coordinate check is removed too. Finally,
+  \ the new code overwrites the original (formerly the code was
+  \ one byte bigger): no dictionary space is used.  The
+  \ execution time is still almost the same, only one system
+  \ frame less.
+
+-->
+
+( Faster POINT -- part 1 )
+
+HERE  \ save the current dictionary pointer
+
+  \ POINT  ( x y -- )
+  HEX
   E1 C,               \ pop hl ; l = y coordinate
   D1 C,               \ pop de ; e = x coordinate
-  DD C, E5 C,         \ push ix
   C5 C,               \ push bc
   40 05 + C,          \ ld b,l ; b = y coordinate
   48 03 + C,          \ ld c,e ; c = x coordinate
-  3E C, AF C,         \ ld a,0xAF
-  90 00 + C,          \ sub b ; y>0xAF?
-  38 C, 0B C,         \ jr c,finish ; if so, finish
   \ ; C = x coordinate
   \ ; B = y coordinate
   CD C, 22AA 6 + ,    \ call PIXELADD ; +6 to skip BASIC error
   \ ; HL = screen address
   \ ; A = pixel position in HL
+  
   -->
 
-( POINT -- part 2 )
+( Faster POINT -- part 2 )
 
   40 07 + C,          \ ld b,a
   04 C,               \ inc b
@@ -82,9 +78,9 @@ CREATE POINT  ( x y -- )
   26 C, 00 C,         \ ld h,0
   68 07 + C,          \ ld l,a
   C1 C,               \ pop bc
-  DD C, E1 C,         \ pop ix
   C3 C, PUSHHL ,      \ jp PUSHHL
 
-  SMUDGE DECIMAL
+  DUP ' POINT OVER HERE SWAP - CMOVE  \ move the code
+  DP !  DECIMAL  \ restore the dictionary pointer
 
   \ vim: filetype=abersoftforth

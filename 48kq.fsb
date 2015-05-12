@@ -2,6 +2,7 @@
 
 \ 48kq.fsb
 \ Memory size checks for ZX Spectrum's Abersoft Forth
+\ and related system patches
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -18,7 +19,7 @@
   \ History
 
   \ 2015-04-07: Start. Code adapted from Lennart Benschop's
-  \ Spectrum FORTH-83.
+  \ Spectrum Forth-83.
   \ 
   \ 2015-05-07: Code moved to its own file, separated from
   \ `BANK`.
@@ -31,11 +32,9 @@ HEX
 
 : 48K?  (  -- f )
   \ Running on a 48K Spectrum?
-  0 BANK FFFE @ 0 FFFE !
-  1 BANK FFFE @ 1 FFFE !
-  0 BANK FFFE @ >R
-  1 BANK FFFE !  0 BANK FFFE !  \ restore
-  R>  ;
+  0 BANK FFFE @ 0 FFFE !  1 BANK FFFE @ 1 FFFE !
+  0 BANK FFFE @
+  >R  1 BANK FFFE !  0 BANK FFFE !  R>  ; \ restore
 
 : 128K?  (  -- f )  48K? 0=  ;
 
@@ -45,36 +44,19 @@ DECIMAL  -->
 
 : CPUK  ( -- n )
   \ KiB of the machine.
-  \ Named after Abersoft Forth's `.CPU`
   48 128K? 80 * + ;
 
 : .CPUK  ( -- )
-
   \ Print the KiB of the CPU.
-  \ Named after Abersoft Forth's `.CPU`
-
-  \ First version:
-  
-  \ 48K? IF  ." 48K" ELSE  ." 128K"  THEN  ;
-
-  \ Second version:
-  \ 3 bytes shorter than the first version,
-  \ but prints an space:
-
-  \ 48 128K? 80 * + . ." K"  ;
-
-  \ Third version:
-  \ Still 1 byte shorter, and no space:
-  
-  \ 48 128K? 80 * + 2 .R ." K"  ;
-
-  \ Version 4th: factorized, modern units:
   SPACE CPUK . ." KiB"  ;
 
-  \ The word `.CPU` prints "48K SPECTRUM", so it has to be
-  \ patched. The space of the patch is exacly the same than the
-  \ original code. The patched text is stored letter by letter
-  \ in order to make this module independent from the strings
+  \ -----------------------------------------------------------
+  \ Patch `.CPU`
+
+  \ The original word `.CPU` prints "48K SPECTRUM", so it has
+  \ to be patched. The length of the patch is the same than the
+  \ original code. The patched text is stored letter by letter,
+  \ thus this module remains independent from the strings
   \ module.
 
 HEX
@@ -86,15 +68,25 @@ HEX
 65 75DC C!  63 75DD C!  74 75DE C!  72 75DF C!  75 75E0 C!
 6D 75E1 C!
 
-  \ And at the end call `.CPUK`:
+  \ At the end call `.CPUK`:
   ' .CPUK CFA 75E2 !
+
+  \ -----------------------------------------------------------
+  \ Patch `ABORT`
 
   \ Also `ABORT` needs a little patch:
   \ change the order of `.CPU` and `CR`:
+
   ' .CPU CFA 6D62 !  ' CR CFA 6D64 !
 
-  \ A system word has been patched with new words, so the
-  \ dictionary must be protected at this point:
+  \ -----------------------------------------------------------
+  \ Protect the patches
+
+  \ System words have been patched with new words. Those new
+  \ words should not be removed, e.g. by `COLD`, otherwise the
+  \ system would crash when their space will be overwritten. So
+  \ the dictionary must be protected at this point:
+
 HERE FENCE !
 
 DECIMAL

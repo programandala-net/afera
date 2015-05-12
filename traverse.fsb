@@ -1,0 +1,39 @@
+\ traverse.fsb
+\ Faster `TRAVERSE` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+  
+  \ 2015-05-06: First version.
+
+-->
+
+.( Faster TRAVERSE )
+
+HERE ' TRAVERSE  ( a pfa )
+  DUP , \ the new cfa points to the code at pfa
+
+  \ TRAVERSE  ( a1 n -- a2 )
+  \ n = 1 | -1
+  HEX
+  D1 C,                   \ pop de
+  E1 C,                   \ pop hl
+                          \ do:
+  19 C,                   \ add hl,de
+  CB C, 46 8 7 * + C,     \ bit 7,(hl)
+  CA C, ' TRAVERSE 2+ ,   \ jp z,do
+  C3 C, PUSHHL ,          \ jp PUSHHL
+
+  CFA OVER SWAP OVER HERE SWAP - CMOVE  \ overwrite the word
+  ( a ) DP !  \ restore the dictionary pointer
+
+  \ vim: filetype=abersoftforth
+
+
+

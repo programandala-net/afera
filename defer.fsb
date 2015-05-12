@@ -1,5 +1,7 @@
+.( DEFER )
+
 \ defer.fsb
-\ Deferred words for ZX Spectrum's Abersoft Forth
+\ Deferred words for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -15,10 +17,8 @@
 
   \ -----------------------------------------------------------
 
-.( DEFER )
+-->
 
-1 2 +THRU
- 
 ( Deferred words -- common code )
 
 : (DEFER)  ( -- )
@@ -46,6 +46,8 @@
   \ Return the code field address of a deferred word.
   STATE @ IF    [COMPILE] ' COMPILE DEFER@ 
           ELSE  [COMPILE] ' DEFER@  THEN  ; IMMEDIATE
+
+-->
 
 ( Deferred words -- version with PFA )
 

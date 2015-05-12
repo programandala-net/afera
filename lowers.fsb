@@ -1,0 +1,21 @@
+.( LOWERS )
+
+\ lowers.fsb
+\ `LOWERS` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+  
+  \ 2015-05-06: First version.
+
+: LOWERS   ( ca len -- )
+  \ Convert a string to uppercase.
+  BOUNDS DO  I C@ LOWERC I C!  LOOP  ;
+
+  \ vim: filetype=abersoftforth

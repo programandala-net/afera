@@ -1,5 +1,5 @@
 \ key_identifiers.fsb
-\ ZX Spectrum key identifiers (bit mask and port)
+\ Key identifiers for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -9,12 +9,18 @@
 
 \ 2015-03-23: Written.
 \ 2015-03-28: Converted to fsb format; file renamed.
+\ 2015-05-02: Comments.
+
+-->
 
 ( Load )
 
 HEX
 1 3 +THRU
 DECIMAL
+
+\ Every key is identified by a double constant that stores
+\ the port of the key row and the key bitmask in its row.
 
 ( Rows 1-5 Q-T A-G )
 

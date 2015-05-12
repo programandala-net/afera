@@ -1,0 +1,34 @@
+.( Loaded )
+\ loaded.fsb
+
+\ Part of a
+\ tape source loader for ZX Spectrum Abersoft Forth
+
+\ http://programandala.net/en.program.tron_0xf.html
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This file must be the last one to be loaded. It simply
+  \ stores 1 into the `LOADED?' variable, what causes the
+  \ loader to stop.
+  \
+  \ See <loader.fsb> for details.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-08: Start.
+
+  \ -----------------------------------------------------------
+
+1 LOADED? !
+
+  \ vim: filetype=abersoftforth
+

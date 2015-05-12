@@ -1,0 +1,26 @@
+.( 2* )
+
+\ 2star.fsb
+\ `2/` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History of this file
+ 
+  \ 2015-04-16: Code written in the main file of the library.
+  \ 2015-05-05: Extracted from the main file of the library.
+
+CREATE 2*  ( n1 -- n2 )
+  \ DUP +
+  HEX
+  E1 C,           \ pop hl
+  29 C,           \ add hl,hl
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE DECIMAL
+
+  \ vim: filetype=abersoftforth

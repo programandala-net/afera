@@ -1,5 +1,5 @@
 \ lowerc.fsb
-\ `LOWERC` for Abersoft Forth
+\ `LOWERC` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -11,6 +11,8 @@
   \ History of this file
   
   \ 2015-04-23: First version.
+
+-->
 
 .( LOWERC )
 

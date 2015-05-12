@@ -1,5 +1,5 @@
 \ flags.fsb
-\ Boolean flags for Abersoft Forth
+\ Boolean flags for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -14,6 +14,8 @@
   \ `ON` and `OFF` are rewritten in Z80.
   \
   \ 2015-04-23: Faster and smaller version of `OFF`.
+
+-->
 
 .( FALSE TRUE )
 

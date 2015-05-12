@@ -1,5 +1,7 @@
+.( DUMP )
+
 \ dump.fsb
-\ DUMP word for ZX Spectrum's Abersoft Forth
+\ `DUMP` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -10,22 +12,20 @@
   \ -----------------------------------------------------------
   \ History of this file
 
-  \ 2015-03-26: Start. Copied from Lennart Benschop's SPECTRUM
-  \ FORTH83.
+  \ 2015-03-26: Start. Copied from Lennart Benschop's Spectrum
+  \ Forth-83.
   \
   \ 2015-03-28: Simple version as a temporary alternative,
   \ until `?DO` is defined.
   \
-  \ 2015-04-17: The code from SPECTRUM FORTH83 has been
+  \ 2015-04-17: The code from ZX Spectrum Forth-83 has been
   \ adapted, with `IF ... DO` instead of `?DO`.
   \
   \ 2015-04-20: Fix in `H.`.
 
   \ -----------------------------------------------------------
 
-.( DUMP )
-
-1 2 +THRU
+-->
 
 ( BS H. STYPE )
 
@@ -44,7 +44,7 @@ HEX
     LOOP
   ELSE  2DROP  THEN  DROP  ;
 
-DECIMAL
+DECIMAL  -->
 
 ( DUMP )
 

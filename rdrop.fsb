@@ -1,0 +1,48 @@
+\ rdrop.fsb
+\ `RDROP` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: Code written in the main file of the library.
+  \
+  \ 2015-04-14: Code moved to <rstack.fsb> with all return
+  \ stack words.
+  \
+  \ 2015-05-10: Code moved to this file and rewritten in Z80.
+  \ `EXIT` patched.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( RDROP )
+
+
+CREATE RDROP  ( -- ) ( R: x -- )
+
+  \ R> DROP
+
+  HEX
+
+  2A C, 5E68 ,  \ ld hl,(RP) ; return stack pointer
+  23 C,         \ inc hl
+  23 C,         \ inc hl
+  22 C, 5E68 ,  \ ld (RP),hl ; update the pointer
+  C3 C, NEXT ,  \ jp NEXT
+
+  DECIMAL
+
+  \ `EXIT` does the same than `RDROP`, but it's a colon
+  \ definition, so we redefine it to jump to the Z80 code of
+  \ `RDROP`:
+
+' RDROP ' EXIT CFA !
+
+  \ vim: filetype=abersoftforth

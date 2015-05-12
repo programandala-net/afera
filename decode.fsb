@@ -9,6 +9,8 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+\ Adapted and modified from:
+
 \ Original code by Robert Dudley Ackerman, published in:
 \   FORTH DIMENSIONS IV,#2 p28 (July/August 1982)
 \ Modified by Dennis Wilson for Z80 CP/M fig-Forth 1.1g
@@ -38,8 +40,6 @@
   \
   \ The main code has been divided in smaller pieces, easier to
   \ understand and maintain.
-  
-  \ XXX TODO -- finish: 2015-05-07: key pause.
 
 -->
 
@@ -60,10 +60,6 @@ FORTH DEFINITIONS DECIMAL
 : INDENT+  ( -- )
   1 DECODE-LEVEL +! INDENT ;
 
-1 VARIABLE WAIT?  \ flag: ask for a key to be pressed?
-: AKEY  ( -- c )
-  WAIT? @ IF  KEY  ELSE  BL  THEN  1 WAIT? !  ;
-
 -->
 
 ( DECODE -- Special cases )
@@ -75,10 +71,10 @@ FORTH DEFINITIONS DECIMAL
   2+ DUP @ .  ;
 
 : DECODE-LITERAL  ( a1 -- a2 )
-  (DECODE-LITERAL)  0 WAIT? !  ;
+  (DECODE-LITERAL)  ;
 
 : DECODE-BRANCH  ( a1 -- a2 )
-  (DECODE-LITERAL)  ."  \ to " DUP DUP @ + U.  0 WAIT? !  ;
+  (DECODE-LITERAL)  ."  \ to " DUP DUP @ + U.  ;
 
 : DECODE-DOT-QUOTE  ( a1 -- a2 )
   2+ DUP COUNT TYPE  DUP C@ + 1 -  ;
@@ -113,9 +109,31 @@ FORTH DEFINITIONS DECIMAL
 
 -->
 
-( DECODE -- main code )
+( DECODE -- main code ) \ XXX NEW unfinished, with UNTIL
 
 : (DECODE)  ( pfa --- )
+
+  \ Decode the definition at the given pfa.
+
+  DUP COLON-PFA? IF
+    INDENT  ." : " DUP NFA ID.
+    BEGIN   ( pfa+n ) DUP DECODE-ADDRESS !
+            DUP @ DUP ( pfa+n cfa cfa ) DECODE-END? 0=
+            \ ( pfa+n cfa f )
+    WHILE  \ high level & NOT end of colon definition
+      \ ( pfa+n cfa )
+      ( pfa+n cfa ) 2+ ( pfa+n pfa' ) DUP INDENT+  NFA ID.
+      KEY CASE  [CHAR] Q   OF  SP! QUIT  ENDOF
+                BL         OF  DROP      ENDOF
+                SWAP RECURSE  \ default
+          ENDCASE  DECODE-SPECIAL-CASES
+      2+  -1 DECODE-LEVEL +!
+    REPEAT  INDENT 2+ NFA ID. \ show the last word
+  THEN  DROP  ;  -->
+
+( DECODE -- main code )  \ XXX OLD
+
+-->  : (DECODE)  ( pfa --- )
 
   \ Decode the definition at the given pfa.
 
@@ -125,18 +143,17 @@ FORTH DEFINITIONS DECIMAL
             DUP @ DUP DECODE-END? 0=
     WHILE  \ high level & NOT end of colon definition
       ( cfa ) 2+ ( pfa ) DUP INDENT+  NFA ID.
-      AKEY CASE  [CHAR] Q   OF  SP! QUIT  ENDOF
-                 BL         OF  DROP      ENDOF
-                 SWAP RECURSE  \ default
-           ENDCASE  DECODE-SPECIAL-CASES
-      2+  -1 DECODE-LEVEL +!  ;
+      KEY CASE  [CHAR] Q   OF  SP! QUIT  ENDOF
+                BL         OF  DROP      ENDOF
+                SWAP RECURSE  \ default
+          ENDCASE  DECODE-SPECIAL-CASES
+      2+  -1 DECODE-LEVEL +!
     REPEAT  INDENT 2+ NFA ID. \ show the last word
   THEN  DROP  ;  -->
 
 ( DECODE -- interface )
 
 : DECODE  ( "name" -- )
-  1 WAIT? !
   -FIND IF    DROP 0 DECODE-LEVEL ! (DECODE)
         ELSE  ." Not Found"  THEN  ;
 
@@ -156,27 +173,5 @@ CR
 ."           (except primitives);" CR
 ."   Q :      Quit." CR
  \ <------------------------------>
-
-( DECODE -- old code )  \ XXX OLD
-
-;S  : DECODE-SPECIAL-CASES
-  \ Handle special cases.
-  DUP @ 2+ ' COMPILE =
-  IF   2+ DUP  @ 2+ NFA ID. 2+
-  ELSE    DUP @ 2+ DUP ' LIT =
-          OVER ' BRANCH  = OR
-          OVER ' 0BRANCH = OR
-          OVER ' (LOOP)  = OR
-          SWAP ' (+LOOP) = OR
-    IF    2+ DUP @ SPACE .
-          \ ." \ to " DUP DUP @ + . 
-          2+
-          \ 0 WAIT? !
-    ELSE  DUP @ 2+ ' (.") =
-          IF  2+ DUP COUNT TYPE  DUP C@ 1+ +
-          \ 0 WAIT? !
-          ELSE 2+  THEN
-    THEN
-  THEN   -1 DECODE-LEVEL +!  ; -->
 
   \ vim: filetype=abersoftforth

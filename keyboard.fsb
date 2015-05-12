@@ -1,5 +1,5 @@
 \ keyboard.fsb
-\ Keyboard extensions for Abersoft Forth
+\ Keyboard extensions for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -17,6 +17,8 @@
   \ 0x10.
 
   \ -----------------------------------------------------------
+
+-->
 
 ( Keyboard rows ports)
 

@@ -1,4 +1,4 @@
-.( 512 B/BUF )
+.( 512B/BUF )
 
 \ 512bbuf.fsb
 \ 512-byte disk buffers for ZX Spectrum Abersoft Forth
@@ -12,6 +12,9 @@
   \ -----------------------------------------------------------
   \ Description
 
+  \ This program configures Abersoft Forth to use 2 512-byte
+  \ disk buffers instead of 8 128-byte disk buffers.
+
   \ The disk buffers of Abersoft Forth follow the fig-Forth
   \ model:
 
@@ -24,7 +27,7 @@
   \ increase the space used by the buffers:
 
   \ B/BUF = 512 bytes per buffer
-  \ B/SCR = 2 block per screen
+  \ B/SCR = 2 blocks per screen
   \ #BUFF = 2 disk buffers
 
   \ In order to make this change, those constants have to be
@@ -62,120 +65,31 @@
   \ 2015-05-08: Start, based on the code of the unfinished
   \ module <1024bbuf.fsb>.
   \
-  \ 2015-05-09: Bug fixed. First working version.  Now trying
-  \ to make it possible to automatically load other modules
-  \ after this one.
+  \ 2015-05-09: Bug fixed. First working version.
+  \
+  \ 2015-05-10: `QUIT` used. No way yet to compile other
+  \ modules after this one.
 
--->
-
-( XXXBUFFER )  \ XXX TMP copy of the original
-
-HEX
-: XXXBUFFER  ( n -- a )
-  USE @ DUP >R
-  BEGIN  
-         0 0 AT [CHAR] - EMIT +BUF 1 0 AT .S
-         0 0 AT [CHAR] | EMIT
-  UNTIL  USE !
-  R @ 0<
-  IF
-    R 2+
-    R @ 7FFF AND 0 R/W
-  THEN
-  R !  R PREV !
-  R> 2+  ;  DECIMAL -->
-
-( XXXBLOCK )  \ XXX TMP copy of the original
-
-: XXXBLOCK  ( n -- a )
-  OFFSET @ + >R
-  PREV @ DUP @  ( [prev] prevblock )
-  R -  \ Compare to the block number saved on return stack.
-
-  \ Ting says `DUP +` discards the left most bit, which is the
-  \ update indicator. I don't understand why this is needed
-  \ _after_ the comparation: the only combination whose result
-  \ is zero is when both blocks are equal.
-
-  DUP +
-  IF ." XXX1" \ n <> previous block
-    BEGIN  +BUF 0=  ." XXX2" 
-      IF  ." XXX3"
-         DROP R XXXBUFFER
-         DUP R 1 R/W 2 -
-       THEN  DUP @ R -  DUP + 0=
-    UNTIL  DUP PREV !
-  THEN  R> DROP 2+ ;  -->
-
-( 512B )
-
-: 512B  ( -- )
-
-  \ XXX OLD
-  \ B/BUF \ current value, 128, for later
+: 512B/BUF  ( -- )
 
   \ Change the constants:
   512 ' B/BUF !  2 ' B/SCR !  2 ' #BUFF !
+  FIRST B/BUF 4 + #BUFF * + ' LIMIT !
 
   \ Patch `EMPTY-BUFFERS` and `+BUF`
   \ with the new value of `B/BUF`:
   B/BUF 4 + ' EMPTY-BUFFERS 26 + !
   B/BUF 4 + ' +BUF 2 + !
 
-  \ Update `LIMIT`:
-  FIRST B/BUF 4 + #BUFF * + ' LIMIT !
-
   \ Init the whole thing:
   EMPTY-BUFFERS  FIRST PREV !  FIRST USE !
 
-  CR ." 2 512-byte buffers installed." CR
+  \ Make this word to forget itself:
+  [ LATEST ] LITERAL DUP DP ! PFA LFA @ CURRENT @ !
 
-  \ After doing the changes, the interpreter can not return to
-  \ this screen (at least without a complex hacking; maybe some
-  \ day...) but a new one can be loaded:
+  \ Done and quit:
+  CR ." 2 512-byte buffers installed." QUIT
 
-  
-  \ 5 LOAD
- 
-  \ XXX OLD
-  \ Update the current disk block 
-  \ ( n ) B/BUF SWAP / BLK @ DUP . SWAP / DUP . CR BLK !
-
-  \ Make `512B` to forget itself:
-  \ XXX It works
-  \   [ LATEST ] LITERAL DUP DP ! PFA LFA @ CURRENT @ !
-  \   ." I forgot myself!"
-
-  \ RP! 
-  \ LOADER
-  \ EMPTY-BUFFERS INIT-DISC LOADT
-  \ 2 XXXBLOCK U. QUIT
-  ;
-
--->
-( Forget the code and quit )
-
-  \ BLK @ B/BUF 128 / / BLK !
-  \ ." about to execute " 512B ." done" 
-
-  \ XXX FIXME the loader hangs here, why?:
-  \ FORGET 512B ." forgot" CR LOADER QUIT
-
-512 B FORGET 512B ." forgot" CR RP! LOADER QUIT
-
-  \ Unfortunately, `QUIT` is necessary (at least without a
-  \ complex hacking; maybe some day...), so more modules can be
-  \ automatically loaded after this one.
-
-  \ XXX TMP
-  \ QUIT
-
-  \ XXX NEW try
-  \ RP!
-  \ ." hola"  FLUSH
-  \
-  \ XXX FIXME the loader hangs here, why?
-
-  \  LOADER
+  ;  512B/BUF
 
   \ vim: filetype=abersoftforth

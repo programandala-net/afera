@@ -1,5 +1,7 @@
+.( Logo-like graphics)
+
 \ logo.fsb
-\ Logo-like graphics for Abersoft Forth
+\ Logo-like graphics for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 1985,2009,2015 Marcos Cruz (programandala.net)
 
@@ -17,21 +19,32 @@
   \
   \ 2015-04-15: Included in the Afera library. `COORDS` is
   \ renamed to `SYS-COORDS` after the current convention.
+  \
+  \ 2015-05-02: Improved with `MINUS` and conditional
+  \ compilation. `X-COORD` and `Y-COORD` renamed with the
+  \ "SYS-" prefix, after the current convention for system
+  \ variable aliases.
 
   \ -----------------------------------------------------------
 
+-->
+
 ( Coordinates )
 
-." Logo-like graphics"
+  \ Define the required system variables,
+  \ if needed.
 
-23677 CONSTANT SYS-COORDS  \ ZX Spectrum system variable
-SYS-COORDS    CONSTANT X-COORD
-SYS-COORDS 1+ CONSTANT Y-COORD
+[DEFINED] SYS-COORDS
+  ?\ 23677 CONSTANT SYS-COORDS  \ ZX Spectrum system variable
+[DEFINED] SYS-X-COORDS
+  ?\ SYS-COORDS    CONSTANT SYS-X-COORD
+[DEFINED] SYS-Y-COORD
+  ?\ SYS-COORDS 1+ CONSTANT SYS-Y-COORD
 
-: X@  ( -- b )  X-COORD C@  ;
-: Y@  ( -- b )  Y-COORD C@  ;
-: X!  ( b -- )  X-COORD C!  ;
-: Y!  ( b -- )  Y-COORD C!  ;
+: X@  ( -- b )  SYS-X-COORD C@  ;
+: Y@  ( -- b )  SYS-Y-COORD C@  ;
+: X!  ( b -- )  SYS-X-COORD C!  ;
+: Y!  ( b -- )  SYS-Y-COORD C!  ;
 
 -->
 
@@ -43,14 +56,16 @@ SYS-COORDS 1+ CONSTANT Y-COORD
 : SETXY  ( x y -- )  RELATIVE PLOT  ;
 
 : RIGHT  ( u -- )  0 RDRAW  ;
-: LEFT  ( u -- )  -1 * 0 RDRAW  ;
+: LEFT  ( u -- )  MINUS 0 RDRAW  ;
 : UP  ( u -- )  0 SWAP RDRAW  ;
-: DOWN  ( u -- )  -1 * 0 SWAP RDRAW  ;
+: DOWN  ( u -- )  MINUS 0 SWAP RDRAW  ;
 
 : PAT  ( x y -- )  Y! X!  ;
 : RPAT  ( x y -- )  Y@ + Y!  X@ + X!  ;
 
 : RPLOT  ( u -- )  0 SETXY  ;
-: LPLOT  ( u -- )  -1 * 0 SETXY  ;
+: LPLOT  ( u -- )  MINUS 0 SETXY  ;
 : UPLOT  ( u -- )  0 SWAP SETXY  ;
-: DPLOT  ( u -- )  -1 * 0 SWAP SETXY  ;
+: DPLOT  ( u -- )  MINUS 0 SWAP SETXY  ;
+  
+  \ vim: filetype=abersoftforth

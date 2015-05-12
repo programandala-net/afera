@@ -1,5 +1,7 @@
+.( AT@ )
+
 \ at-fetch.fsb
-\ Current cursor position for Abersoft Forth
+\ Current cursor position for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -11,9 +13,9 @@
   \ 
   \ 2015-04-27: Start.
 
-.( AT@ )
-
 : AT@  ( -- line col )
   \ Line and column of the current print position.
+  \ System variable: 24 minus line number for print position
   24 23689 C@ -
+  \ System variable: 33 minus column number for print position
   33 23688 C@ -  ;

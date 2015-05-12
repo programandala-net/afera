@@ -1,5 +1,7 @@
+.( ALIAS)
+
 \ alias.fsb
-\ `ALIAS` for ZX Spectrum's Abersoft Forth
+\ `ALIAS` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -14,8 +16,6 @@
   \ library.
 
   \ -----------------------------------------------------------
-
-.( ALIAS)
 
 : ALIAS  ( pfa "name" -- )
   \ Create the word "name" as an alias of the *code* word

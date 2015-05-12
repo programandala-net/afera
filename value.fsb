@@ -1,5 +1,7 @@
+.( VALUE )
+
 \ value.fsb
-\ `VALUE` for Abersoft Forth
+\ `VALUE` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -20,11 +22,9 @@
 
   \ -----------------------------------------------------------
 
-.( VALUE )
+2 LOAD
 
-3 LOAD
-
-.( VALUE with parsing and state-smart TO )
+( VALUE with parsing and state-smart TO )
 
 \ This implementation, with parsing and state-smart `TO`,
 \ was inspired by Gforth.

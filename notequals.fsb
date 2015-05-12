@@ -1,0 +1,39 @@
+\ notequals.fsb
+\ `<>` for ZX Spectrum Abersoft Forth.
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-12: Extracted from the main file of the library and
+  \ rewritten in Z80.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( <> )
+
+CREATE <>  ( n1 n2 -- f )
+
+  \ = 0=
+
+  HEX
+  E1 C,           \ pop hl
+  D1 C,           \ pop de
+  A0 07 + C,      \ and a ; reset cy flag
+  ED C, 52 C,     \ sbc hl,de
+  78 04 + C,      \ ld a,h
+  B0 05 + C,      \ or l
+  CA C, PUSHHL ,  \ jp z,PUSHHL
+  21 C, 1 ,       \ ld hl,1
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE DECIMAL
+
+  \ vim: filetype=abersoftforth
+

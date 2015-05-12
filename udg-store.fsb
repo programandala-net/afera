@@ -1,5 +1,7 @@
+.( UDG! )
+
 \ udg-store.fsb
-\ `UDG!` for Abersoft Forth By Marcos Cruz
+\ `UDG!` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 1985,1986,1987,2015
 \ Marcos Cruz (programandala.net)
@@ -8,12 +10,25 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-\ 2015-03: Code written.
-\ 2015-03-28: Code moved from the main file of the library
-\ to <graphics.fsb>.
-\ 2015-04-22: Code moved to its own file.
 
-.( UDG! )
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ `UDG!` defines UDG graphics with data in the usual order
+  \ (top row first). This makes same things easier. When binary
+  \ is used, the graphic can be shown in the source code.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: Code written.
+  \
+  \ 2015-03-28: Code moved from the main file of the library
+  \ to <graphics.fsb>.
+  \
+  \ 2015-04-22: Code moved to its own file.
+  \
+  \ 2015-05-08: Description.
 
 : UDG!  ( b0..b7 c -- )
   \ Store the given 8 bytes into the c UDG char

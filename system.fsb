@@ -1,5 +1,7 @@
+.( SYSTEM )
+
 \ system.fsb
-\ A system-saving for ZX Spectrum's Abersoft Forth
+\ System saving for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -16,13 +18,11 @@
   \ with the +3DOS module.
   \
   \ 2015-04-29: `SAVE-SYSTEM` is renamed to `SYSTEM`; it does
-  \ not save, just prepares the system and returns the
+  \ not save any more, just prepares the system and returns the
   \ parameters; this way also the tape module can be used to
   \ save the system.
 
   \ XXX TODO accept a boot word to patch `COLD` with.
-
-.( SYSTEM )
 
 : SYSTEM ( -- a len )
 

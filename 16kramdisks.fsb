@@ -1,7 +1,7 @@
 .( Two 16-KiB RAM-disks )
 
 \ 16kramdisks.fsb
-\ 16-KiB RAM-disks for ZX Spectrum Abersoft Forth
+\ Two 16-KiB RAM-disks for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -12,10 +12,14 @@
   \ -----------------------------------------------------------
   \ Description
 
-  \ Abersoft Forth uses an 11-Kib RAM-disk at the top of the
-  \ memory map. This module patches the system in order to use
-  \ a 16-KiB memory bank instead (ZX Spectrum 128K or later
-  \ only), thus freeing those 11 KiB for the dictionary space.
+  \ Abersoft Forth uses one 11-KiB RAM-disk at the top of the
+  \ memory map.  This module, suitable only for ZX Spectrum
+  \ 128K (or later), modifies the system in order to use two
+  \ 16-KiB RAM-disks instead, using the additional memory
+  \ banks.
+  \
+  \ The 11 KiB of memory used by the original RAM-disk are
+  \ freed for the Forth dictionary.
 
   \ -----------------------------------------------------------
   \ Requirements
@@ -33,30 +37,26 @@
   \ caused `LIST` could be used with screen numbers greater
   \ than 16.
   \
-  \ Fix: Also `(TAPE)` needed a patch, as the <tape.fsb> module
-  \ does.
+  \ Fix: Also `(TAPE)` needed a patch, the same way the
+  \ <tape.fsb> module does.
   \
   \ First working version.
   \
   \ Improvement: Second drive. The fig-Forth word `DR1` is
-  \ added for selection.
+  \ added.
   \
-  \ Improvement: Then contents of the old RAM-disk are moved to
-  \ the new one, thus the module must not quit after installing
-  \ the new RAM-disks, and other modules can be automatically
-  \ loaded after this one.
+  \ Improvement: The contents of the old RAM-disk are moved to
+  \ the new one, thus the module must not quit after doing its
+  \ job, and other modules can be automatically loaded after
+  \ this one.
 
 -->
 
-( DR1 INIT-DISC )
+( DR1 DISC-BANK INIT-DISC )
 
 : DR1  ( -- )
   \ Select the second RAM-disk.
   SCR/DR B/SCR * OFFSET !  ;
-
-: (INIT-DISC)  ( -- )
-  \ Blank the current RAM-disk, that must be already paged in.
-  LO /DISC BLANKS ;
 
 : DISC-BANK  ( -- n )
   \ Memory bank of the current RAM-disk.
@@ -65,6 +65,10 @@
   3 OFFSET @ 0=    [DEFINED] 2* ?\ 2 * 
                  [UNDEFINED] 2* ?\ 2*
   -  ;
+
+: (INIT-DISC)  ( -- )
+  \ Blank the current RAM-disk, that must be already paged in.
+  LO /DISC BLANKS ;
 
 HERE
   \ Compile the patch for `INIT-DISC`
@@ -78,36 +82,21 @@ DP ! \ restore the disctionary pointer
 
 DECIMAL -->
 
-( Tape )
-
-HEX
-
-  \ The load header (pointed by IX before calling the ROM
-  \ routine) is at address 30182 (0x75E6).  Its 
-  \ contents (after fixing the length bug) are:
-
-  \ +00 : 3 (identifier of code file type)
-  \ +01 : "DISC      " = 10-char filename, padded with spaces
-  \ +11 : 11264 (0x2C00)  = length
-  \ +13 : 53248 (0xD0FF)  = start address
-  \ +15 : "  " (2 spaces) = not used for code files
-
-  \ Patch the load header
-  \ with the new length and start address:
-  /DISC 75E6 0B + !
-   C000 75E6 0D + !  \ C000 is the new `LO`, still unchanged
+( LOADT SAVET VERIFY )
 
   \ Patch the tape words to use the new RAM-disk
 
-: (LOADT)   ( 0 -- )  DISC-BANK BANK (TAPE) 0 BANK  ;
-: (SAVET)   ( 1 -- )  DISC-BANK BANK (TAPE) 0 BANK  ;
-: (VERIFY)  ( 2 -- )  DISC-BANK BANK (TAPE) 0 BANK  ;
+: (BANK-TAPE)   ( n -- )
+  \ Do a RAM-disk tape operation
+  \ with the proper memory bank paged in.
+  \ n = 0 for loading; 1 for saving; 2 for verifying
+  DISC-BANK BANK (TAPE) 0 BANK  ;
 
-' (LOADT)  CFA ' LOADT  2+  !
-' (SAVET)  CFA ' SAVET  4 + !
-' (VERIFY) CFA ' VERIFY 2+  !
+' (BANK-TAPE) CFA ' LOADT  2+  !
+' (BANK-TAPE) CFA ' SAVET  4 + !
+' (BANK-TAPE) CFA ' VERIFY 2+  !
 
-DECIMAL -->
+-->
 
 ( DISC-BLOCK )
 
@@ -155,17 +144,16 @@ DECIMAL -->
 : DISC-BLOCK  ( n -- a )
 
   \ Calculate the address of disk block n1 in the Forth RAM
-  \ disk. Give error #6 when the requested disk block n1
-  \ belongs to the first screen of the RAM-disk.  Finally
-  \ update the result one screen below.
+  \ disk.  Give error #6 when the requested disk block is out
+  \ of range.
 
   \ The disk block number is adjusted with `OFFSET`, in case
-  \ it's the second drive, because the result address must be
-  \ the same, no matter the current drive (set by `DR0` and
+  \ it's the second drive, because the result address is the
+  \ same, no matter what the current drive is (set by `DR0` and
   \ `DR1`).
 
   \ n = number of sequential disk block
-  \ a = address in the RAM-disk
+  \ a = address in the RAM-disk (when paged in)
 
   OFFSET @ -
   B/BUF * DUP /SCR U< 6 ?ERROR
@@ -173,10 +161,13 @@ DECIMAL -->
 
 
 : (R/W)  ( a1 a2 f -- )
+
   \ Read to or write from the new RAM-disk.
+
   \ a1 = buffer address
   \ a2 = address in the RAM-disk
   \ f =  0 for writing; 1 for reading
+
   IF  SWAP  THEN  B/BUF DISC-BANK BANK CMOVE 0 BANK  ;
 
 -->
@@ -187,12 +178,15 @@ HEX
 
 : INSTALL  ( -- )
 
-  \ Intall the two 16-KiB RAM-disks, by updating and patching.
+  \ Intall the two 16-KiB RAM-disks.
   \
   \ This long word, that forgets itself at the end, does all
   \ operations that have to be done in one single step, while
   \ no disk block is being interpreted, otherwise the system
-  \ could be affected.
+  \ could be affected. It includes also some simple patches
+  \ that could be done previously without risk, but that depend
+  \ on the new values of some constants, in order to use them
+  \ as literals, and those constants are modified here.
 
   \ Update the length and bounds of the RAM-disk:
   4000 ' /DISC !        \ 16 KiB length
@@ -201,9 +195,6 @@ HEX
 
   \ Update the number of screens per RAM-disk:
   10 ' SCR/DR !
-
-  \ Patch `(TAPE)` with the new default file start address:
-  LO 7619 !
 
   \ Make sure the buffers are empty before patching `R/W`:
   EMPTY-BUFFERS
@@ -218,6 +209,23 @@ HEX
 -->
 
 ( INSTALL -- part 2 )
+
+  \ The tape load header (pointed by IX before calling the ROM
+  \ routine) is at address 30182 (0x75E6).  Its contents (after
+  \ fixing the length bug) are:
+
+  \ +00 : 3 (identifier of code file type)
+  \ +01 : "DISC      " = 10-char filename, padded with spaces
+  \ +11 : 11264 (0x2C00)  = length
+  \ +13 : 53248 (0xD0FF)  = start address
+  \ +15 : "  " (2 spaces) = not used for code files
+
+  \ Patch the tape load header
+  \ with the new length and start address:
+  /DISC 75E6 0B + !  LO 75E6 0D + !
+  
+  \ Patch `(TAPE)` with the new default file start address:
+  LO 7619 !
 
   \ The word `FREE` returns the free dictionary space.  Its
   \ original definition, according to the original memory map,
@@ -260,7 +268,10 @@ HEX
   \ Make this word to forget itself:
   [ LATEST ] LITERAL DUP DP ! PFA LFA @ CURRENT @ !
 
-  DECIMAL  ;  INSTALL
+  \ System words have been patched with new ones,
+  \ so the changes must be protected:
+  HERE FENCE !
 
+  DECIMAL  ;  INSTALL
 
   \ vim: filetype=abersoftforth

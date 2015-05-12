@@ -1,5 +1,7 @@
+.( +SCROLL -SCROLL )
+
 \ scroll.fsb
-\ Scroll control for Abersoft Forth
+\ Scroll control for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -11,16 +13,15 @@
   \ History of this file
 
   \ 2015-04-19: Code extracted from <plusscreen.fsb>.
+  \ 2015-05-04: The names are exchanged. More logical.
 
   \ -----------------------------------------------------------
-
-.( +SCROLL -SCROLL )
 
   \ Two words to toggle the scroll prompt.
 
   \ Note: 23692 is the system variable SCR CT.
 
-  : +SCROLL  ( -- )    0 23692 C!  ;
-  : -SCROLL  ( -- )  255 23692 C!  ;
+  : -SCROLL  ( -- )    0 23692 C!  ;
+  : +SCROLL  ( -- )  255 23692 C!  ;
 
 \ vim: filetype=abersoftforth

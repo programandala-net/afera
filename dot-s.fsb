@@ -1,3 +1,5 @@
+.( .S )
+
 \ dot-s.fsb
 \ `.S` for ZX Spectrum Abersoft Forth
 
@@ -6,11 +8,11 @@
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 
-\ 2015-03-30: First version.
-\ 2015-04-14: Second version, from Matteo Vitturi's vForth.
-\ 2015-04-19: Combined version.
+  \ History of this file
 
-.( .S )
+  \ 2015-03-30: First version.
+  \ 2015-04-14: Second version, from Matteo Vitturi's vForth.
+  \ 2015-04-19: Combined version.
 
 : .S   ( -- )
 
@@ -27,4 +29,4 @@
 
   ;
 
-  \ vim: ft=abersoftforth
+  \ vim: filetype=abersoftforth

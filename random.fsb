@@ -1,5 +1,7 @@
+.( Random number generator )
+
 \ random.fsb
-\ Random number generator for Abersoft Forth.
+\ Random number generator for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -16,9 +18,9 @@
   \ 2015-04-16: Reference of the Brodie's implementation.
 
 
-.( Random number generator )
+  \ -----------------------------------------------------------
 
-  \ Code of `RND`is adapted from Bertie, the demo program
+  \ The code of `RND` was adapted from Bertie, the demo program
   \ bundled with Abersoft Forth:
 
 23670 CONSTANT SYS-SEED
@@ -40,6 +42,7 @@ VARIABLE RND    HERE RND !
 : RANDOM ( -- n ) RND @   31421 *  6927 +   DUP  RND ! ;
 : CHOOSE ( u1 -- u2 )   RANDOM UM*   SWAP DROP  ;
 
+  \ ____ Quote:
   \ So I assume that what you really want is UM* . That is a
   \ primitive that most Forth's have. I know MAXforth does. And
   \ Brodie's code works there.  Didacticism: * is either a
@@ -49,5 +52,6 @@ VARIABLE RND    HERE RND !
   \ be what you expect if the operands are negative.) Stack
   \ Diag for UM* : ( u u -- d) Email me if i missed the point.
   \ Jerry
+  \ ____
 
   \ vim: filetype=abersoftforth
