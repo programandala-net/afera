@@ -329,4 +329,3 @@ LIMIT FIRST -  ALLOT \ space for the new buffers
 ' LO CFA ' FREE !
 
 
-  \ vim: filetype=abersoftforth

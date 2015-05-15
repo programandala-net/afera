@@ -1,4 +1,4 @@
-.( Move HI to top of memory )
+.( Move the 11-KiB RAM-disk to top of memory )
 
 \ uppersys.fsb
 \ More free memory for ZX Spectrum Abersoft Forth
@@ -12,13 +12,105 @@
   \ -----------------------------------------------------------
   \ Description
 
+  \ This module increases the free dictionary space of Abersoft
+  \ Forth with 1 KiB, but only if the system has been
+  \ previously moved below 0xC000 by the module <lowersys.fsb>.
+  \ This module is most for a 48K Spectrum; the 128K model can
+  \ use the module <16kramdisks.fsb> instead, and get 11 KiB of
+  \ memory for the dictionary.
+  \
+  \ A detailed explanation follows.
+  \
+  \ The default value of `HI` (the highest address of the
+  \ 11-KiB RAM-disk) is 1 KiB below the top of memory.  That
+  \ space is used only by the UDG (168 bytes); 856 bytes are
+  \ unused by the system.
+
+  \ Address         Returned by  Description
+  \ --------------  -----------  --------------------------
+  \ 0xFFFF (65535)               Top of memory
+  \ 0xFF58 (65368)  `UDG`        User defined graphics
+  \                              (168 bytes)
+  \                              Unused space (856 bytes)
+  \ 0xFBFF (64511)  `HI`         End of screens area
+  \                                (RAM-disk)
+  \ 0xD000 (53248)  `LO`         Start of screens area
+  \                                (RAM-disk)
+  \ 0xD000 (53248)  `LIMIT`      End of buffer area plus 1
+  \ 0xCBE0 (52192)  `FIRST`      Start of buffer area
+  \                                (lowest buffer start)
+
+  \ Of course that unused space can be used by Forth programs
+  \ in any way, but it would be more useful as part of the
+  \ dictionary space.
+  \ 
+  \ This module moves the RAM-disk to the top of memory,
+  \ overwritting even the UDG, that will be pointed to 0 (ROM).
+  \ In order to use the UDG, the user must reserve space for
+  \ them in the dictionary and point the correspondent system
+  \ variable (0x5C7B) to it.
+  \
+  \ This module is useful only after <lowersys.fsb>. Otherwise
+  \ the freed memory will not be available for the dictionary,
+  \ but simply moved down, between the RAM-disk and the disk
+  \ buffers.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ lowersys.fsb
+
   \ -----------------------------------------------------------
   \ History
   \
-  \ 2015-05-15: Start.
+  \ 2015-05-15: Start. First working version..
 
-0 23675 !  \ Point the UDG to ROM.
+-->
 
-LO  0 /DISC - ' LO !  0 ' HI !  LO /DISC CMOVE>
+( Main )
+
+HEX 
+
+0 5C7B !  \ point UDG to ROM
+
+: TASK ;
+
+FFFF CONSTANT NEW-HI
+
+NEW-HI 1+ CONSTANT ABOVE-HI
+ABOVE-HI /DISC - CONSTANT NEW-LO
+NEW-HI HI - CONSTANT FREED
+
+  \ Update `HI` and `LO`.
+: HI>TOP  ( -- )  LO FREED + ' LO !  NEW-HI ' HI !  ;
+
+  \ The origin and destination zones overlap, so `CMOVE>`
+  \ is the preferred method if available.
+
+1 [DEFINED] CMOVE> ?\ 1+
+  +LOAD
+
+DISC>TOP  FORGET TASK  DECIMAL
+
+( Do it with CMOVE> )
+
+: DISC>TOP  ( -- )
+  LO  ABOVE-HI /DISC - /DISC CMOVE>
+  HI>TOP  ;
+
+( Do it without CMOVE> )
+
+  \ The origin and destination zones overlap, so the 11 KiB are
+  \ moved by pieces of 512 bytes, from top to bottom.
+
+512 CONSTANT /PIECE
+/DISC /PIECE / CONSTANT PIECES
+
+: PIECE  (  n -- a1 a2 len )
+  /PIECE * >R  HI R -  ABOVE-HI R> -  /PIECE  ;
+
+: DISC>TOP  ( -- )
+  PIECES 0 DO  I PIECE CMOVE  LOOP
+  HI>TOP  ;
 
   \ vim: filetype=abersoftforth

@@ -10,7 +10,12 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ Requirements
+
+  \ cswap.fsb
+
+  \ -----------------------------------------------------------
+  \ History
 
   \ 2015-03-26: Start. Copied from Lennart Benschop's Spectrum
   \ Forth-83.
@@ -60,7 +65,5 @@ DECIMAL  -->
       ?TERMINAL IF  LEAVE  THEN
     8 + LOOP
   ELSE  2DROP  THEN  DROP  ;
-
-DECIMAL
 
   \ vim: filetype=abersoftforth

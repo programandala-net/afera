@@ -57,8 +57,9 @@ MAKEFLAGS = --no-print-directory
 source_files=$(wildcard src/*.fsb)
 tape_files=$(wildcard tap/*.tap)
 
+.PHONY : all
 all: \
-	afera.mgt \
+	tap \
 	sys \
 	test
 
@@ -79,16 +80,18 @@ tap/%.tap: src/%.fsb
 	mv src/$*.tap tap/
 
 # ##############################################################
+# System packages
+
+# System packages whose name ends with "_inc.tap" have no <loaded.tap> at the
+# end, so its loader will never stop.  They are intended to be used as the
+# first part of other packages (see examples below) that add more modules,
+# including <loaded.tap> at the end.
 
 sys: \
 	sys/abersoft_forth_afera.tap \
 	sys/abersoft_forth_afera_inc.tap \
 	sys/abersoft_forth_afera_tools.tap \
 	sys/abersoft_forth_afera_tools_inc.tap
-
-# sys/abersoft_forth_afera_inc.tap has no <loaded.tap> at the end, so its
-# loader will never stop.  This file is intended to be used as part of other
-# files (see below) that add more modules, including <loaded.tap> at the end.
 
 sys/abersoft_forth_afera_inc.tap: \
 	tap/loader.tap \
@@ -112,10 +115,6 @@ sys/abersoft_forth_afera.tap: \
 		sys/abersoft_forth_afera_inc.tap \
 		tap/loaded.tap \
 		> sys/abersoft_forth_afera.tap
-
-# sys/abersoft_forth_afera_tools_inc.tap has no <loaded.tap> at the end, so its
-# loader will never stop.  This file is intended to be used as part of other
-# files (see below) that add more modules, including <loaded.tap> at the end.
 
 sys/abersoft_forth_afera_tools_inc.tap: \
 	tap/loader.tap \
@@ -151,12 +150,18 @@ sys/abersoft_forth_gplusdos.bas.tap: sys/abersoft_forth_gplusdos.bas
 		sys/abersoft_forth_gplusdos.bas  \
 		sys/abersoft_forth_gplusdos.bas.tap
 
+.PHONY : tap
+tap:
+	for source in $$(ls -1 src/*.fsb) ; do
+		@make tap/$$(basename $${source} .fsb).tap ;
+	done
+
 afera.mgt: $(tape_files) sys/abersoft_forth_gplusdos.bas.tap
 	for source in $$(ls -1 src/*.fsb) ; do
 		@make tap/$$(basename $${source} .fsb).tap ;
 	done
 	mkmgt \
-		--quiet afera.mgt \
+		afera.mgt \
 		sys/gplusdos-sys-2a.tap \
 		sys/abersoft_forth_gplusdos.bas.tap \
 		sys/abersoft_forth.bin.tap \

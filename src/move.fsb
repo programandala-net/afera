@@ -52,3 +52,6 @@ HEX  CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
   >R 2DUP - 0< IF  R> CMOVE>  ELSE  R> CMOVE  THEN  ;
 
   \ vim: filetype=abersoftforth
+  \ 2015-05-15: Simpler `GREETING`.
+: GREETING  ( -- )  .SYS CR .SYS-AUTHOR CR  ;
+  \

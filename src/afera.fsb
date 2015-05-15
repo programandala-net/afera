@@ -151,7 +151,7 @@ CREATE TUCK  ( x1 x2 -- x2 x1 x2 )
   E1 C, D1 C, E5 C, C3 C, PUSHDE ,  SMUDGE
 
 : DEPTH  ( -- n )  SP@ S0 @ - -2 /  ;
-  
+
   \ ............................................
   \ Conditional compilation
 
@@ -168,75 +168,59 @@ CREATE TUCK  ( x1 x2 -- x2 x1 x2 )
 : ?\ ( f "ccc<newline>" -- )  IF  [COMPILE] \
   THEN  ; IMMEDIATE  DECIMAL -->
 
-( .CPU )
-
-HEX
+( .CPU GREETING )
 
   \ The original word `.CPU` prints "48K SPECTRUM".  It's
-  \ changed to "ZX Spectrum". A `NOOP` is added at the end;
-  \ it will be substituted by `.CPUK` later.
+  \ changed to "ZX Spectrum". A `NOOP` is added at the end; it
+  \ will be substituted by `.CPUK` later, to show the memory of
+  \ the specific model.
 
-HERE  0B C, 5A C, 58 C, BL C, 53 C, 70 C, 65 C, 63 C, 74 C,
+HEX HERE  0B C, 5A C, 58 C, BL C, 53 C, 70 C, 65 C, 63 C, 74 C,
 72 C, 75 C, 6D C, ' NOOP CFA ,
 DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 
-DECIMAL -->
+  \ New messages show after a cold start.
 
-( GREETING )
+: .SYS         ( -- )  ." Spectrum fig-Forth"  ;
+: .SYS-AUTHOR  ( -- )  ." v1.1A \* 1983 Abersoft" CR
+                       ." v1.1C+Afera \* 2015 Marcos Cruz" CR
+                       ." (programandala.net)"  ;
 
-: .FREE  ( -- )  FREE U. ." bytes free"  ;
-
-: .SYS       ( -- )  ." Spectrum fig-Forth"  ;
-: .AUTHOR    ( -- )  ." v1.1A \* 1983 Abersoft" CR
-                     ." v1.1C+Afera \* 2015 Marcos Cruz" CR
-                     ." (programandala.net)"  ;
+: GREETING  ( -- )  .SYS CR .SYS-AUTHOR CR  ;
 
   \ As the message shows, the current user version is "C".
-  \ Store it into its standard fig-Forth address:
+  \ Store it into its standard fig-Forth address.
+
 67 DUP 10 +ORIGIN C!
 
-: (GREETING)  ( -- )  .SYS CR .AUTHOR CR  ;
-
-  \ `GREETING` prints the new message shown by `ABORT`. The
-  \ word is factored in order to make it possible for the
-  \ library modules to add their own messages to it, by
-  \ substituting the first word with another one that first
-  \ calls the previous one and then prints a new message.
-  \ `GREETING` only prints the messages that always must be
-  \ shown at the end: the CPU id and the free memory.
-
-: GREETING  ( -- )  (GREETING) .CPU CR .FREE CR  ;
-
-  \ Finally, `ABORT` must be patched to execute `GREETING`
-  \ after `CLS`, and then the rest.  The new code is shorter
-  \ than the original one, because the old messages were
-  \ hardcoded in the word.
+  \ `ABORT` must be patched to execute `GREETING` after `CLS`,
+  \ and then the rest.  The new code is shorter than the
+  \ original one, because the old messages were hardcoded in
+  \ the word.
 
 HEX ' GREETING    CFA 6D62 !  ' FORTH CFA 6D64 !
-    ' DEFINITIONS CFA 6D66 !  ' QUIT  CFA 6D68 !  DECIMAL -->
-
-( Patches )
-
-HEX
+    ' DEFINITIONS CFA 6D66 !  ' QUIT  CFA 6D68 !
 
   \ ............................................
   \ Cosmetic patches
 
-' NOOP CFA ' INDEX !        \ no `CLS` in `INDEX`
-' NOOP CFA ' LIST !         \ no `DECIMAL` in `LIST`
+  \ No `CLS` in `INDEX`, no `DECIMAL` in `LIST`
+' NOOP CFA ' INDEX !
+' NOOP CFA ' LIST !
          2 ' LIST 23 + !    \ smaller margin in `LIST`
 
-  \ ............................................
-  \ Patch: Make screen 0 usable
+DECIMAL -->
+
+( Make the first screen usable )
 
   \ Abersoft Forth doesn't allow to compile sources from the
-  \ first screen of its RAM-disk, by convention reserved to
-  \ comments. But that is a waste of memory.  This patch solves
-  \ that problem.
+  \ first screen (number 0) of its RAM-disk, by convention
+  \ reserved to comments. But that is a waste of memory.  This
+  \ patch solves that problem.
   \
-  \ After this patch is done, screen numbers of the RAM-disk
-  \ are 1..11 instead of 0..10. Or 1..16 after compiling the
-  \ <16kramdisks.fsb> module.
+  \ After the patch, screen numbers will be 1..11 instead of
+  \ 0..10. Or 1..16 after compiling the <16kramdisks.fsb>
+  \ module.
 
   \ The only word that has to be patched is `R/W`, the
   \ fig-Forth standard disk read/write linkage, a system
@@ -257,31 +241,82 @@ HEX
 
 B/SCR B/BUF * CONSTANT /SCR  \ bytes per screen (1024)
 
-: BUF*  ( n1 +n2 -- +n3 )
+  \ XXX OLD
+  \ : BUF*  ( n1 +n2 -- +n3 )
 
-  \ Calculate the relative address +n3 of disk block n1 in the
-  \ Forth RAM-disk. Give error #6 when the requested disk block
-  \ n1 belongs to the first screen of the RAM-disk.  Finally
-  \ update the result one screen below.
+  \   \ Calculate the relative address +n3 of disk block n1 in the
+  \   \ Forth RAM-disk. Give error #6 when the requested disk block
+  \   \ n1 belongs to the first screen of the RAM-disk.  Finally
+  \   \ update the result one screen below.
 
-  \ n1 = number of sequential disk block
-  \ +n2 = bytes per block buffer, returned by `B/BUF`
-  \ +n3 = offset in the RAM-disk (from 0 to `HI B/BUF -`)
+  \   \ n1 = number of sequential disk block
+  \   \ +n2 = bytes per block buffer, returned by `B/BUF`
+  \   \ +n3 = offset in the RAM-disk (from 0 to `HI B/BUF -`)
 
-  * DUP /SCR U< 06 ?ERROR  /SCR -  ;
+  \   * DUP /SCR U< 06 ?ERROR  /SCR -  ;
 
-  \ Patch `R/W` with `BUF*` and update `BLK` to prevent the
-  \ current screen to be loaded twice. Warning: Both operations
-  \ must be done on the same line, to prevent them from being
-  \ in two different blocks of the screen.
-  ' BUF* CFA 7223 !  B/SCR BLK +!
+  \   \ Patch `R/W` with `BUF*` and update `BLK` to prevent the
+  \   \ current screen to be loaded twice. Warning: Both operations
+  \   \ must be done on the same line, to prevent them from being
+  \   \ in two different blocks of the screen.
+  \   ' BUF* CFA 7223 !  B/SCR BLK +!
 
-  \ XXX TODO
-  \ : R/W  ( a n f -- )
-  \   \ 48K version of R/W
-  \   >R
-  \   DISC-BLOCK
-  \   R> IF  SWAP   THEN  B/BUF CMOVE  ;
+: DISC-BLOCK  ( n -- a )
+
+  \ Calculate the address of disk block n in the Forth RAM-
+  \ disk.  Give error 6 when the requested disk block is out of
+  \ range.
+  \
+  \ This word works with the default 11-KiB RAM disk and also
+  \ with the 16-KiB paged RAM-disks that can be used with the
+  \ 128K model (installed by the <16kramdisks.fsb> module).
+  \
+  \ The disk block number is adjusted with `OFFSET`, because
+  \ the result address is the same, no matter what the current
+  \ drive is.
+
+  \ n = number of sequential disk block
+  \ a = address in the RAM-disk (when paged in)
+
+  OFFSET @ -
+  B/BUF * DUP /SCR U< 6 ?ERROR
+  LO + /SCR - DUP HI > 6 ?ERROR  ;
+
+
+: (R/W)  ( a1 a2 f -- )
+
+  \ Read to or write from the new RAM-disk.
+
+  \ a1 = buffer address
+  \ a2 = address in the RAM-disk
+  \ f =  0 for writing; 1 for reading
+
+  \ This word is created with `;S` and `NOOP` in order to make
+  \ it easier for the <16kramdisks.fsb> module to convert it
+  \ into the 128K version, that needs four more commands.
+
+  IF  SWAP  THEN  B/BUF CMOVE [COMPILE] ;S NOOP NOOP NOOP ;
+
+  \ Compile the new code of `R/W`.
+
+HERE  ' >R CFA , ' DISC-BLOCK CFA , ' R> CFA , '
+      (R/W) CFA , ' ;S CFA ,
+
+  \ Patch `R/W` with the new code.  Update `BLK` to prevent the
+  \ current screen to be loaded twice, because of the patch.
+  \ Finally, free the dictionary space used by the patch.
+  \
+  \ Warning: `CMOVE` and `B/SCR BLK +!` must be on the same
+  \ line, otherwise there's a chance they could be in different
+  \ blocks of the screen, what would cause trouble.
+
+DUP ' R/W OVER SWAP OVER HERE SWAP - CMOVE  B/SCR BLK +!  DP !
+
+  \ Change the error 9 caused by `0 LOAD` ("Trying to load from
+  \ screen 0") to error 6 ("Out of RAM-disk range"), what seems
+  \ more logical now, because there's no screen 0 anymore.
+
+6 ' LOAD 8 + !
 
 DECIMAL -->
 
@@ -359,7 +394,7 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
   \ Blank the init disc from the given block number.
   /SCR * DUP >R /DISC SWAP - LO R> + SWAP BLANKS  ;
 
-11 CONSTANT SCR/DR  \ screens per RAM-disk
+11 CONSTANT SCR/DR  \ screens per drive (RAM-disk)
 
 : DISC-SCR  ( n -- a )
   \ Address of screen n in the Forth RAM-disk;
@@ -398,7 +433,7 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
 
   EXTEND  0 +ORIGIN SIZE 10 + ;
 
-EXTEND CLS GREETING
+EXTEND CR GREETING
 
   \ -----------------------------------------------------------
   \ Temporary code during the development
@@ -590,6 +625,9 @@ EXTEND CLS GREETING
   \ 2015-05-14: File renamed <afera.fsb>. Several changes. New
   \ approach... The system will be lowered by default, in order
   \ to use memory paging to detect the available memory.
+  \
+  \ 2015-05-15: Simpler `GREETING`.
+  \
   \ -----------------------------------------------------------
 
   \ vim: filetype=abersoftforth
