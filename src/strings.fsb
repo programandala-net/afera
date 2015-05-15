@@ -1,0 +1,147 @@
+.( Strings )
+
+\ strings.fsb
+\ Strings extensions for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ afera.fsb
+  \ move.fsb
+  \ flags.fsb
+  \ 2r.fsb
+
+  \ -----------------------------------------------------------
+  \ History of this file
+  
+  \ 2015-03:
+  \
+  \ `CHAR`, `[CHAR]`, `PARSE-TEXT`, `PARSE-NAME`, `SLIT`, `S,`,
+  \ `SLITERAL`, `.(`, `(S)`, `S"`, `S'`.
+  \
+  \ 2015-03-28: File created with code extracted from the main
+  \ file of the library. New: `STR=`, after Gforth.
+  \
+  \ 2015-03-29: New: 'PLACE' and '+PLACE', after Gforth;
+  \ circular string buffer and related tools, adapted from csb8
+  \ (http://programandala.net/en.program.csb8.html).
+  \
+  \ 2015-03-30:
+  \
+  \ `.(`is moved to the main extend module, in order to use it
+  \ at block headers.
+  \
+  \ 2015-03-31:
+  \
+  \ New: `/STRING`.
+  \
+  \ 2015-04-03:
+  \
+  \ Change: `CHAR` and `[CHAR]` are moved to the main file of
+  \ the library. 
+  \
+  \ 2015-04-14:
+  \
+  \ New: `CMOVE>`, `MOVE`.
+  \
+  \ 2015-05-15:
+  \
+  \ `CMOVE>` and `MOVE` are moved to <move.fsb>.
+
+2 6 THRU 
+
+( Strings )
+
+: PARSE-TEXT  ( c "ccc<c>" -- ca len )  TEXT PAD COUNT  ;
+: PARSE-NAME  ( "name" -- ca len )  BL PARSE-TEXT  ;
+
+: SLIT  ( -- ca len ) R COUNT DUP 1+ R> + >R  ;
+: S,  ( ca len -- ) SWAP HERE ROT CMOVE 1+ ALLOT  ;
+: SLITERAL  ( ca len -- ) COMPILE SLIT S,  ; IMMEDIATE
+
+: PLACE  ( ca1 len1 ca2 )  2DUP C! 1+ SWAP MOVE  ;
+: +PLACE  ( ca1 len1 ca2 )
+  2DUP C@ + OVER C!  DUP C@ 1+ + SWAP MOVE  ;
+
+: /STRING  ( ca1 len1 n -- ca2 len2 ) 
+  DUP >R - SWAP R> + SWAP  ;
+
+( S" S' )
+
+  \ Reference from Don Thomasson's _Advanced Spectrum Forth_:
+
+  \ :  (.")
+  \   R COUNT DUP 1+ R> + >R TYPE  ;
+  \ : ."
+  \   [ 34 ] LITERAL STATE @
+  \   IF COMPILE (.") WORD HERE C@ 1+ ALLOT
+  \   ELSE WORD HERE COUNT TYPE  ; IMMEDIATE
+
+: (S) ( Compilation: c "ccc<c>" -- ) ( Run-time:  -- ca len )
+  STATE @
+  IF    COMPILE SLIT WORD HERE C@ 1+ ALLOT
+  ELSE  PARSE-TEXT  THEN  ;
+
+: S"  ( Compilation: "ccc<">" -- ) ( Run-time:  -- ca len )
+  [CHAR] " (S)  ; IMMEDIATE
+
+: S'  ( Compilation: "ccc<'>" -- ) ( Run-time:  -- ca len )
+  [CHAR] ' (S)  ; IMMEDIATE
+
+( LENGTHS STR= )
+
+: LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
+  2 PICK OVER  ;
+
+: STR=  ( ca1 len1 ca2 len2 -- f )
+  LENGTHS -  \ different lenghts?
+  IF    2DROP 2DROP FALSE EXIT
+  ELSE  DROP [ CONTEXT @ EDITOR ] -TEXT [ CONTEXT ! ] 0= 0=
+  THEN  ;
+
+( Circular string buffer)
+
+\ XXX TODO make it configurable, with deferred words
+\ and a word to make the buffer.
+
+512 CONSTANT /CSB  \ buffer size
+
+/CSB VARIABLE CSB-UNUSED         \ unused buffer space
+HERE  /CSB ALLOT  CONSTANT CSB0  \ bottom address
+
+: ?CSB  ( len -- )
+  \ Make sure there's room for the given characters.
+  DUP CSB-UNUSED @ > IF  /CSB CSB-UNUSED !  THEN
+  MINUS CSB-UNUSED +!  ;
+
+: STRING-ALLOCATE  ( len -- ca )
+  ?CSB CSB0 CSB-UNUSED @ +  ;
+
+: SAVE-STRING  ( ca1 len1 -- ca2 len1 )
+  DUP STRING-ALLOCATE SWAP  2DUP 2>R  MOVE  2R>  ;
+
+: SAVE-COUNTED-STRING  ( ca1 len1 -- ca2 )
+  DUP 1+ STRING-ALLOCATE DUP >R PLACE R> ;
+
+( SMOVE S+ )
+
+: SMOVE  ( ca1 ca2 u -- )
+  SWAP MOVE  ;
+
+: S+  ( ca1 len1 ca2 len2 -- ca3 len3 )
+  \ Append the string ca2 len2 to the end of string ca1 len1
+  \ returning the string ca3 len3.
+  LENGTHS + >R          ( ca1 len2 ca2 len2 ) ( R: len3 )
+  R STRING-ALLOCATE >R  ( R: len3 ca3 )
+  2 PICK R +            ( ca1 len1 ca2 len2 len1+ca3 )
+  SMOVE                 ( ca1 len1 )  \ 2nd string to buffer
+  R SMOVE               \  1st string to buffer
+  R> R>  ;
+
+  \ vim: filetype=abersoftforth

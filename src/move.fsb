@@ -1,0 +1,54 @@
+.( CMOVE> MOVE )
+
+\ move.fsb
+\ `MOVE` and `CMOVE>` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-14: Code written as part of the strings module.
+  \
+  \ 2015-05-15: Code moved to an independent file.
+
+-->
+
+( CMOVE> )
+
+HEX  CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
+
+  \ Adapted from Lennart Benschop's Spectrum Forth-83.
+
+  \ exx / pop bc / pop de / pop hl
+  D9 C,  C1 C,  D1 C,  E1 C,
+
+  \ ld a,c / or b / jr z,end
+  79 C, B0 C, 28 C, 8 C,
+
+  09 C,         \ add hl,bc
+  2B C,         \ dec hl
+  EB C,         \ ex de,hl
+  09 C,         \ add hl,bc
+  2B C,         \ dec hl
+  EB C,         \ ex de,hl
+  ED C, B8 C,   \ lddr
+
+  \ end: / exx / jp NEXT
+  D9 C,  C3 C, NEXT ,
+
+  SMUDGE DECIMAL
+
+-->
+
+( MOVE )
+
+: MOVE  ( a1 a2 u -- )  \ Forth-94
+ \ Note: Copied from Phil Burk's pForth (V19).
+  >R 2DUP - 0< IF  R> CMOVE>  ELSE  R> CMOVE  THEN  ;
+
+  \ vim: filetype=abersoftforth

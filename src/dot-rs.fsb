@@ -1,0 +1,28 @@
+.( .RS )
+
+\ dot-rs.fsb
+\ `.RS` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+  \ History of this file
+
+  \ 2015-05-15: Written after the code of `.S`.
+
+[DEFINED] RDEPTH
+  ?\  : RDEPTH  ( -- u )  RP@ R0 @ - -2 /  ;
+
+: .RS   ( -- )
+
+  RDEPTH 2- DUP
+  S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
+  
+  IF  RP@ 2- R0 @ 2- DO I @ . -2 +LOOP  THEN
+
+  ;
+
+  \ vim: filetype=abersoftforth
+

@@ -1,0 +1,69 @@
+.( 48K? 128K? )
+
+\ 48kq.fsb
+\ Memory size checks for ZX Spectrum's Abersoft Forth
+\ and related system patches
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ <bank.fsb>
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-07: Start. Code adapted from Lennart Benschop's
+  \ Spectrum Forth-83.
+  \ 
+  \ 2015-05-07: Code moved to its own file, separated from
+  \ `BANK`.
+  \
+  \ 2015-05-11: New: `CPUK`, `.CPUK` and patch for `.CPU`.
+  \
+  \ 2015-05-14: Already integrated into the main file of the
+  \ library. This file is abandoned.
+
+  \ -----------------------------------------------------------
+
+HEX
+
+: 48K?  (  -- f )
+
+  \ Running on a 48K Spectrum?
+
+  \ An address in range 0xC000..0xFFFF is modified, then
+  \ checked after paging a different memory bank in, and
+  \ finally restored. If the contents of the address changed,
+  \ that means the paging had no effect, so it's a 48K.
+  \
+  \ This code was adapted from Lennart Benschop's Spectrum
+  \ Forth-83.
+
+  0 BANK FFFE @ 0 FFFE !  1 BANK FFFE @ 1 FFFE !
+  0 BANK FFFE @ >R  1 BANK FFFE !  0 BANK FFFE !  R>  ;
+
+: 128K?  (  -- f )  48K? 0=  ;
+
+DECIMAL  -->
+
+( CPUK .CPUK )
+
+: CPUK  ( -- n )  \ KiB of the machine.
+  48 128K? 80 * + ;
+
+: .CPUK  ( -- )  \ Print the computer family, 48K or 128K.
+  BASE @ DECIMAL SPACE CPUK 2 .R ." K" BASE !  ;
+
+  \ Substitute the temporary `NOOP` that was added after the
+  \ new message of `.CPU`:
+' .CPUK CFA ' .CPU 14 + !
+
+EXTEND \ protect the patches
+
+  \ vim: filetype=abersoftforth

@@ -1,0 +1,24 @@
+.( Move HI to top of memory )
+
+\ uppersys.fsb
+\ More free memory for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ -----------------------------------------------------------
+  \ History
+  \
+  \ 2015-05-15: Start.
+
+0 23675 !  \ Point the UDG to ROM.
+
+LO  0 /DISC - ' LO !  0 ' HI !  LO /DISC CMOVE>
+
+  \ vim: filetype=abersoftforth

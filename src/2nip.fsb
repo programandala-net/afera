@@ -1,0 +1,27 @@
+.( 2NIP )
+
+\ 2NIP.fsb
+\ '2NIP` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-13: Code copied from DZX-Forth
+  \ (http://programandala.net/en.program.dzx-forth.html).
+
+CREATE 2NIP  ( x1 x2 x3 x4 -- x3 x4 )
+
+HEX   E1 C,           \ pop hl
+      D1 C,           \ pop de
+      F1 C,           \ pop af
+      F1 C,           \ pop af
+      C3 C, PUSHDE ,  \ jp PUSHDE
+      SMUDGE          DECIMAL
+
+      \ vim: filetype=abersoftforth

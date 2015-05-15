@@ -1,0 +1,60 @@
+.( [IF] [ELSE] [THEN] )
+
+\ bracket-if.fsb 
+\ Conditional compilation for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2005-2010,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ strings.fsb
+
+  \ -----------------------------------------------------------
+  \ History of this file
+
+  \ 2015-03-28: Start, with code adapted from Forth 5mx
+  \ (http://programandala.net/en.program.forth_5mx.html), that
+  \ was already adapted from pForth.
+  \
+  \ 2015-04-08: Changes.
+  \
+  \ 2015-04-27: New: `?-->` and `?;S`, as a simple alternative
+  \ to the unfinished `[IF]`.
+  \
+  \ 2015-05-02: Change: `[DEFINED]`, `[UNDEFINED]`, `?-->` and
+  \ `?;S` are moved to the main file of the library.
+  \
+  \ 2015-05-15: New version, adapted from lina.
+
+-->
+
+( [IF] [ELSE] [THEN] )
+
+  \ Adapted from lina:
+  \   Copyright (c) 2000-2004 Albert van der Horst,
+  \   The Netherlands
+  \ The lina code was adapted from the ANS Forth documentation.
+
+: [ELSE]  ( "..." -- )
+
+  1 BEGIN   PARSE-NAME 2DUP SWAP C@ AND
+    WHILE   2DUP S" [IF]" STR=
+            IF    2DROP 1+
+            ELSE  2DUP S" [ELSE]" STR=
+                  IF    2DROP 1- DUP IF  1+  THEN
+                  ELSE  S" [THEN]" STR= IF  1-  THEN
+                  THEN
+            THEN  -DUP 0= IF  EXIT  THEN
+  REPEAT  2DROP DROP  ; IMMEDIATE
+
+: [IF]  ( "..." -- )  0= IF [COMPILE] [ELSE] THEN  ; IMMEDIATE
+
+: [THEN]  ( -- )  ; IMMEDIATE
+
+  \ vim: filetype=abersoftforth
+

@@ -1,0 +1,285 @@
+.( Two 16-KiB RAM-disks )
+
+\ 16kramdisks.fsb
+\ Two 16-KiB RAM-disks for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Abersoft Forth uses one 11-KiB RAM-disk at the top of the
+  \ memory map.  This module, suitable only for ZX Spectrum
+  \ 128K (or later), modifies the system in order to use two
+  \ 16-KiB RAM-disks instead, using the additional memory
+  \ banks.
+  \
+  \ The 11 KiB of memory used by the original RAM-disk are
+  \ freed for the Forth dictionary.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ <lowersys.fsb>
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-11: Start.
+  \
+  \ 2015-05-12: 
+  \
+  \ Fix: the second check was missing in `DISC-BLOCK`, what
+  \ caused `LIST` could be used with screen numbers greater
+  \ than 16.
+  \
+  \ Fix: Also `(TAPE)` needed a patch, the same way the
+  \ <tape.fsb> module does.
+  \
+  \ First working version.
+  \
+  \ Improvement: Second drive. The fig-Forth word `DR1` is
+  \ added.
+  \
+  \ Improvement: The contents of the old RAM-disk are moved to
+  \ the new one, thus the module must not quit after doing its
+  \ job, and other modules can be automatically loaded after
+  \ this one.
+  \
+  \ 2015-05-13: Change: The banks used are 4 and 6 (uncontended
+  \ memory) instead of 1 and 3 (contended memory).
+
+-->
+
+( DR1 DISC-BANK INIT-DISC )
+
+: DR1  ( -- )
+  \ Select the second RAM-disk.
+  SCR/DR B/SCR * OFFSET !  ;
+
+: DISC-BANK  ( -- n )
+  \ Memory bank of the current RAM-disk.
+  \ n = 4 for the first RAM-disk; 6 for the second RAM-disk
+  \ Note: `2 *` is used, unless `2*` exists.
+  6 OFFSET @ 0=    [DEFINED] 2* ?\ 2 * 
+                 [UNDEFINED] 2* ?\ 2*
+  -  ;
+
+: (INIT-DISC)  ( -- )
+  \ Blank the current RAM-disk, that must be already paged in.
+  LO /DISC BLANKS ;
+
+HERE
+  \ Compile the patch for `INIT-DISC`
+  \ (the original word occupies the same):
+  ' DISC-BANK CFA , ' BANK CFA ,
+  ' (INIT-DISC) CFA ,
+  ' 0 CFA , ' BANK CFA ,
+  \ Move it:
+DUP  ' INIT-DISC OVER HERE SWAP - CMOVE
+DP ! \ restore the disctionary pointer
+
+DECIMAL -->
+
+( LOADT SAVET VERIFY )
+
+  \ Patch the tape words to use the new RAM-disk
+
+: (BANK-TAPE)   ( n -- )
+  \ Do a RAM-disk tape operation
+  \ with the proper memory bank paged in.
+  \ n = 0 for loading; 1 for saving; 2 for verifying
+  DISC-BANK BANK (TAPE) 0 BANK  ;
+
+' (BANK-TAPE) CFA ' LOADT  2+  !
+' (BANK-TAPE) CFA ' SAVET  4 + !
+' (BANK-TAPE) CFA ' VERIFY 2+  !
+
+-->
+
+( DISC-BLOCK )
+
+  \ Patched `R/W`, decoded:
+  \
+  \ 7225 : R/W 
+  \ 721F   >R 
+  \ 7221   B/BUF 
+  \ 7223   BUF*  \ patched
+  \ 7225   LO 
+  \ 7227   + 
+  \ 7229   DUP 
+  \ 722B   HI 
+  \ 722D   > 
+  \ 722F   LIT 6 
+  \ 7233   ?ERROR 
+  \ 7235   R> 
+  \ 7237   0BRANCH 4  \ to 723D 
+  \ 723B   SWAP 
+  \ 723D   B/BUF 
+  \ 723F   CMOVE 
+  \ 7241   ;S
+
+  \ : BUF*  ( n1 +n2 -- +n3 )
+
+  \   \ Calculate the relative address +n3 of disk block n1 in the
+  \   \ Forth RAM-disk. Give error #6 when the requested disk block
+  \   \ n1 belongs to the first screen of the RAM-disk.  Finally
+  \   \ update the result one screen below.
+
+  \   \ n1 = number of sequential disk block
+  \   \ +n2 = bytes per block buffer, returned by `B/BUF`
+  \   \ +n3 = offset in the RAM-disk (from 0 to `HI B/BUF -`)
+
+  \   * DUP /SCR U< 06 ?ERROR  /SCR -  ;
+
+  \ : R/W  ( a n f -- )
+  \   >R 
+  \   B/BUF BUF*  \ patched
+  \   LO + 
+  \   DUP HI > 6 ?ERROR
+  \   R> IF  SWAP   THEN
+  \   B/BUF CMOVE ;
+
+: DISC-BLOCK  ( n -- a )
+
+  \ Calculate the address of disk block n1 in the Forth RAM-
+  \ disk (when paged in).  Give error 6 when the requested disk
+  \ block is out of range.
+
+  \ The disk block number is adjusted with `OFFSET`, in case
+  \ it's the second drive, because the result address is the
+  \ same, no matter what the current drive is (set by `DR0` and
+  \ `DR1`).
+
+  \ n = number of sequential disk block
+  \ a = address in the RAM-disk (when paged in)
+
+  OFFSET @ -
+  B/BUF * DUP /SCR U< 6 ?ERROR
+  LO + /SCR - DUP HI > 6 ?ERROR  ;
+
+
+: (R/W)  ( a1 a2 f -- )
+
+  \ Read to or write from the new RAM-disk.
+
+  \ a1 = buffer address
+  \ a2 = address in the RAM-disk
+  \ f =  0 for writing; 1 for reading
+
+  IF  SWAP  THEN  B/BUF DISC-BANK BANK CMOVE 0 BANK  ;
+
+-->
+
+( INSTALL -- part 1 )
+
+HEX
+
+: INSTALL  ( -- )
+
+  \ Intall the two 16-KiB RAM-disks.
+  \
+  \ This long word, that forgets itself at the end, does all
+  \ operations that have to be done in one single step, while
+  \ no disk block is being interpreted, otherwise the system
+  \ could be affected. It includes also some simple patches
+  \ that could be done previously without risk, but that depend
+  \ on the new values of some constants, in order to use them
+  \ as literals, and those constants are modified here.
+
+  \ Update the length and bounds of the RAM-disk:
+  4000 ' /DISC !        \ 16 KiB length
+  C000 ' LO !           \ lowest address, when paged
+  LO /DISC + 1- ' HI !  \ highest address, when paged
+
+  \ Update the number of screens per RAM-disk:
+  10 ' SCR/DR !
+
+  \ Make sure the buffers are empty before patching `R/W`:
+EMPTY-BUFFERS
+
+  \ Patch `R/W` with its new code:
+' >R          CFA ' R/W !
+' DISC-BLOCK  CFA ' R/W 2+ !
+' R>          CFA ' R/W 4 + !
+' (R/W)       CFA ' R/W 6 + !
+' ;S          CFA ' R/W 8 + !
+ 
+  \ XXX Alternative method: 
+  \ HERE  ' >R CFA , ' DISC-BLOCK CFA , ' R> CFA ,
+  \       ' (R/W) CFA , ' ;S CFA ,
+  \ DUP ' R/W OVER HERE SWAP - CMOVE DP !
+
+-->
+
+( INSTALL -- part 2 )
+
+  \ The tape load header (pointed by IX before calling the ROM
+  \ routine) is at address 30182 (0x75E6).  Its contents (after
+  \ fixing the length bug) are:
+
+  \ +00 : 3 (identifier of code file type)
+  \ +01 : "DISC      " = 10-char filename, padded with spaces
+  \ +11 : 11264 (0x2C00)  = length
+  \ +13 : 53248 (0xD0FF)  = start address
+  \ +15 : "  " (2 spaces) = not used for code files
+
+  \ Patch the tape load header
+  \ with the new length and start address:
+  /DISC 75E6 0B + !  LO 75E6 0D + !
+  
+  \ Patch `(TAPE)` with the new default file start address:
+  LO 7619 !
+
+  \ The word `FREE` returns the free dictionary space.  Its
+  \ original definition, according to the original memory map,
+  \ is:
+  \
+  \   : FREE  ( -- n )  SP@ HERE -  ;
+  \ 
+  \ After been patched by the <lowersys.fsb> module, its
+  \ definition is:
+  \
+  \   : FREE  ( -- n )  LO HERE -  ;
+  \
+  \ It has to be modified once more because now all RAM is
+  \ free, so '0' must be used instead of 'LO':
+  ' 0 CFA ' FREE !
+
+  \ Move the contents of the old RAM-disk to the new one.  This
+  \ makes it possible to use this module transparently, and
+  \ load other modules after it.
+  \
+  \ The first 6 KiB of the display (the bitmap) are used as a
+  \ buffer.
+
+  \ Save the display contents to bank 4:
+  4000 C000 1B00 4 BANK CMOVE 0 BANK
+  \ Set white paper and white ink,
+  \ to hide the display garbage caused by the copying:
+  5800 300 3F FILL
+  \ Copy the old RAM-disk (screens 1-6) to the display:
+  D000 4000 1800 CMOVE
+  \ Then copy it from the display to bank 1:
+  4000 C000 1800 1 BANK CMOVE 0 BANK
+  \ Copy the old RAM-disk (screens 7-11) to the display:
+  D000 1800 + 4000 1400 CMOVE
+  \ Then copy it from the display to bank 1:
+  4000 C000 1800 + 1400 1 BANK CMOVE 0 BANK
+  \ Restore the display contents from bank 4:
+  C000 4000 1B00 4 BANK CMOVE 0 BANK
+
+  \ Make this word to forget itself:
+  [ LATEST ] LITERAL DUP DP ! PFA LFA @ CURRENT @ !
+
+  \ System words have been patched with new ones,
+  \ so the changes must be protected:
+  HERE FENCE !
+
+  DECIMAL  ;  INSTALL
+
+  \ vim: filetype=abersoftforth
