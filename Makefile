@@ -95,15 +95,13 @@ sys/abersoft_forth_afera_inc.tap: \
 	tap/loader.tap \
 	tap/afera.tap \
 	tap/lowersys.tap \
-	tap/bank.tap \
-	tap/48kq.tap
+	tap/bank.tap
 	cat \
 		sys/abersoft_forth.tap \
 		tap/loader.tap \
 		tap/afera.tap \
 		tap/lowersys.tap \
 		tap/bank.tap \
-		tap/48kq.tap \
 		> sys/abersoft_forth_afera_inc.tap
 
 sys/abersoft_forth_afera.tap: \
@@ -172,7 +170,6 @@ tapes:
 # 		tap/strings.tap \
 # 		tap/plusscreen.tap \
 # 		tap/dot-s.tap \
-# 		tap/2star.tap \
 # 		tap/assembler.tap \
 # 		tap/gplusdos_1.tap \
 # 		tap/gplusdos_2.tap \
@@ -186,7 +183,6 @@ tapes:
 # 		tap/afera.tap \
 # 		tap/lowersys.tap \
 # 		tap/bank.tap \
-# 		tap/48kq.tap \
 # 		tap/16kramdisks.tap \
 # 		tap/buffercol.tap \
 # 		tap/flags.tap \
@@ -196,7 +192,6 @@ tapes:
 # 		tap/strings.tap \
 # 		tap/plusscreen.tap \
 # 		tap/dot-s.tap \
-# 		tap/2star.tap \
 # 		tap/assembler.tap \
 # 		tap/gplusdos_1.tap \
 # 		tap/gplusdos_2.tap \
@@ -289,7 +284,6 @@ _tests/gplusdos_test.tap: tapes afera.mgt
 		tap/cswap.tap \
 		tap/dump.tap \
 		tap/dot-s.tap \
-		tap/2star.tap \
 		tap/transient.tap \
 		tap/transient-start-4096.tap \
 		tap/assembler.tap \
@@ -307,7 +301,6 @@ _tests/gplusdos_128k_test.tap: tapes afera.mgt
 		tap/afera.tap \
 		tap/lowersys.tap \
 		tap/bank.tap \
-		tap/48kq.tap \
 		tap/16kramdisks.tap \
 		tap/buffercol.tap \
 		tap/flags.tap \
@@ -317,7 +310,6 @@ _tests/gplusdos_128k_test.tap: tapes afera.mgt
 		tap/strings.tap \
 		tap/plusscreen.tap \
 		tap/dot-s.tap \
-		tap/2star.tap \
 		tap/transient.tap \
 		tap/transient-start-4096.tap \
 		tap/assembler.tap \

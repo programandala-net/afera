@@ -31,7 +31,7 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  \ <strings.fsb>
+  NEEDS   S"        strings
 
   \ -----------------------------------------------------------
   \ History
@@ -55,6 +55,8 @@
   \
   \ 2015-05-12: Change: `'SCR` renamed to `DISC-SCR`, after the
   \ changes in the library.
+  \
+  \ 2015-05-17: `NEEDS` used.
 
   \ -----------------------------------------------------------
   \ Documentation
@@ -137,6 +139,8 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   \ Blank the filename of the load header.
   LOADT-HEADER >T-FILENAME /T-FILENAME BLANKS ;
 
+  \  XXX TODO use the file execution table
+  \  to share one word with the disk support?
 : T-FILENAME!  ( ca len -- )
   \ Store a filename into the load header.
   -T-FILENAME  /T-FILENAME MIN
@@ -170,7 +174,7 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
 
 ( <TAPE >TAPE )
 
-: <TAPE  ( a1 len1 a2 len2 -- )
+: <TAPE-FILE  ( a1 len1 a2 len2 -- )
   \ Load a file from tape.
   \ a1      = destination address
   \ len1    = length (or zero if unspecified)
@@ -179,12 +183,16 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   IF  T-FILENAME!  ELSE  2DROP ANY-T-FILENAME  THEN
   T-LENGTH! T-START!  1 (TAPE)  T-RESTORE   ;
 
-: >TAPE  ( a1 len1 a2 len2 -- )
+' <TAPE-FILE CFA '<FILE ,  \ Update the execution table.
+
+: >TAPE-FILE  ( a1 len1 a2 len2 -- )
   \ Save a memory region into a tape file.
   \ a1      = address of the code
   \ len1    = length of the code
   \ a2 len2 = filename
   T-FILENAME! T-LENGTH! T-START!  0 (TAPE)  T-RESTORE  ;
+
+' >TAPE-FILE CFA '>FILE ,  \ Update the execution table.
 
 ( /LOADT /SAVET )
 

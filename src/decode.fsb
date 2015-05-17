@@ -18,7 +18,7 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  \ recurse.fsb
+  NEEDS RECURSE recurse
 
   \ -----------------------------------------------------------
   \ History
@@ -49,6 +49,8 @@
   \ 2015-05-13: Fix: the address shown at the left of the colon
   \ was the last value of `DECODE-ADDRESS`. Now it's the nfa of
   \ the definition. The check in `INDENT` is removed.
+  \
+  \ 2015-05-17: `NEEDS` used.
 
 -->
 

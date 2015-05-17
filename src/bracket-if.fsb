@@ -12,7 +12,8 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  \ strings.fsb
+  NEEDS S" strings
+  NEEDS STR= strings
 
   \ -----------------------------------------------------------
   \ History of this file
@@ -30,6 +31,8 @@
   \ `?;S` are moved to the main file of the library.
   \
   \ 2015-05-15: New version, adapted from lina.
+  \
+  \ 2015-05-17: `NEEDS` used.
 
 -->
 

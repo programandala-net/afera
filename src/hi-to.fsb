@@ -60,13 +60,20 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  \ <lowersys.fsb>
-  \ <hi-to-top.fsb> or <hi-to-udg.fsb>
+  49152 S0 U< 0=  ?NEEDS lowersys
+
+    \ The word `NEW-HI` is provided also by the module
+    \ <hi-to-udg.fsb>, but <hi-to-top.fsb> is used as
+    \ default.
+
+  NEEDS NEW-HI hi-to-top
 
   \ -----------------------------------------------------------
   \ History
   \
   \ 2015-05-15: Start. First working version..
+  \
+  \ 2015-05-17: `NEEDS` and `?NEEDS` used.
 
 -->
 

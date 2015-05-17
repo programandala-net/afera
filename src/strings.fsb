@@ -12,10 +12,10 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  \ <afera.fsb>
-  \ <move.fsb>
-  \ <flags.fsb>
-  \ <2r.fsb>
+  NEEDS MOVE    move
+  NEEDS FALSE   flags
+  NEEDS 2>R     2r
+  NEEDS 2R>     2r
 
   \ -----------------------------------------------------------
   \ History
@@ -44,6 +44,8 @@
   \ `2>R` and `2>R` are already available and used.
   \ Improvement: The circular string buffer is configurable; it
   \ must be initialized.
+  \
+  \ 2015-05-17: `NEEDS` used.
 
 2 7 THRU 
 
