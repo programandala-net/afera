@@ -16,6 +16,8 @@
   \
   \ 2015-05-08: Renamed to <gplusdos_vars.fsb>, because of an
   \ issue with Makefile.
+  \
+  \ 2015-05-17: `DOSC@` and `DOSC!`are finished.
 
 
 -->
@@ -25,8 +27,6 @@
 3 6 THRU
 
 ( DOSC@ )
-
-  \ XXX FIXME
 
 8192 CONSTANT DOS-VARS
 
@@ -64,10 +64,9 @@ CODE DOS@  ( n1 -- n2 )
 
 CODE DOSC!  ( b n -- )
   \ Store b into the G+DOS variable n.
-  \ XXX TODO -- finish
   HL POP  DE POP
   BC PUSH  IX PUSH  \ save the Forth registers
-  DE POP  HL PUSH
+  DE PUSH HL PUSH
   PATCH HOOK
   HL POP  DOS-VARS DE LDP#  DE ADDP  DE POP
   E (HL) LD

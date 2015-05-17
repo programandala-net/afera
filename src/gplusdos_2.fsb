@@ -54,11 +54,13 @@
   \ 
   \ Change: `'SCR` renamed to `DISC-SCR`, after the changes in
   \ the library.
+  \
+  \ 2015-05-17: New: `FILE-EXISTS?`.
 
   \ -----------------------------------------------------------
   \ Todo
 
-2 9 THRU
+2 10 THRU
 
 ( Save a file)
 
@@ -147,12 +149,13 @@ CODE (CAT)  ( -- )
   \ XXX TODO -- call the G+DOS routines
 
   BC PUSH  IX PUSH  \ save the Forth registers
+  UFIA IX LDP#
   PCAT HOOK
   IX POP  BC POP  \ restore the Forth registers
   NEXT JP
   END-CODE
 
-: CAT  ( -- )  -SCREEN (CAT) +SCREEN  ;
+: CAT  ( ca len -- )  0 0 2SWAP >UFIA  -SCREEN (CAT) +SCREEN  ;
 
 ( User interface: Forth RAM-disk )
 
@@ -243,6 +246,38 @@ CODE (CAT)  ( -- )
   \ Delete a disk file.
   \ ca len = filename
   -DISK? ?ERROR  ;
+
+( FILE-EXISTS? )
+
+CODE (FILE-EXISTS?)  ( -- f )
+
+  \ XXX FIXME this changes the current drive to 2! why?
+ 
+  BC PUSH  IX PUSH  \ save the Forth registers
+  PATCH HOOK
+  NSTR2 IX LDP#
+  1146 CALL
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  0 HL LDP#  PUSHHL JPNZ
+  HL INCP    PUSHHL JP
+  END-CODE
+  
+: FILE-EXISTS?  ( ca len -- f )  FILENAME! (FILE-EXISTS?)  ;
+
+  \ CODE DISK-CAPACITY  ( -- n )
+
+  \   \ n = tracks (+128 if double sided)
+  \   \
+  \   \ XXX OLD -- not useful, it just reads the DOS variable at
+  \   \ 0x2001 or 0x2002, depending on the current drive.
+
+  \   PATCH HOOK
+  \   0985 CALL
+  \   E7 OUT  \ page +D out
+  \   0 H LD#  A L LD  PUSHHL JP
+
+  \   END-CODE
 
 ( User interface: screens of the Forth RAM-disk )
 

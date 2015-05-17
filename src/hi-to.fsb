@@ -1,0 +1,119 @@
+.( Move the 11-KiB RAM-disk )
+
+\ hi-to.fsb
+\ Move the RAM-disk of ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This module increases the free dictionary space of Abersoft
+  \ Forth with 1 KiB, but only if the system has been
+  \ previously moved below 0xC000 by the module <lowersys.fsb>.
+  \ This module is most useful for a 48K Spectrum; the 128K
+  \ model can use the module <16kramdisks.fsb> instead, and get
+  \ 11 KiB of memory for the dictionary.
+  \
+  \ A detailed explanation follows.
+  \
+  \ The default value of `HI` (the highest address of the
+  \ 11-KiB RAM-disk) is 1 KiB below the top of memory.  That
+  \ space is used only by the UDG (168 bytes); 856 bytes are
+  \ unused by the system.
+
+  \ Address         Returned by  Description
+  \ --------------  -----------  --------------------------
+  \ 0xFFFF (65535)               Top of memory
+  \ 0xFF58 (65368)  `UDG`        User defined graphics
+  \                              (168 bytes)
+  \                              Unused space (856 bytes)
+  \ 0xFBFF (64511)  `HI`         End of screens area
+  \                                (RAM-disk)
+  \ 0xD000 (53248)  `LO`         Start of screens area
+  \                                (RAM-disk)
+
+  \ Of course the space above `HI` can be used by Forth
+  \ programs in any way, but it would be more useful as part of
+  \ the dictionary space.
+  \
+  \ This module is useful only after the module <lowersys.fsb>
+  \ has moved the system below 0xC000. Otherwise the freed
+  \ memory will not be available for the dictionary, but simply
+  \ moved down, between the RAM-disk and the disk buffers.
+  \
+  \ When compiling this module, the constant `NEW-HI` must be
+  \ the latest word defined.  It must hold the new address of
+  \ `HI`.  The modules <hi-to-top.fsb> and <hi-to-udg.fsb> do
+  \ that. See them for details.
+  \
+  \ WARNING: If `NEW-HI` is equal or greater than `UDG`, the
+  \ address of the user defined graphics will be changed to 0
+  \ (ROM).  Then, in order to use them, the user must reserve
+  \ space for them in the dictionary and point the
+  \ correspondent system variable (0x5C7B) to it.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ <lowersys.fsb>
+  \ <hi-to-top.fsb> or <hi-to-udg.fsb>
+
+  \ -----------------------------------------------------------
+  \ History
+  \
+  \ 2015-05-15: Start. First working version..
+
+-->
+
+( Main )
+
+HEX
+
+  \ If the new location of the RAM-disk
+  \ overwrites the user defined graphics,
+  \ point them to 0 (ROM).
+
+UDG NEW-HI U<  ?\ 0 5C7B !
+
+NEW-HI 1+ CONSTANT ABOVE-HI
+ABOVE-HI /DISC - CONSTANT NEW-LO
+NEW-HI HI - CONSTANT FREED
+
+  \ Update `HI` and `LO`.
+: HI>TOP  ( -- )  LO FREED + ' LO !  NEW-HI ' HI !  ;
+
+  \ The origin and destination zones overlap, so `CMOVE>`
+  \ is the preferred method if available.
+
+1 [DEFINED] CMOVE> ?\ 1+
+  +LOAD
+
+DISC>TOP  FORGET NEW-HI DECIMAL
+
+( Do it with CMOVE> )
+
+: DISC>TOP  ( -- )
+  LO  ABOVE-HI /DISC - /DISC CMOVE>
+  HI>TOP  ;
+
+( Do it without CMOVE> )
+
+  \ The origin and destination zones overlap, so the 11 KiB are
+  \ moved by pieces of 512 bytes, from top to bottom.
+
+512 CONSTANT /PIECE
+/DISC /PIECE / CONSTANT PIECES
+
+: PIECE  (  n -- a1 a2 len )
+  /PIECE * >R  HI R -  ABOVE-HI R> -  /PIECE  ;
+
+: DISC>TOP  ( -- )
+  PIECES 0 DO  I PIECE CMOVE  LOOP
+  HI>TOP  ;
+
+  \ vim: filetype=abersoftforth

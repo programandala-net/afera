@@ -179,7 +179,7 @@ HEX HERE  0B C, 5A C, 58 C, BL C, 53 C, 70 C, 65 C, 63 C, 74 C,
 72 C, 75 C, 6D C, ' NOOP CFA ,
 DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 
-  \ New messages show after a cold start.
+  \ New messages shown after a cold start.
 
 : .SYS         ( -- )  ." Spectrum fig-Forth"  ;
 : .SYS-AUTHOR  ( -- )  ." v1.1A \* 1983 Abersoft" CR
@@ -389,11 +389,6 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
   \ Read a new RAM-disk from tape and load its first screen.
 : RUNT  ( -- )  1 /RUNT  ;
 
-: /INIT-DISC  ( n -- )
-  \ XXX TMP -- not definitive.
-  \ Blank the init disc from the given block number.
-  /SCR * DUP >R /DISC SWAP - LO R> + SWAP BLANKS  ;
-
 11 CONSTANT SCR/DR  \ screens per drive (RAM-disk)
 
 : DISC-SCR  ( n -- a )
@@ -405,35 +400,38 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
 
 ( EXTEND SYSTEM )
 
-  \ System words have been patched with new words. Those new
-  \ words should not be removed, e.g. by `COLD`, otherwise the
-  \ system would crash when their space will be overwritten. So
-  \ the dictionary must be protected at this point.
 
 : EXTEND  ( -- )
 
-  \ XXX OLD
-  \ `EXTEND` sets the initial values of `DP` and `FENCE`
-  \ (restored by `COLD`) to the current value of `FENCE`.
-  \ FENCE @  DUP 1C +ORIGIN !  1E +ORIGIN !
-  \ LATEST 0C +ORIGIN ! ;
+  \ Change the `COLD` start parameters to extend the system to
+  \ its current state.
+
+  \ This word should be used especially when system words have
+  \ been patched with new words.  Otherwise `COLD` would delete
+  \ the new words and the system would crash when their space
+  \ would be overwritten.
 
   LATEST 12 +ORIGIN !  HERE 28 +ORIGIN !  HERE 30 +ORIGIN !
-  \ XXX or other vocabulary and `6 +` instead of `8 +`:
   HERE FENCE !  ' FORTH 8 + 32 +ORIGIN !  ;
 
 
-: SYSTEM ( -- a len )
+: SYSTEM  ( -- a len )
 
   \ Prepare the system in order to save a copy.  Return its
   \ start address and length, to be used as parameters for the
   \ tape or disk saving commands.
 
-  \ XXX TODO accept a boot word to patch `COLD` with.
-
   EXTEND  0 +ORIGIN SIZE 10 + ;
 
-EXTEND CR GREETING
+: TURNKEY  ( cfa -- a len )
+  \ Prepare the system in order to save a copy that will
+  \ execute the given cfa at the end of `COLD`.  Return its
+  \ start address and length, to be used as parameters for the
+  \ tape or disk saving commands.  28168 (0x6E08) is the
+  \ address of `ABORT` at the end of the pfa of `COLD`.
+  28168 ! SYSTEM  ;
+
+EXTEND CLS GREETING
 
   \ -----------------------------------------------------------
   \ Temporary code during the development
@@ -627,6 +625,9 @@ EXTEND CR GREETING
   \ to use memory paging to detect the available memory.
   \
   \ 2015-05-15: Simpler `GREETING`.
+  \
+  \ 2015-05-17: `/INIT-DISC` is moved to drafts, it has not
+  \ been needed yet, it's not useful with tapes.
   \
   \ -----------------------------------------------------------
 

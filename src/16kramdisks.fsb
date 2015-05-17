@@ -9,6 +9,12 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+
+  \ XXX FIXME 2015-05-17
+  \
+  \ `INSTALL` works fine when manually executed.
+  \ But the system crashes when running from `LOADER`.
+
   \ -----------------------------------------------------------
   \ Description
 
@@ -25,6 +31,7 @@
   \ Requirements
 
   \ <lowersys.fsb>
+  \ <bank.fsb>
 
   \ -----------------------------------------------------------
   \ History
@@ -52,6 +59,10 @@
   \
   \ 2015-05-13: Change: The banks used are 4 and 6 (uncontended
   \ memory) instead of 1 and 3 (contended memory).
+  \
+  \ 2015-05-17: Change: The banks used are 3 and 4. Simpler
+  \ calculation. Anyway, contended memory banks are different
+  \ in 128K and +3.
 
 -->
 
@@ -63,12 +74,22 @@
 
 : DISC-BANK  ( -- n )
   \ Memory bank of the current RAM-disk.
-  \ n = 4 for the first RAM-disk;
-  \     6 for the second RAM-disk
-  \ Note: `2 *` is used, unless `2*` exists.
-  6 OFFSET @ 0=    [DEFINED] 2* ?\ 2 *
-                 [UNDEFINED] 2* ?\ 2*
-  -  ;
+    \ XXX OLD
+    \ n = 4 for the first RAM-disk;
+    \     6 for the second RAM-disk
+    \ Note: `2 *` is used, unless `2*` exists.
+    \ 6 OFFSET @ 0=    [DEFINED] 2* ?\ 2 *
+    \                [UNDEFINED] 2* ?\ 2*
+    \ -  ;
+
+  \ XXX OLD
+  \ n = 3 for the first RAM-disk;
+  \     4 for the second RAM-disk
+  \ 4 OFFSET @ 0= -  ;
+
+  \ n = 1 for the first RAM-disk;
+  \     3 for the second RAM-disk
+  1 OFFSET @ 2 * + ;
 
 : (INIT-DISC)  ( -- )
   \ Blank the current RAM-disk, that must be already paged in.
@@ -88,7 +109,7 @@ DECIMAL -->
 
 ( LOADT SAVET VERIFY )
 
-  \ Patch the tape words to use the new RAM-disk
+  \ Patch the tape words to use the new RAM-disk.
 
 : (BANK-TAPE)   ( n -- )
   \ Do a RAM-disk tape operation
@@ -133,11 +154,17 @@ HEX
   \ with additional space required to patch it now
   \ with the new code required by the 128K version.
 
-  ' DISC-BANK   CFA ' R/W 08 + !
-  ' BANK        CFA ' R/W 0A + !
-  ' CMOVE       CFA ' R/W 0C + !
-  ' 0           CFA ' R/W 0E + !
-  ' BANK        CFA ' R/W 10 + !
+  \ Method 0
+  \ ' DISC-BANK   CFA ' R/W 08 + !
+  \ ' BANK        CFA ' R/W 0A + !
+  \ ' CMOVE       CFA ' R/W 0C + !
+  \ ' 0           CFA ' R/W 0E + !
+  \ ' BANK        CFA ' R/W 10 + !
+
+  \ Method 1
+  HERE  ' DISC-BANK CFA ,  ' BANK CFA , ' CMOVE CFA ,
+        ' 0 CFA ,  ' BANK CFA ,
+  DUP ' (R/W) 08 + OVER HERE SWAP - CMOVE  DP !
 
 -->
 
@@ -184,17 +211,20 @@ HEX
 
   \ Save the display contents to bank 4.
   4000 C000 1B00 4 BANK CMOVE 0 BANK
+
   \ Set white paper and white ink,
   \ to hide the display garbage caused by the copying.
   5800 300 3F FILL
+
   \ Copy the old RAM-disk (screens 1-6) to the display.
   D000 4000 1800 CMOVE
-  \ Then copy it from the display to bank 1.
-  4000 C000 1800 1 BANK CMOVE 0 BANK
+  \ Copy it from the display to the current RAM-disk bank.
+  4000 C000 1800 DISC-BANK BANK CMOVE 0 BANK
   \ Copy the old RAM-disk (screens 7-11) to the display.
   D000 1800 + 4000 1400 CMOVE
-  \ Then copy it from the display to bank 1.
-  4000 C000 1800 + 1400 1 BANK CMOVE 0 BANK
+  \ Copy it from the display to the current RAM-disk bank.
+  4000 C000 1800 + 1400 DISC-BANK BANK CMOVE 0 BANK
+
   \ Restore the display contents from bank 4.
   C000 4000 1B00 4 BANK CMOVE 0 BANK
 
@@ -203,10 +233,8 @@ HEX
   [ LATEST ] LITERAL DUP DP ! PFA LFA @ CURRENT @ !
 
   \ System words have been patched with new ones,
-  \ so the changes must be protected.
+  \ therefore the changes must be protected.
 
-  EXTEND
-
-  DECIMAL  ;  INSTALL
+  EXTEND  DECIMAL  ;  INSTALL
 
   \ vim: filetype=abersoftforth

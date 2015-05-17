@@ -10,6 +10,13 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
+  \ Acknowledgments
+
+  \ Includes code, marked with comments, from:
+  \   Lennart Benschop's Spectrum Forth-83 (1988)
+  \   Phil Burk's pForth V19 (1998)
+
+  \ -----------------------------------------------------------
   \ History
 
   \ 2015-04-14: Code written as part of the strings module.
@@ -20,9 +27,11 @@
 
 ( CMOVE> )
 
-HEX  CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
+HEX
 
-  \ Adapted from Lennart Benschop's Spectrum Forth-83.
+CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
+
+  \ Note: Adapted from Lennart Benschop's Spectrum Forth-83.
 
   \ exx / pop bc / pop de / pop hl
   D9 C,  C1 C,  D1 C,  E1 C,
@@ -41,17 +50,14 @@ HEX  CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
   \ end: / exx / jp NEXT
   D9 C,  C3 C, NEXT ,
 
-  SMUDGE DECIMAL
-
--->
+  SMUDGE  DECIMAL  -->
 
 ( MOVE )
 
 : MOVE  ( a1 a2 u -- )  \ Forth-94
+
  \ Note: Copied from Phil Burk's pForth (V19).
+
   >R 2DUP - 0< IF  R> CMOVE>  ELSE  R> CMOVE  THEN  ;
 
   \ vim: filetype=abersoftforth
-  \ 2015-05-15: Simpler `GREETING`.
-: GREETING  ( -- )  .SYS CR .SYS-AUTHOR CR  ;
-  \

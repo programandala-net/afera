@@ -1,0 +1,12 @@
+.( Start transient code with 4096 bytes reserved )
+
+\ transient-start-4096.fsb
+\ Transient code tool for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+4096 TRANSIENT[

@@ -26,9 +26,9 @@
 
 ( TRANSIENT -- variables )
 
-0 VARIABLE PREVIOUS-DP
-0 VARIABLE PREVIOUS-LATEST
-0 VARIABLE PREVIOUS-VOC-LINK
+0 VARIABLE OLD-DP
+0 VARIABLE OLD-LATEST
+0 VARIABLE OLD-VOC-LINK
 
 -->
 
@@ -47,18 +47,19 @@
   \ system has been lowered below 0xC000 by the <lowersys.fsb>
   \ module.
 
-  HERE        PREVIOUS-DP !
-  LATEST      PREVIOUS-LATEST !
-  VOC-LINK @  PREVIOUS-VOC-LINK !
+  HERE        OLD-DP !
+  LATEST      OLD-LATEST !
+  VOC-LINK @  OLD-VOC-LINK !
 
   \ The free dictionary space top limit is `SP@` in the
   \ standard memory map. But when the system has been lowered
   \ by the <lowersys.fsb> module, it's `LO` instead (the start
-  \ of RAM-disk). `FREE` is used to get the current value,
-  \ because the first word compiled in its pfa is either the
-  \ original `SP@` or the patched `LO`:
+  \ of RAM-disk). And when the system uses 16-KiB RAM-disks,
+  \ the limit is the top of the memory.  `FREE` is used to get
+  \ the current value, because the first word compiled in its
+  \ pfa returns the top address `SP@`, `LO` or `0`).
 
-  ' FREE @ EXECUTE \ execute SP@ or LO
+  ' FREE @ EXECUTE
 
   SWAP - DP !  ;
 
@@ -68,7 +69,7 @@
   \
   \ This word must be used after compiling the transient code.
 
-  PREVIOUS-DP @ DP !  ;
+  OLD-DP @ DP !  ;
 
 : -TRANSIENT  ( -- )
 
@@ -78,13 +79,13 @@
   \ This word must be used when the transient code is not going
   \ to be used any more.
 
-  PREVIOUS-VOC-LINK @ VOC-LINK !
+  OLD-VOC-LINK @ VOC-LINK !
 
   \ Store the nfa of the latest word created
   \ before compiling the transient code,
   \ into the lfa of the first word created
   \ after the transient code was finished
   \ by `]TRANSIENT`.
-  PREVIOUS-LATEST @ PREVIOUS-DP @ PFA LFA !  ;
+  OLD-LATEST @ OLD-DP @ PFA LFA !  ;
 
   \ vim: filetype=abersoftforth

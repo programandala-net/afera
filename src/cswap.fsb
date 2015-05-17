@@ -1,4 +1,4 @@
-.( CSWAP)
+.( CSWAP )
 
 \ cswap.fsb
 \ `CSWAP` for ZX Spectrum Abersoft Forth.
@@ -10,7 +10,7 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
 
   \ 2015-03-13: Adapted from Lennart Benschop's Spectrum
   \ Forth-83.

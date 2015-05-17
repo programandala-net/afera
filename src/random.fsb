@@ -15,7 +15,10 @@
   \ 2015-04-02: Start, with the code of `RND`, moved from the
   \ main file of the library.
   \
-  \ 2015-04-16: Reference of the Brodie's implementation.
+  \ 2015-04-16: Reference of the Leo Brodie's implementation.
+  \ 
+  \ 2015-05-17: Reference of the Matteo Vitturi's
+  \ implementation.
 
 
   \ -----------------------------------------------------------
@@ -32,7 +35,7 @@
 
 ;S
 
-.( References )
+.( Leo Brodie )
 
   \ From Brodie's book,
   \ for reference,
@@ -53,5 +56,24 @@ VARIABLE RND    HERE RND !
   \ Diag for UM* : ( u u -- d) Email me if i missed the point.
   \ Jerry
   \ ____
+
+\ 2015-05-16: Adapted.
+
+HERE SYS-SEED !
+: RANDOM  ( -- n )
+  SYS-SEED @ 31421 * 6927 +  DUP SYS-SEED !  ;
+: CHOOSE  ( u1 -- u2 )
+  RANDOM U* SWAP DROP  ;
+
+( Matteo Vitturi's vForth )
+
+\ 2015-05-17: From Matteo Vitturi's vForth 1.3 (1990-2000).
+
+23670 CONSTANT SYS-SEED
+: RND
+  1+ 8195 23672 @ U* 1 0 D+
+  16383 U/ DROP DUP 23672 !
+  SWAP MOD ;
+: SEED  ( n -- ) 23672 ! ;
 
   \ vim: filetype=abersoftforth

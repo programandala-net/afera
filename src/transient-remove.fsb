@@ -1,0 +1,13 @@
+.( Remove transient code )
+
+\ transient-remove.fsb
+\ Transient code tool for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+-TRANSIENT
+

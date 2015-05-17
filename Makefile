@@ -26,10 +26,9 @@
 #
 # 2015-05-11: Updated.
 #
-#
 # 2015-05-14: Updated with the fsb2abersoft11k converter.
 #
-# 2015-05-15: New: backup recipe.
+# 2015-05-15: New: backup recipe; tapes recipe, factored from afera.mgt.
 
 # ##############################################################
 # Requirements
@@ -59,9 +58,8 @@ tape_files=$(wildcard tap/*.tap)
 
 .PHONY : all
 all: \
-	tap \
 	sys \
-	test
+	tests
 
 clean:
 	rm -f tap/*.tap
@@ -144,29 +142,77 @@ sys/abersoft_forth_afera_tools.tap: \
 		> sys/abersoft_forth_afera_tools.tap
 
 # ##############################################################
+# G+DOS
 
 sys/abersoft_forth_gplusdos.bas.tap: sys/abersoft_forth_gplusdos.bas
 	bas2tap -q -n -sAutoload -a1 \
 		sys/abersoft_forth_gplusdos.bas  \
 		sys/abersoft_forth_gplusdos.bas.tap
 
-.PHONY : tap
-tap:
-	for source in $$(ls -1 src/*.fsb) ; do
-		@make tap/$$(basename $${source} .fsb).tap ;
+# On Debian i486, with make 3.86, sh fails wit error
+# "@make not found"; removing the at sign works.
+
+.PHONY : tapes
+tapes:
+	for source in $$(ls -1 src/*.fsb) ; do \
+		make tap/$$(basename $${source} .fsb).tap ; \
 	done
 
-afera.mgt: $(tape_files) sys/abersoft_forth_gplusdos.bas.tap
-	for source in $$(ls -1 src/*.fsb) ; do
-		@make tap/$$(basename $${source} .fsb).tap ;
-	done
+# XXX TODO
+
+# _tests/gplusdos_test.tap: tapes afera.mgt
+# 	cat \
+# 		tap/loader.tap \
+# 		tap/afera.tap \
+# 		tap/buffercol.tap \
+# 		tap/flags.tap \
+# 		tap/pick.tap \
+# 		tap/move.tap \
+# 		tap/2r.tap \
+# 		tap/strings.tap \
+# 		tap/plusscreen.tap \
+# 		tap/dot-s.tap \
+# 		tap/2star.tap \
+# 		tap/assembler.tap \
+# 		tap/gplusdos_1.tap \
+# 		tap/gplusdos_2.tap \
+# 		tap/gplusdos_vars.tap \
+# 		tap/loaded.tap \
+# 		> _tests/abersoft_forth_afera_gplusdos_install.tap
+
+# _tests/gplusdos_128k_test.tap: tapes afera.mgt
+# 	cat \
+# 		tap/loader.tap \
+# 		tap/afera.tap \
+# 		tap/lowersys.tap \
+# 		tap/bank.tap \
+# 		tap/48kq.tap \
+# 		tap/16kramdisks.tap \
+# 		tap/buffercol.tap \
+# 		tap/flags.tap \
+# 		tap/pick.tap \
+# 		tap/move.tap \
+# 		tap/2r.tap \
+# 		tap/strings.tap \
+# 		tap/plusscreen.tap \
+# 		tap/dot-s.tap \
+# 		tap/2star.tap \
+# 		tap/assembler.tap \
+# 		tap/gplusdos_1.tap \
+# 		tap/gplusdos_2.tap \
+# 		tap/gplusdos_vars.tap \
+# 		tap/loaded.tap \
+# 		> _tests/gplusdos_128k_test.tap
+
+afera.mgt: tapes sys/abersoft_forth_gplusdos.bas.tap
 	mkmgt \
-		afera.mgt \
+		--quiet afera.mgt \
 		sys/gplusdos-sys-2a.tap \
 		sys/abersoft_forth_gplusdos.bas.tap \
 		sys/abersoft_forth.bin.tap \
 		--tap-filename \
-		tap/*.tap
+		mgt/*.tap
+
 
 # ##############################################################
 # Backups
@@ -182,23 +228,18 @@ backup:
 # ##############################################################
 # Temporary for development
 
-test: \
+#	_tests/512bbuf_test.tap \
+
+tests: \
 	_tests/lowersys_test.tap \
-	_tests/512bbuf_test.tap \
 	_tests/bank_test.tap \
 	_tests/gplusdos_test.tap \
+	_tests/gplusdos_128k_test.tap \
 	_tests/bracket-if.tap \
+	_tests/16kramdisks_test.tap \
 	_tests/transient_test.tap
 
-_tests/lowersys_test.tap: \
-	tap/loader.tap \
-	tap/loaded.tap \
-	tap/cswap.tap \
-	tap/dump.tap \
-	tap/dot-rs.tap \
-	tap/dot-s.tap \
-	tap/afera.tap \
-	tap/lowersys.tap
+_tests/lowersys_test.tap: tapes
 	cat \
 		sys/abersoft_forth.tap \
 		tap/loader.tap \
@@ -207,30 +248,19 @@ _tests/lowersys_test.tap: \
 		tap/dump.tap \
 		tap/dot-rs.tap \
 		tap/dot-s.tap \
-		tap/loaded.tap \
 		tap/lowersys.tap \
+		tap/loaded.tap \
 		> _tests/lowersys_test.tap
 
 _tests/512bbuf_test.tap: \
-	sys/abersoft_forth_afera_tools_inc.tap \
-	tap/512bbuf.tap \
-	tap/loaded_quit.tap
+	tapes \
+	sys/abersoft_forth_afera_tools_inc.tap
 	cat \
 		sys/abersoft_forth_afera_tools_inc.tap \
 		tap/512bbuf.tap \
 		> _tests/512bbuf_test.tap
 
-_tests/bank_test.tap: \
-	tap/loader.tap \
-	tap/loaded.tap \
-	tap/afera.tap \
-	tap/recurse.tap \
-	tap/decode.tap \
-	tap/cswap.tap \
-	tap/dump.tap \
-	tap/lowersys.tap \
-	tap/bank.tap \
-  tap/16kramdisks.tap
+_tests/bank_test.tap: tapes
 	cat \
 		sys/abersoft_forth.tap \
 		tap/loader.tap \
@@ -245,51 +275,61 @@ _tests/bank_test.tap: \
 		tap/loaded.tap \
 		> _tests/bank_test.tap
 
-_tests/gplusdos_test.tap: \
-	tap/loader.tap \
-	tap/afera.tap \
-	tap/buffercol.tap \
-	tap/flags.tap \
-	tap/pick.tap \
-	tap/strings.tap \
-	tap/plusscreen.tap \
-	tap/cswap.tap \
-	tap/dump.tap \
-	tap/dot-s.tap \
-	tap/2star.tap \
-	tap/assembler.tap \
-	tap/gplusdos_1.tap \
-	tap/gplusdos_2.tap \
-	tap/gplusdos_vars.tap \
-	tap/system.tap \
-	tap/loaded.tap
+_tests/gplusdos_test.tap: tapes afera.mgt
 	cat \
 		tap/loader.tap \
 		tap/afera.tap \
 		tap/buffercol.tap \
 		tap/flags.tap \
 		tap/pick.tap \
+		tap/move.tap \
+		tap/2r.tap \
 		tap/strings.tap \
 		tap/plusscreen.tap \
 		tap/cswap.tap \
 		tap/dump.tap \
 		tap/dot-s.tap \
 		tap/2star.tap \
+		tap/transient.tap \
+		tap/transient-start-4096.tap \
 		tap/assembler.tap \
+		tap/transient-end.tap \
 		tap/gplusdos_1.tap \
 		tap/gplusdos_2.tap \
 		tap/gplusdos_vars.tap \
-		tap/system.tap \
+		tap/transient-remove.tap \
 		tap/loaded.tap \
 		> _tests/gplusdos_test.tap
 
-_tests/transient_test.tap: \
-	tap/loader.tap \
-	tap/loaded.tap \
-	tap/afera.tap \
-	tap/transient.tap \
-	tap/recurse.tap \
-	tap/decode.tap
+_tests/gplusdos_128k_test.tap: tapes afera.mgt
+	cat \
+		tap/loader.tap \
+		tap/afera.tap \
+		tap/lowersys.tap \
+		tap/bank.tap \
+		tap/48kq.tap \
+		tap/16kramdisks.tap \
+		tap/buffercol.tap \
+		tap/flags.tap \
+		tap/pick.tap \
+		tap/move.tap \
+		tap/2r.tap \
+		tap/strings.tap \
+		tap/plusscreen.tap \
+		tap/dot-s.tap \
+		tap/2star.tap \
+		tap/transient.tap \
+		tap/transient-start-4096.tap \
+		tap/assembler.tap \
+		tap/transient-end.tap \
+		tap/gplusdos_1.tap \
+		tap/gplusdos_2.tap \
+		tap/gplusdos_vars.tap \
+		tap/transient-remove.tap \
+		tap/loaded.tap \
+		> _tests/gplusdos_128k_test.tap
+
+_tests/transient_test.tap: tapes
 	cat \
 		sys/abersoft_forth.tap \
 		tap/loader.tap \
@@ -300,48 +340,38 @@ _tests/transient_test.tap: \
 		tap/loaded.tap \
 		> _tests/transient_test.tap
 
-_tests/plus3dos_test.tap: \
-	tap/loader.tap \
-	tap/afera.tap \
-	tap/lowersys.tap \
-	tap/buffercol.tap \
-	tap/flags.tap \
-	tap/pick.tap \
-	tap/strings.tap \
-	tap/plusscreen.tap \
-	tap/cswap.tap \
-	tap/dump.tap \
-	tap/dot-s.tap \
-	tap/2star.tap \
-	tap/assembler.tap \
-	tap/plus3dos_1.tap \
-	tap/system.tap \
-	tap/loaded.tap
+_tests/plus3dos_test.tap: tapes
 	cat \
 		tap/loader.tap \
 		tap/afera.tap \
 		tap/assembler.tap \
 		tap/plus3dos.tap \
-		tap/system.tap \
 		tap/loaded.tap \
 		> _tests/plus3dos_test.tap
 
-_tests/bracket-if.tap: \
-	tap/loader.tap \
-	tap/afera.tap \
-	tap/flags.tap \
-	tap/pick.tap \
-	tap/strings.tap \
-	tap/bracket-if.tap \
-	tap/loaded.tap
+_tests/bracket-if.tap: tapes
 	cat \
 		sys/abersoft_forth.tap \
 		tap/loader.tap \
 		tap/afera.tap \
 		tap/flags.tap \
 		tap/pick.tap \
+		tap/2r.tap \
 		tap/strings.tap \
 		tap/bracket-if.tap \
 		tap/loaded.tap \
 		> _tests/bracket-if.tap
 
+_tests/16kramdisks_test.tap: tapes
+	cat \
+		sys/abersoft_forth.tap \
+		tap/loader.tap \
+		tap/afera.tap \
+		tap/lowersys.tap \
+		tap/bank.tap \
+		tap/time.tap \
+		tap/recurse.tap \
+		tap/decode.tap \
+		tap/16kramdisks.tap \
+		tap/loaded.tap \
+		> _tests/16kramdisks_test.tap

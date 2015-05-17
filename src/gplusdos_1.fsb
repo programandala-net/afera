@@ -141,7 +141,11 @@ CHAR d DEVICE C! \ "d" or "D"
 CODE DRIVE@  ( -- n )
   \ Get the current drive (1 or 2).
   BC PUSH  IX PUSH  \ save the Forth registers
-  PATCH HOOK  3E01 LDA
+  PATCH HOOK
+  \ 3E01 LDA  \ XXX OLD
+  3ACE LDA  \ XXX NEW
+  \ XXX TODO check this method:
+  \ bit 0 of 3DD1
   E7 OUT  \ page +D out
   IX POP  BC POP  \ restore the Forth registers
   0 H LD#  A L LD  PUSHHL JP  END-CODE
@@ -150,9 +154,12 @@ CODE DRIVE!  ( n -- )
   \ Set the current drive (1 or 2).
   HL POP
   BC PUSH  IX PUSH  \ save the Forth registers
-  HL PUSH
-  PATCH HOOK  HL POP  L A LD  3E01 STA
-  E7 OUT  \ page +D out
+  \ XXX OLD
+  \ HL PUSH
+  \ PATCH HOOK  HL POP  L A LD  3E01 STA
+  \ E7 OUT  \ page +D out
+  \ XXX NEW
+  L A LD  21 HOOK
   IX POP  BC POP  \ restore the Forth registers
   NEXT JP  END-CODE
 
