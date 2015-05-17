@@ -60,7 +60,7 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  49152 S0 U< 0=  ?NEEDS lowersys
+  49152 S0 @ U<  ?NEEDS lowersys
 
     \ The word `NEW-HI` is provided also by the module
     \ <hi-to-udg.fsb>, but <hi-to-top.fsb> is used as

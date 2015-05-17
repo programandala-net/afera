@@ -50,7 +50,9 @@
   \ was the last value of `DECODE-ADDRESS`. Now it's the nfa of
   \ the definition. The check in `INDENT` is removed.
   \
-  \ 2015-05-17: `NEEDS` used.
+  \ 2015-05-17: `NEEDS` used. Improved with run-time and
+  \ shorter instructions, standard break key instead of Q,
+  \ and no default action.
 
 -->
 
@@ -65,24 +67,18 @@ FORTH DEFINITIONS DECIMAL
 : INDENT  ( -- )
   CR DECODE-ADDRESS @ U. DECODE-LEVEL @ 2 * SPACES  ;
 
-: INDENT+  ( -- )
-  1 DECODE-LEVEL +! INDENT ;
+: INDENT+  ( -- )  1 DECODE-LEVEL +! INDENT ;
 
 -->
 
 ( DECODE -- Special cases )
 
-: DECODE-COMPILE  ( a1 -- a2 )
-  2+ DUP @ 2+ NFA ID.  ;
+: DECODE-COMPILE  ( a1 -- a2 )  2+ DUP @ 2+ NFA ID.  ;
 
-: (DECODE-LITERAL)  ( a1 -- a2 )
-  2+ DUP @ .  ;
-
-: DECODE-LITERAL  ( a1 -- a2 )
-  (DECODE-LITERAL)  ;
+: DECODE-LITERAL  ( a1 -- a2 )  2+ DUP @ .  ;
 
 : DECODE-BRANCH  ( a1 -- a2 )
-  (DECODE-LITERAL)  ."  \ to " DUP DUP @ + U.  ;
+  DECODE-LITERAL  ."  \ to " DUP DUP @ + U.  ;
 
 : DECODE-DOT-QUOTE  ( a1 -- a2 )
   2+ DUP COUNT TYPE  DUP C@ + 1 -  ;
@@ -92,17 +88,15 @@ FORTH DEFINITIONS DECIMAL
 ( DECODE -- Special cases dispatcher )
 
 : DECODE-SPECIAL-CASES  ( a1 -- a1 | a2 )
-  DUP @
-  CASE
-    [ ' COMPILE CFA ] LITERAL OF  DECODE-COMPILE    ENDOF
-    [ ' LIT     CFA ] LITERAL OF  DECODE-LITERAL    ENDOF
-    [ ' BRANCH  CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
-    [ ' 0BRANCH CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
-    [ ' (LOOP)  CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
-    [ ' (+LOOP) CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
-    [ ' (.")    CFA ] LITERAL OF  DECODE-DOT-QUOTE  ENDOF
-  ENDCASE  ;
-
+  DUP @ CASE
+          [ ' COMPILE CFA ] LITERAL OF  DECODE-COMPILE    ENDOF
+          [ ' LIT     CFA ] LITERAL OF  DECODE-LITERAL    ENDOF
+          [ ' BRANCH  CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+          [ ' 0BRANCH CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+          [ ' (LOOP)  CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+          [ ' (+LOOP) CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+          [ ' (.")    CFA ] LITERAL OF  DECODE-DOT-QUOTE  ENDOF
+        ENDCASE  ; 
 -->
 
 ( DECODE -- checks of the main code )
@@ -131,24 +125,30 @@ FORTH DEFINITIONS DECIMAL
     WHILE  \ high level & NOT end of colon definition
       \ ( pfa+n cfa )
       ( pfa+n cfa ) 2+ ( pfa+n pfa' ) DUP INDENT+  NFA ID.
-      KEY CASE  [CHAR] Q   OF  SP! QUIT  ENDOF
-                BL         OF  DROP      ENDOF
-                SWAP RECURSE  \ default
+      ?TERMINAL            IF  SP! QUIT  THEN  \ Break
+      KEY CASE  BL         OF  DROP      ENDOF \ Space
+                13         OF  RECURSE   ENDOF \ Return
           ENDCASE  DECODE-SPECIAL-CASES
       2+  -1 DECODE-LEVEL +!
     REPEAT  INDENT 2+ NFA ID. \ show the last word
+  ELSE  ." Not a colon definition."
   THEN  DROP  ;  -->
 
 ( DECODE -- interface )
 
+: DECODE-USAGE  ( -- )
+     \  <------------------------------>
+  CR ." Keys: SPACE=more, RETURN=deeper,BREAK=quit." CR  ;
+
 : DECODE  ( "name" -- )
+  DECODE-USAGE
   -FIND IF    DROP 0 DECODE-LEVEL ! (DECODE)
         ELSE  ." Not Found"  THEN  ;
-CR
 
+;S
+
+  \ XXX OLD
  \ <------------------------------>
-." Usage:" CR
-."   DECODE word" CR
 ." Keys:" CR
 ."   Space:  Show next word" CR
 ."           at same level;" CR

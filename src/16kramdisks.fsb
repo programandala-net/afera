@@ -30,7 +30,7 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  49152 S0 U< 0=  ?NEEDS lowersys
+  49152 S0 @ U<  ?NEEDS lowersys
   NEEDS BANK bank
 
   \ -----------------------------------------------------------
@@ -64,7 +64,10 @@
   \ calculation. Anyway, contended memory banks are different
   \ in 128K and +3.
   \
-  \ 2015-05-17: `NEEDS` and `?NEEDS` used.
+  \ 2015-05-17: `NEEDS` and `?NEEDS` used. Improved: the
+  \ current permanent paper color is used to hide the screen
+  \ during the RAM-disk copying, instead of white; this way any
+  \ screen color set in the main file of the library will work.
 
 -->
 
@@ -211,9 +214,12 @@ HEX
   \ Save the display contents to bank 4.
   4000 C000 1B00 4 BANK CMOVE 0 BANK
 
-  \ Set white paper and white ink,
-  \ to hide the display garbage caused by the copying.
-  5800 300 3F FILL
+  \ Set all the display attributes to the current permanent
+  \ paper color.  This way display garbage caused by the
+  \ copying will not be seen.
+  \   5C8D = system variable ATTR P (bits: 0-2=ink, 3-5=paper,
+  \   6=bright, 7=flash)
+  5800 300  5C8D C@ 38 AND DUP 8 / +  FILL
 
   \ Copy the old RAM-disk (screens 1-6) to the display.
   D000 4000 1800 CMOVE

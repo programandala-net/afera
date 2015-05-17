@@ -1,4 +1,4 @@
-.( G+DOS support -- part 1)
+.( G+DOS support -- part 1 )
 
 \ gplusdos_1.fsb
 \ G+DOS support for ZX Spectrum Abersoft Forth (part 1)
@@ -178,10 +178,10 @@ CODE DRIVE!  ( n -- )
   \ Set the UFIA.
   \ a1 len1   = memory region
   \ ca2 len2  = filename
-  3 HD00 C! 4 NSTR1 C! \ code filetype and dir description
+  3 HD00 C!  4 NSTR1 C!  \ code filetype and dir description
   FILENAME!
-  DUP HD0B ! FILE-LENGTH !
-  DUP HD0D ! FILE-ADDRESS !
+  DUP HD0B !  FILE-LENGTH !
+  DUP HD0D !  FILE-ADDRESS !
   DRIVE@ DSTR1 C!  ;
 
   \ vim: filetype=abersoftforth

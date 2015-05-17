@@ -1,0 +1,62 @@
+.( G+DOS support -- part 3 )
+
+\ gplusdos_3.fsb
+\ G+DOS support for ZX Spectrum Abersoft Forth (part 3)
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Note
+
+  \ "DISC" in Forth words means the Forth RAM-disk, after the
+  \ name used by Abersoft Forth's documentation and vocabulary,
+  \ e.g.  `INIT-DISC`.
+  \
+  \ "DISK" means always a G+DOS disk.
+  \
+  \ In the comments of this library, "disc" is not used, and
+  \ the Abersoft Forth RAM-disk is always called "RAM-disk".
+
+  \ -----------------------------------------------------------
+  \ Requirements 
+
+  \ `NEEDS` can not be used yet because it's defined in this
+  \ module...
+
+  [UNDEFINED] 2>R 0 ERROR
+  [UNDEFINED] 2R> 0 ERROR
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-17: Start.
+
+-->
+
+( NEEDS-DISK )
+
+  \ XXX TODO
+
+  \ (NEEDS-DISK)  ( f "filename" -- )
+  \
+  \ Tape version of `(NEEDS)`.
+  \
+  \ f = is there a word needed from the given filename?
+
+: (NEEDS-DISK)  ( f "filename" -- )
+  BL WORD  IF
+    DISC-FILENAME 2@ 2>R  OFFSET @ >R 
+
+    HERE COUNT RUND
+
+    R> OFFSET !  2R> LOADD
+
+  THEN  ;
+
+' (NEEDS-DISK) CFA 2+ 'NEEDS !  \ Update the execution table.
+
+

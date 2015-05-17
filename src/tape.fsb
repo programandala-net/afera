@@ -56,7 +56,9 @@
   \ 2015-05-12: Change: `'SCR` renamed to `DISC-SCR`, after the
   \ changes in the library.
   \
-  \ 2015-05-17: `NEEDS` used.
+  \ 2015-05-17: `NEEDS` used.  Some renamings, after the
+  \ changes in the library (common core words for some tape and
+  \ disk operations).
 
   \ -----------------------------------------------------------
   \ Documentation
@@ -174,22 +176,22 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
 
 ( <TAPE >TAPE )
 
-: <TAPE-FILE  ( a1 len1 a2 len2 -- )
+: <TAPE-FILE  ( a1 len1 ca2 len2 -- )
   \ Load a file from tape.
-  \ a1      = destination address
-  \ len1    = length (or zero if unspecified)
-  \ a2 len2 = filename (len2 is zero if unspecified) 
+  \ a1       = destination
+  \ len1     = length (or zero if unspecified)
+  \ ca2 len2 = filename (len2 is zero if unspecified) 
   DUP   \ filename specified?
   IF  T-FILENAME!  ELSE  2DROP ANY-T-FILENAME  THEN
   T-LENGTH! T-START!  1 (TAPE)  T-RESTORE   ;
 
 ' <TAPE-FILE CFA '<FILE ,  \ Update the execution table.
 
-: >TAPE-FILE  ( a1 len1 a2 len2 -- )
+: >TAPE-FILE  ( a1 len1 ca2 len2 -- )
   \ Save a memory region into a tape file.
-  \ a1      = address of the code
-  \ len1    = length of the code
-  \ a2 len2 = filename
+  \ a1       = start address
+  \ len1     = length
+  \ ca2 len2 = filename
   T-FILENAME! T-LENGTH! T-START!  0 (TAPE)  T-RESTORE  ;
 
 ' >TAPE-FILE CFA '>FILE ,  \ Update the execution table.

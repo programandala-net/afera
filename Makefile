@@ -290,6 +290,7 @@ _tests/gplusdos_test.tap: tapes afera.mgt
 		tap/transient-end.tap \
 		tap/gplusdos_1.tap \
 		tap/gplusdos_2.tap \
+		tap/gplusdos_3.tap \
 		tap/gplusdos_vars.tap \
 		tap/transient-remove.tap \
 		tap/loaded.tap \
@@ -316,6 +317,7 @@ _tests/gplusdos_128k_test.tap: tapes afera.mgt
 		tap/transient-end.tap \
 		tap/gplusdos_1.tap \
 		tap/gplusdos_2.tap \
+		tap/gplusdos_3.tap \
 		tap/gplusdos_vars.tap \
 		tap/transient-remove.tap \
 		tap/loaded.tap \

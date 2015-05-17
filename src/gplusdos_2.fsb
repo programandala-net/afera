@@ -1,4 +1,4 @@
-.( G+DOS support -- part 2)
+.( G+DOS support -- part 2 )
 
 \ gplusdos_2.fsb
 \ G+DOS support for ZX Spectrum Abersoft Forth (part 2)
@@ -22,7 +22,16 @@
   \ the Abersoft Forth RAM-disk is always called "RAM-disk".
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ Requirements 
+
+  \ This module needs the circular string buffer, part of the
+  \ module <strings.fsb>. But `NEEDS` can not be used yet
+  \ because it must be defined later.
+
+  [UNDEFINED] SAVE-STRING 0 ERROR
+
+  \ -----------------------------------------------------------
+  \ History
 
   \ 2015-04-15: Extracted from <gdos_1.fsb>.
   \
@@ -55,16 +64,15 @@
   \ Change: `'SCR` renamed to `DISC-SCR`, after the changes in
   \ the library.
   \
-  \ 2015-05-17: New: `FILE-EXISTS?`.
-
-  \ -----------------------------------------------------------
-  \ Todo
+  \ 2015-05-17: New: `FILE?`. Some renamings, after the changes
+  \ in the library (common core words for some tape and disk
+  \ operations).
 
 2 10 THRU
 
 ( Save a file)
 
-CODE (>DISK)  ( -- ior )
+CODE (>DISK-FILE)  ( -- ior )
 
   \ Save a file to disk using the data hold in UFIA.
 
@@ -85,7 +93,7 @@ CODE (>DISK)  ( -- ior )
 
 ( Load a file -- part 1 )
 
-CODE (<DISK)  ( -- ior )
+CODE (<DISK-FILE)  ( -- ior )
 
   \ Load a file from disk, using the data hold in UFIA, the
   \ file header and the parameters specified by the high level
@@ -128,7 +136,7 @@ END-CODE
 
 ( Delete a file)
 
-CODE (-DISK)  ( -- ior )
+CODE (-FILE)  ( -- ior )
 
   \ Delete a disk file using the data hold in UFIA.
 
@@ -159,13 +167,15 @@ CODE (CAT)  ( -- )
 
 ( User interface: Forth RAM-disk )
 
-: DISC>UFIA  ( ca len -- )
-  \ Init the User File Information Area
-  \ to load or save the Forth RAM-disk.
-  \ Zero length is specified, what will make `(<DISK)`
-  \ to use the length of the file header.
+  \ DISC>UFIA  ( ca len -- )
+  \
+  \ Init the User File Information Area to load or save the
+  \ Forth RAM-disk.  Zero length is specified, what will make
+  \ `(<DISK-FILE)` to use the length of the file header.
+  \
   \ ca1 len1 = filename
-  LO 0 2SWAP >UFIA  ;
+
+: DISC>UFIA  ( ca len -- )  LO 0 2SWAP >UFIA  ;
 
 : SAVED?  ( ca len -- f n )
   \ Save the Forth RAM-disk to disk
@@ -173,13 +183,25 @@ CODE (CAT)  ( -- )
   \ ca len  = filename
   \ f       = error?
   \ n       = error
-  DISC>UFIA (>DISK) IOR>ERROR  ;
+  DISC>UFIA (>DISK-FILE) IOR>ERROR  ;
 
-: SAVED  ( ca len -- )
+  \ SAVED  ( ca len -- )
+  \
   \ Save the Forth RAM-disk to disk
   \ (word named after Abersoft Forth's `SAVET`).
   \ ca len = filename
-  SAVED? ?ERROR  ;
+
+: SAVED  ( ca len -- )  SAVED? ?ERROR  ;
+
+  \ The latest filename used to load a RAM-disk is saved by
+  \ `LOADD?` (the lowest level word) into the circular string
+  \ buffer and its address and length are stored into a double
+  \ variable.
+  \
+  \ This is used by `(NEEDS-DISK)` to implement nested
+  \ requirements between modules.
+
+0. 2VARIABLE DISC-FILENAME
 
 : LOADD?  ( ca len -- f n )
   \ Load a Forth RAM-disk from disk.
@@ -187,69 +209,78 @@ CODE (CAT)  ( -- )
   \ ca len  = filename
   \ f       = error?
   \ n       = error
-  DISC>UFIA (<DISK) IOR>ERROR  ;
+  SAVE-STRING DISC-FILENAME 2!
+  DISC>UFIA (<DISK-FILE) IOR>ERROR  ;
 
-: LOADD  ( ca len -- )
+  \ LOADD  ( ca len -- )
+  \
   \ Load a Forth RAM-disk from disk.
   \ (word named after Abersoft Forth's `LOADT`).
   \ ca len = filename
-  LOADD? ?ERROR  ;
+ 
+: LOADD  ( ca len -- )  LOADD? ?ERROR  ;
 
 : /RUND  ( ca len n -- )
   \ Read a new RAM-disk from disk and load block 'n'.
   \ ca len = filename
   >R EMPTY-BUFFERS INIT-DISC LOADD R> LOAD  ;
 
-: RUND  ( ca len -- )
+  \ RUND  ( ca len -- )
+  \
   \ Read a new RAM-disk from disk and load its first block.
   \ ca len = filename
-  1 /RUND ;
+
+: RUND  ( ca len -- )  1 /RUND  ;
 
 ( User interface: ordinary files )
 
-: <DISK?  ( a1 len1 ca2 len2 -- f n )
+: <FILE?  ( a1 len1 ca2 len2 -- f n )
   \ Load a file from disk.
   \ a1 len1   = memory region to load
   \ ca2 len2  = filename
   \ f         = error?
   \ n         = error
-  >UFIA (<DISK) IOR>ERROR  ;
+  >UFIA (<DISK-FILE) IOR>ERROR  ;
 
-: <DISK  ( a1 len1 ca2 len2 -- )
+: <DISK-FILE  ( a1 len1 ca2 len2 -- )
   \ Load a file from disk.
   \ a1 len1   = memory region to load
   \ ca2 len2  = filename
-  <DISK? ?ERROR  ;
+  <FILE? ?ERROR  ;
 
-: >DISK?  ( ca1 len1 ca2 len2 -- f n )
+' <DISK-FILE CFA '<FILE 2+ !  \ Update the execution table.
+
+: >FILE?  ( ca1 len1 ca2 len2 -- f n )
   \ Save a file to disk.
   \ a1 len1   = memory region to save
   \ ca2 len2  = filename
   \ f         = error?
   \ n         = error
-  >UFIA (>DISK) IOR>ERROR  ;
+  >UFIA (>DISK-FILE) IOR>ERROR  ;
 
-: >DISK  ( ca1 len1 ca2 len2 -- )
+: >DISK-FILE  ( ca1 len1 ca2 len2 -- )
   \ Save a file to disk.
   \ a1 len1   = memory region to save
   \ ca2 len2  = filename
-  >DISK? ?ERROR  ;
+  >FILE? ?ERROR  ;
 
-: -DISK?  ( ca len -- f n )
+' >DISK-FILE CFA '>FILE 2+ !  \ Update the execution table.
+
+: -FILE?  ( ca len -- f n )
   \ Delete a disk file.
   \ ca len  = filename
   \ f       = error?
   \ n       = error
-  0 0 2SWAP >UFIA (-DISK) IOR>ERROR  ;
+  0 0 2SWAP >UFIA (-FILE) IOR>ERROR  ;
 
-: -DISK  ( ca len -- )
+: -FILE  ( ca len -- )
   \ Delete a disk file.
   \ ca len = filename
-  -DISK? ?ERROR  ;
+  -FILE? ?ERROR  ;
 
-( FILE-EXISTS? )
+( FILE? )
 
-CODE (FILE-EXISTS?)  ( -- f )
+CODE (FILE?)  ( -- f )
 
   \ XXX FIXME this changes the current drive to 2! why?
  
@@ -262,8 +293,8 @@ CODE (FILE-EXISTS?)  ( -- f )
   0 HL LDP#  PUSHHL JPNZ
   HL INCP    PUSHHL JP
   END-CODE
-  
-: FILE-EXISTS?  ( ca len -- f )  FILENAME! (FILE-EXISTS?)  ;
+
+: FILE?  ( ca len -- f )  FILENAME! (FILE?)  ;
 
   \ CODE DISK-CAPACITY  ( -- n )
 
@@ -292,13 +323,13 @@ CODE (FILE-EXISTS?)  ( -- f )
   \ Load a RAM-disk from disk, at address of screen n.
   \ Warning: the file will be loaded, no matter its length.
   \ n = first screen (1..11)
-  (/LOADD) <DISK  ;
+  (/LOADD) <DISK-FILE  ;
 
 : /LOADD?  ( n ca len -- error? error )
   \ Load a RAM-disk from disk, at address of screen n.
   \ Warning: the file will be loaded, no matter its length.
   \ n = first screen (1..11)
-  (/LOADD) <DISK?  ;
+  (/LOADD) <FILE?  ;
 
 : (/SAVED)  ( n1 n2 ca len -- ca len ca2 len2 )
   \ Prepare the parameters to save a RAM-disk to disk,
@@ -314,14 +345,14 @@ CODE (FILE-EXISTS?)  ( -- f )
   \ n1 = first block (1..11)
   \ n2 = last block (1..11)
   \ ca len = filename
-  (/SAVED) >DISK  ;
+  (/SAVED) >DISK-FILE  ;
 
 : /SAVED?  ( n1 n2 ca len -- error? error )
   \ Save a RAM-disk to disk, from block n1 to block n2.
   \ n1 = first block (1..11)
   \ n2 = last block (1..11)
   \ ca len = filename
-  (/SAVED) >DISK?  ;
+  (/SAVED) >FILE?  ;
 
 
   \ vim: filetype=abersoftforth

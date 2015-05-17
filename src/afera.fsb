@@ -150,10 +150,8 @@ HEX
   \ ............................................
   \ Data stack
 
-CREATE NIP  ( x1 x2 -- x2 )
-  \ SWAP DROP
-  \ pop hl / pop de / jp PUSHHL
-  E1 C, D1 C, C3 C, PUSHHL ,  SMUDGE
+                            \ pop hl / pop de / jp PUSHHL
+CREATE NIP  ( x1 x2 -- x2 )  E1 C, D1 C, C3 C, PUSHHL ,  SMUDGE
 
 CREATE TUCK  ( x1 x2 -- x2 x1 x2 )
   \ SWAP OVER
@@ -414,14 +412,18 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
 
 11 CONSTANT SCR/DR  \ screens per drive (RAM-disk)
 
-: DISC-SCR  ( n -- a )
-  \ Address of screen n in the Forth RAM-disk;
-  \ error 6 if not in range.
+  \ DISC-SCR  ( n -- a )
+  \
+  \ Address of screen n in the Forth RAM-disk; error 6 if not
+  \ in range.
+  \
   \ n = 1..11 for 48K
-  \     1..16 for 128K (with the <16kramdisks.fsb> module)
+  \     1..16 for 128K (with the <16kramdisks.fsb> installed)
+
+: DISC-SCR  ( n -- a )
   1- DUP SCR/DR U< 0= 6 ?ERROR  /SCR * LO +  ;  -->
 
-( DRIVE ?FILE FILE-OP NEEDS )
+( DRIVE ?FILE FILE-OP <FILE >FILE )
 
   \ This screen defines the basic file support, required  by
   \ optional modules <tape.fsb> (improved tape support), and
@@ -430,54 +432,85 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
   \ table to execute the tape or disk version, if it's been
   \ implemented by the correspondent module.
 
-  \ When `DRIVE` is zero, tape will be used, otherwise the
-  \ correspondent drive of the supported DOS.
+  \ `DRIVE` stores the current drive, according to the
+  \ supported DOS (at the moment, only G+DOS). Zero means tape.
+
 0 VARIABLE DRIVE
 
-  \ `?FILE` halts the system with error 25 (unsupported tape
+  \ ?FILE  ( -- )
+  \
+  \ Halt the system with error 25 (unsupported tape
   \ operation) or 26 (unsupported disk operation), depending on
   \ `DRIVE`.  Those errors are new, implemented by Afera.
+
 : ?FILE  ( -- )  26 DRIVE @ 0= - ERROR  ;
 
   \ Execution tables, filled with `?FILE` by default.
   \ The first cfa of every table is the tape command, the
   \ second one is the disk command.
+
 HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT '>FILE  \ save
 HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT '<FILE  \ load
 HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
 
-: FILE-OP  ( a -- )
+  \  FILE-OP  ( a -- )
+  \
   \ Execute the proper file operation from the given execution
   \ table, depending on the content of `DRIVE`: when `DRIVE` is
-  \ zero, the first cfa of the table is executed (for tape
-  \ operation), else the second one (for disk operation).
-  DRIVE @ 0<> 2* + @ EXECUTE  ;
+  \ zero, the cfa contained in the first cell of the given
+  \ execution table is executed (for tape operation), else the
+  \ second one (for disk operation).
+  \
+  \ a = execution table
 
-  \ The provided `NEEDS` is used in all modules of the library,
-  \ to specify their requirements from other modules. In a tape
-  \ based system, `NEEDS` only causes an error when the
-  \ required word is not defined.
+: FILE-OP  ( a -- )  DRIVE @ 0<> 2* + @ EXECUTE  ;
 
-: (NEEDS-TAPE)  ( f "filename" -- )
+  \ <FILE  ( a1 len1 ca2 len2  -- )
+  \
+  \ Load a file from tape or disk.
+  \ a1      = destination
+  \ len1    = length (or zero if unspecified)
+  \ a2 len2 = filename (len2 is zero if unspecified)
 
+: <FILE  ( a1 len1 ca2 len2  -- )  '<FILE FILE-OP  ;
+
+  \ >FILE  ( a1 len1 ca2 len2  -- )
+  \
+  \ Save a file from tape or disk.
+  \ a1      = start address
+  \ len1    = length
+  \ a2 len2 = filename (len2 is zero if unspecified)
+
+: >FILE  ( a1 len1 ca2 len2  -- )  '>FILE FILE-OP  ;
+
+-->
+
+( NEEDS )
+
+  \ The provided `NEEDS` is used in modules of the library that
+  \ require other modules.  In a tape based system, `NEEDS`
+  \ only causes an error when the required word is not defined.
+
+  \ (NEEDS-TAPE)  ( f "filename" -- )
+  \
   \ Tape version of `(NEEDS)`.
   \
   \ f = is there a word needed from the given filename?
   \
-  \ If f is not zero stop with error 34 (source file needed),
+  \ If f is not zero stop with error 27 (source file needed),
   \ because there's no way to load a specific file in a tape
   \ based system; otherwise ignore the filename.
   \
-  \ Error 34 is new, implemented by Afera. Error 0 (word not
-  \ found) could be used for `NEEDS` instead, but not for
-  \ `?NEEDS`. That's why a new error is defined for both cases.
+  \ Error 27 is new, implemented by Afera. Error 0 (word not
+  \ found) could be used for `NEEDS`, but not for `?NEEDS`.
+  \ That's why a new error is defined for both cases.
 
-  27 ?ERROR  BL WORD  ;
+: (NEEDS-TAPE)  ( f "filename" -- )  27 ?ERROR  BL WORD  ;
 
 ' (NEEDS-TAPE) CFA 'NEEDS !  \ Update the execution table.
-  
 
-: ?NEEDS  ( f "filename" -- )
+  \ ?NEEDS  ( f "filename" -- )
+  \
   \ If f is not zero, load file "filename", if possible; else
   \ remove the parameters.  The loading works only with disks
   \ drives, when the correspondent module is installed; the
@@ -485,15 +518,21 @@ HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
   \ This is used instead of `NEEDS` when the needed file
   \ does not define a word it can be identified with. This
   \ happens with modules that simply patch the system.
-  'NEEDS FILE-OP  ;
 
-: NEEDS  ( "name" "filename" -- )
+: ?NEEDS  ( f "filename" -- )  'NEEDS FILE-OP  ;
+
+  \ NEEDS  ( "name" "filename" -- )
+
   \ If "name" is not defined, load file "filename", if
   \ possible; else remove the parameters.  The loading works
   \ only with disks drives, when the correspondent module is
   \ installed; the default tape-only system will stop with an
   \ error.
+
+: NEEDS  ( "name" "filename" -- )
   [COMPILE] [UNDEFINED]  ?NEEDS  ;
+
+-->
 
 ( EXTEND SYSTEM )
 
@@ -510,17 +549,16 @@ HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
   LATEST 12 +ORIGIN !  HERE 28 +ORIGIN !  HERE 30 +ORIGIN !
   HERE FENCE !  ' FORTH 8 + 32 +ORIGIN !  ;
 
-
-: SYSTEM  ( -- a len )
-
+  \ SYSTEM  ( -- a len )
+  \
   \ Prepare the system in order to save a copy.  Return its
   \ start address and length, to be used as parameters for the
   \ tape or disk saving commands.
 
-  EXTEND  0 +ORIGIN SIZE 10 + ;
+: SYSTEM  ( -- a len )  EXTEND  0 +ORIGIN SIZE 10 + ;
 
-: TURNKEY  ( cfa -- a len )
-
+  \ TURNKEY  ( cfa -- a len )
+  \
   \ XXX FIXME a QUIT is needed after the boot word. `COLD` must
   \ be reorganized (when patched above).
   \
@@ -529,8 +567,10 @@ HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
   \ start address and length, to be used as parameters for the
   \ tape or disk saving commands.  28168 (0x6E08) is the
   \ address of `ABORT` at the end of the pfa of `COLD`.
-  28168 ! SYSTEM  ;
 
+: TURNKEY  ( cfa -- a len )  28168 ! SYSTEM  ;
+
+  0 PAPER 4 INK 0 BORDER \ XXX TMP
 EXTEND CLS GREETING
 
   \ -----------------------------------------------------------
