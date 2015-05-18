@@ -280,10 +280,12 @@ _tests/gplusdos_test.tap: tapes afera.mgt
 		tap/move.tap \
 		tap/2r.tap \
 		tap/strings.tap \
+		tap/csb-256.tap \
 		tap/plusscreen.tap \
 		tap/cswap.tap \
 		tap/dump.tap \
 		tap/dot-s.tap \
+		tap/dot-vocs.tap \
 		tap/transient.tap \
 		tap/transient-start-4096.tap \
 		tap/assembler.tap \
@@ -309,17 +311,15 @@ _tests/gplusdos_128k_test.tap: tapes afera.mgt
 		tap/move.tap \
 		tap/2r.tap \
 		tap/strings.tap \
+		tap/csb-256.tap \
 		tap/plusscreen.tap \
 		tap/dot-s.tap \
-		tap/transient.tap \
-		tap/transient-start-4096.tap \
+		tap/dot-vocs.tap \
 		tap/assembler.tap \
-		tap/transient-end.tap \
 		tap/gplusdos_1.tap \
 		tap/gplusdos_2.tap \
 		tap/gplusdos_3.tap \
 		tap/gplusdos_vars.tap \
-		tap/transient-remove.tap \
 		tap/loaded.tap \
 		> _tests/gplusdos_128k_test.tap
 
@@ -352,6 +352,7 @@ _tests/bracket-if.tap: tapes
 		tap/pick.tap \
 		tap/2r.tap \
 		tap/strings.tap \
+		tap/csb-256.tap \
 		tap/bracket-if.tap \
 		tap/loaded.tap \
 		> _tests/bracket-if.tap

@@ -27,8 +27,8 @@
   \ `NEEDS` can not be used yet because it's defined in this
   \ module...
 
-  [UNDEFINED] 2>R 0 ERROR
-  [UNDEFINED] 2R> 0 ERROR
+  [UNDEFINED] 2>R 0 ?ERROR
+  [UNDEFINED] 2R> 0 ?ERROR
 
   \ -----------------------------------------------------------
   \ History
@@ -59,4 +59,5 @@
 
 ' (NEEDS-DISK) CFA 2+ 'NEEDS !  \ Update the execution table.
 
+  \ vim: filetype=abersoftforth
 

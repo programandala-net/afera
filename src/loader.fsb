@@ -42,6 +42,9 @@
 
   \ 2015-05-08: Start, based on the loader of Tron 0xF
   \ (http://programandala.net/en.program.tron_0xf.html).
+  \
+  \ 2015-05-17: Fix: `LOADER` didn't reset `LOADED?` at the
+  \ start.
 
 ( Library modules loader )
 
@@ -66,6 +69,7 @@ FORTH DEFINITIONS
   \ XXX TMP benchmark -- reset the system frames counter
   \ 0 23672 ! 0 23674 C!
 
+  0 LOADED? !
   BEGIN  LOADED? @ 0=  WHILE
     255 23692 C!  ( avoid the "scroll?" prompt)
     EMPTY-BUFFERS INIT-DISC LOADT 1 LOAD

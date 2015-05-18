@@ -133,6 +133,8 @@
 
 ( SMOVE S+ )
 
+  \ XXX TODO move to its own file.
+
 : SMOVE  ( ca1 len ca2 -- )  SWAP MOVE  ;
 
 : S+  ( ca1 len1 ca2 len2 -- ca3 len3 )

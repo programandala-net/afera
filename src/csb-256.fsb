@@ -1,7 +1,7 @@
-.( 4096 bytes for transient code )
+.( 256-byte circular string buffer )
 
-\ transient-start-4096.fsb
-\ Transient code tool for ZX Spectrum Abersoft Forth
+\ csb-256.fsb
+\ Circular string buffer tool for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -11,4 +11,4 @@
 
   \ 2015-05-17
 
-4096 TRANSIENT[
+256 ALLOT-CSB

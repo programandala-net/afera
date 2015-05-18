@@ -52,11 +52,9 @@
   \ Line comments
 
 : \  ( "ccc<newline>" -- )
-  IN @ DUP C/L > IF  B/BUF SWAP MOD  ELSE  C/L SWAP -  THEN
-  IN +!  ; IMMEDIATE
+  IN @ C/L MOD C/L SWAP - IN +! ; IMMEDIATE
 
-: .(  ( "ccc<paren>" -- )
-  29 ( paren ) TEXT PAD COUNT TYPE  ; IMMEDIATE
+: .(  ( "ccc<paren>" -- )  29 TEXT PAD COUNT TYPE  ; IMMEDIATE
 
   \ ............................................
   \ Fix the "11263" bug
@@ -98,16 +96,39 @@ HI LO - 1+ CONSTANT /DISC
 ' R> CFA ' EXIT !
 
   \ ............................................
-  \ Fix the `COLD` bug
+  \ Fix the `COLD` bug and patch it
 
   \ The word `COLD` has a subtle bug: it inits `PREV` and `USE`
   \ not with `FIRST`, the constant that holds the start address
   \ of the first disk buffer, but with its default value! This
   \ must be fixed in order to move the disk buffers (what does
-  \ the <lowersys.fsb> module).
+  \ <lowersys.fsb>).
+  \
+  \ Beside, we need space to add a `NOOP` right before the
+  \ final `ABORT` of the definition. `TURNKEY` will substitute
+  \ the `NOOP` with the boot word.
 
-' NOOP CFA ' COLD 02 + !  ' FIRST CFA ' COLD 04 + !
-' NOOP CFA ' COLD 0A + !  ' FIRST CFA ' COLD 0C + !
+  \ ' NOOP CFA ' COLD 02 + !  ' FIRST CFA ' COLD 04 + !
+  \ ' NOOP CFA ' COLD 0A + !  ' FIRST CFA ' COLD 0C + !
+
+  \ XXX TODO
+\ ' FIRST CFA 6DD4 + !
+  \ 6E06 6DD6 2DUP SWAP - CMOVE
+
+: ',  ( "name" -- )  [COMPILE] ' CFA ,  ;  HERE
+
+  \ Compile the patched version of `COLD`.
+', EMPTY-BUFFERS ', FIRST ', USE ', !  ', FIRST ', PREV ', !
+', DR0 ', LIT 5E52 , ', LIT 5E66 , ', @ ', LIT 6 , ', +
+', LIT 10 , ', CMOVE ', LIT 5E4C , ', @ ', LIT 6CF8 , ', !
+', NOOP ', ABORT
+
+  \ Patch `COLD` and free the used space.
+DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',  DECIMAL -->
+
+( Bug fixes, data stack and conditional compilation)
+
+HEX
 
   \ ............................................
   \ Safer `MON`
@@ -140,12 +161,6 @@ HI LO - 1+ CONSTANT /DISC
   \ `INK` has a bug that causes `PLOT` to use 0 instead the
   \ proper attribute in most cases. The alternative definition
   \ provided in <color.fsb> works fine.
-
-DECIMAL -->
-
-( Data stack and conditional compilation)
-
-HEX
 
   \ ............................................
   \ Data stack
@@ -199,7 +214,7 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
   \ As the message shows, the current user version is "C".
   \ Store it into its standard fig-Forth address.
 
-67 DUP 10 +ORIGIN C!
+67 10 +ORIGIN C!
 
   \ `ABORT` must be patched to execute `GREETING` after `CLS`,
   \ and then the rest.  The new code is shorter than the
@@ -307,8 +322,8 @@ B/SCR B/BUF * CONSTANT /SCR  \ bytes per screen (1024)
 
   \ Compile the new code of `R/W`.
 
-HERE  ' >R CFA , ' DISC-BLOCK CFA , ' R> CFA , '
-      (R/W) CFA , ' ;S CFA ,
+HERE  ' >R CFA , ' DISC-BLOCK CFA , ' R> CFA ,
+      ' (R/W) CFA , ' ;S CFA ,
 
   \ Patch `R/W` with the new code.  Update `BLK` to prevent the
   \ current screen to be loaded twice, because of the patch.
@@ -565,18 +580,13 @@ HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
   \ Prepare the system in order to save a copy that will
   \ execute the given cfa at the end of `COLD`.  Return its
   \ start address and length, to be used as parameters for the
-  \ tape or disk saving commands.  28168 (0x6E08) is the
-  \ address of `ABORT` at the end of the pfa of `COLD`.
+  \ tape or disk saving commands.  28164 (0x6E04) is the
+  \ address of a `NOOP` right before the `ABORT` at the end of
+  \ the patched pfa of `COLD`.
 
-: TURNKEY  ( cfa -- a len )  28168 ! SYSTEM  ;
+: TURNKEY  ( cfa -- a len )  28164 ! SYSTEM  ;
 
-  0 PAPER 4 INK 0 BORDER \ XXX TMP
-EXTEND CLS GREETING
-
-  \ -----------------------------------------------------------
-  \ Temporary code during the development
-
-  \ : CLS0  ( -- )  0 PAPER 4 INK 0 BORDER CLS  ;
+EXTEND  0 PAPER 4 INK 0 BORDER CLS GREETING
 
   \ -----------------------------------------------------------
   \ History
@@ -767,9 +777,10 @@ EXTEND CLS GREETING
   \ 2015-05-15: Simpler `GREETING`.
   \
   \ 2015-05-17: `/INIT-DISC` is moved to drafts, it has not
-  \ been needed yet, it's not useful with tapes.
-  \ `2*` is moved back from is own files, it's needed by
-  \ several important modules. New: `0<>`.
+  \ been needed yet, it's not useful with tapes.  `2*` is moved
+  \ back from is own files, it's needed by several important
+  \ modules. New: `0<>`. Improvement: simpler version of `\`,
+  \ copied from Matteo Vitturi's vForth (1990-2000).
   \
   \ -----------------------------------------------------------
 

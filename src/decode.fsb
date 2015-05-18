@@ -51,8 +51,7 @@
   \ the definition. The check in `INDENT` is removed.
   \
   \ 2015-05-17: `NEEDS` used. Improved with run-time and
-  \ shorter instructions, standard break key instead of Q,
-  \ and no default action.
+  \ shorter instructions.
 
 -->
 
@@ -125,20 +124,19 @@ FORTH DEFINITIONS DECIMAL
     WHILE  \ high level & NOT end of colon definition
       \ ( pfa+n cfa )
       ( pfa+n cfa ) 2+ ( pfa+n pfa' ) DUP INDENT+  NFA ID.
-      ?TERMINAL            IF  SP! QUIT  THEN  \ Break
-      KEY CASE  BL         OF  DROP      ENDOF \ Space
-                13         OF  RECURSE   ENDOF \ Return
+      KEY CASE  [CHAR] Q  OF  SP! QUIT  ENDOF \ Q
+                      BL  OF  DROP      ENDOF \ Space
+                                 SWAP RECURSE \ Default
           ENDCASE  DECODE-SPECIAL-CASES
       2+  -1 DECODE-LEVEL +!
     REPEAT  INDENT 2+ NFA ID. \ show the last word
-  ELSE  ." Not a colon definition."
-  THEN  DROP  ;  -->
+  ELSE  ." Not a colon definition."  THEN  DROP  ;  -->
 
 ( DECODE -- interface )
 
 : DECODE-USAGE  ( -- )
      \  <------------------------------>
-  CR ." Keys: SPACE=more, RETURN=deeper,BREAK=quit." CR  ;
+  CR ." Keys: Space=more, Q=quit, other=deeper." CR  ;
 
 : DECODE  ( "name" -- )
   DECODE-USAGE

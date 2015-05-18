@@ -13,7 +13,7 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  \ <bank.fsb>
+  NEEDS BANK bank
 
   \ -----------------------------------------------------------
   \ History
@@ -27,7 +27,9 @@
   \ 2015-05-11: New: `CPUK`, `.CPUK` and patch for `.CPU`.
   \
   \ 2015-05-14: Already integrated into the main file of the
-  \ library. This file is abandoned.
+  \ library.
+  \
+  \ 2015-05-15: Restored.
 
   \ -----------------------------------------------------------
 

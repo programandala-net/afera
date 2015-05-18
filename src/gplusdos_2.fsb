@@ -28,7 +28,7 @@
   \ module <strings.fsb>. But `NEEDS` can not be used yet
   \ because it must be defined later.
 
-  [UNDEFINED] SAVE-STRING 0 ERROR
+  [UNDEFINED] SAVE-STRING 0 ?ERROR
 
   \ -----------------------------------------------------------
   \ History
@@ -209,7 +209,7 @@ CODE (CAT)  ( -- )
   \ ca len  = filename
   \ f       = error?
   \ n       = error
-  SAVE-STRING DISC-FILENAME 2!
+  SAVE-STRING 2DUP DISC-FILENAME 2!
   DISC>UFIA (<DISK-FILE) IOR>ERROR  ;
 
   \ LOADD  ( ca len -- )

@@ -86,6 +86,7 @@
   \ into the lfa of the first word created
   \ after the transient code was finished
   \ by `]TRANSIENT`.
+
   OLD-LATEST @ OLD-DP @ PFA LFA !  ;
 
   \ vim: filetype=abersoftforth
