@@ -1,0 +1,20 @@
+( POINT Benchmark )
+
+  \ 2015-05-06: Improved.
+
+: .TIME  ( -- )  TIME@ D. ." in system frames"  ;
+
+: GARBAGE  0 16384 6144 CMOVE  ;
+
+: TEST  ( -- )
+  GARBAGE TIME0
+  256 0 DO  176 0 DO  J I POINT DROP  LOOP  LOOP  .TIME  ; 
+
+  \ Results in system frames
+  \
+  \ 2291 (100%)    Original code
+  \  755 ( 32%)    2015-05-04: Modified.
+  \  754 ( 32%)    2015-05-04: Modified:
+  \                   IX not saved, y not checked.
+  
+  \ vim: filetype=abersoftforth

@@ -12,7 +12,7 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
  
   \ 2015-04-16: Code written in the main file of the library.
   \ 2015-04-23: Code fixed. Negative numbers didn't work

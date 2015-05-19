@@ -8,7 +8,7 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
   
   \ 2015-04-23: First version.
 
@@ -34,5 +34,5 @@ CREATE UPPERC   ( c -- c' )
 
 DECIMAL
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

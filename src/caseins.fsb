@@ -10,9 +10,15 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ Requirements
+
+  NEEDS UPPERS uppers
+
+  \ -----------------------------------------------------------
+  \ History
 
   \ 2015-05-06: First version.
+  \ 2015-05-18: `NEEDS` used.
 
 : UPPER-WORD  ( c -- )
   \ Read the next text characters from the input stream being

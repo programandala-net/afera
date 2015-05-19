@@ -10,7 +10,7 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
   
   \ 2015-03-29: Code written in the main file of the library.
   \ 2015-04-25: Code rewritten in Z80.
@@ -31,7 +31,7 @@ CREATE -ROT  ( x1 x2 x3 -- x3 x1 x2 )
   \ D9 C,              \ exx
   \ C3 C, NEXT ,       \ jp NEXT
 
-  \ Version copied from DZX-Forth:
+  \ Version copied from DZX-Forth.
   E1 C, D1 C,     \ pop hl / pop de
   E3 C,           \ ex (sp),hl
   EB C,           \ ex de,hl

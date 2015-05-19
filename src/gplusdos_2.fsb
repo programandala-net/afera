@@ -1,4 +1,4 @@
-.( G+DOS support -- part 2 )
+.( G+DOS -- part 2 )
 
 \ gplusdos_2.fsb
 \ G+DOS support for ZX Spectrum Abersoft Forth (part 2)
@@ -67,6 +67,9 @@
   \ 2015-05-17: New: `FILE?`. Some renamings, after the changes
   \ in the library (common core words for some tape and disk
   \ operations).
+  \
+  \ 2015-05-18: New: support for 16-KiB RAM-disks in memory
+  \ banks.
 
 2 10 THRU
 
@@ -165,7 +168,42 @@ CODE (CAT)  ( -- )
 
 : CAT  ( ca len -- )  0 0 2SWAP >UFIA  -SCREEN (CAT) +SCREEN  ;
 
-( User interface: Forth RAM-disk )
+( Forth RAM-disk)
+
+: DISC>UFIA  ( ca len -- )  LO 0 2SWAP >UFIA  ;
+
+  \ `DISC-FILENAME` keeps the address and length of the latest
+  \ RAM-disk loaded. It is updated by `LOADD?` and used by
+  \ `(NEEDS-DISK)` to implement nested requirements between
+  \ modules.
+
+0. 2VARIABLE DISC-FILENAME
+
+  \ When the system has been lowered below 0xC000 by
+  \ <lowersys.fsb>, in order to use the memory banks, and the
+  \ 16-KiB RAM-disks have been installed by <16kramdisks.fsb>,
+  \ the G+DOS words that manage the Forth RAM-disk must include
+  \ the commands to switch the memory banks.
+  \
+  \ A flag is calculated to be used by `SAVED?` and `LOAD?`
+  \ during compilation. Every word needs to check the flag
+  \ twice. The flag can not be put on the stack and duplicated,
+  \ because it would be consumed during the compilation, what
+  \ would make `;` to stop with an error 20 (definition not
+  \ finished). The variable `X1`, only used by `DRAW`, is used
+  \ as a temporary storage.
+
+HEX
+R0 @ C000 U<      \ Has the system been lowered below 0xC000
+/DISC 4000 =  AND \ and the 16-KiB RAM-disks installed?
+0= X1 !           \ No? Save it into a temporary storage.
+DECIMAL
+
+  \ XXX TODO -- Use a different address to store the flag. One
+  \ of the planned modules removes `DRAW` and its variables
+  \ from the dictionary and redefines it in Z80.
+
+( Forth RAM-disk -- user interface)
 
   \ DISC>UFIA  ( ca len -- )
   \
@@ -175,15 +213,17 @@ CODE (CAT)  ( -- )
   \
   \ ca1 len1 = filename
 
-: DISC>UFIA  ( ca len -- )  LO 0 2SWAP >UFIA  ;
-
 : SAVED?  ( ca len -- f n )
   \ Save the Forth RAM-disk to disk
   \ (word named after Abersoft Forth's `SAVET`).
   \ ca len  = filename
   \ f       = error?
   \ n       = error
-  DISC>UFIA (>DISK-FILE) IOR>ERROR  ;
+  \ During compilation, as a temporary solution,
+  \ `X1` holds a flag: Use the original RAM-disk?
+  DISC>UFIA       [ X1 @ ] ?\ DISC-BANK BANK
+  (>DISK-FILE)    [ X1 @ ] ?\ 0 BANK
+  IOR>ERROR  ;
 
   \ SAVED  ( ca len -- )
   \
@@ -197,11 +237,6 @@ CODE (CAT)  ( -- )
   \ `LOADD?` (the lowest level word) into the circular string
   \ buffer and its address and length are stored into a double
   \ variable.
-  \
-  \ This is used by `(NEEDS-DISK)` to implement nested
-  \ requirements between modules.
-
-0. 2VARIABLE DISC-FILENAME
 
 : LOADD?  ( ca len -- f n )
   \ Load a Forth RAM-disk from disk.
@@ -209,8 +244,12 @@ CODE (CAT)  ( -- )
   \ ca len  = filename
   \ f       = error?
   \ n       = error
+  \ During compilation, as a temporary solution,
+  \ `X1` holds a flag: Use the original RAM-disk?
   SAVE-STRING 2DUP DISC-FILENAME 2!
-  DISC>UFIA (<DISK-FILE) IOR>ERROR  ;
+  DISC>UFIA       [ X1 @ ] ?\ DISC-BANK BANK
+  (<DISK-FILE)    [ X1 @ ] ?\ 0 BANK
+  IOR>ERROR  ;
 
   \ LOADD  ( ca len -- )
   \

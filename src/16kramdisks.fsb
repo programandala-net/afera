@@ -10,11 +10,6 @@
 \ http://programandala.net/en.program.afera.html
 
 
-  \ XXX FIXME 2015-05-17
-  \
-  \ `INSTALL` works fine when manually executed.
-  \ But the system crashes when running from `LOADER`.
-
   \ -----------------------------------------------------------
   \ Description
 
@@ -30,7 +25,7 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  49152 S0 @ U<  ?NEEDS lowersys
+  49152 R0 @ U<  ?NEEDS lowersys
   NEEDS BANK bank
 
   \ -----------------------------------------------------------
@@ -45,7 +40,7 @@
   \ than 16.
   \
   \ Fix: Also `(TAPE)` needed a patch, the same way the
-  \ <tape.fsb> module does.
+  \ module <tape.fsb> does.
   \
   \ First working version.
   \
@@ -195,7 +190,7 @@ HEX
   \
   \   : FREE  ( -- n )  SP@ HERE -  ;
   \
-  \ After been patched by the <lowersys.fsb> module, its
+  \ After been patched by the module <lowersys.fsb>, its
   \ definition is:
   \
   \   : FREE  ( -- n )  LO HERE -  ;

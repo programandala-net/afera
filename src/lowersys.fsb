@@ -56,6 +56,19 @@
   \ 2015-05-08: Block buffers are moved. `FREE` is patched.
 
   \ -----------------------------------------------------------
+  \ To-do
+
+  \ XXX FIXME 2015-05-15
+  \
+  \ Everything works fine when this module is loaded with
+  \ `LOADER`; but when the module is loaded manually with
+  \ `RUNT` or `LOADT 1 LOAD`, a strange "OT? MSG # 0" error
+  \ always happens at the end, but with no `WHERE` parameters
+  \ on the stack...
+  \
+  \ The contents of the buffers are exactly the same at the end
+  \ of the proccess, and the pointers have been properly
+  \ adapted.
 
 -->
 
@@ -67,7 +80,7 @@
   \ : ?STACK  ( -- )
   \   \ Issue error message
   \   \ if the data stack is out of bounds.
-  \   SP@ S0 @ >        \ out of upper bound?
+  \   SP@ S0 >          \ out of upper bound?
   \   1 ?ERROR          \ stack underflow
   \   SP@ HERE 128 + <  \ out of lower bound?
   \   7 ?ERROR          \ stack overflow
@@ -86,15 +99,6 @@
 
   \ The lower bound has to be changed: instead of `HERE 128 +`
   \ it must be the new fixed address.
-  \
-  \ The new code is shorter (4 bytes instead of 8): For the
-  \ sake of execution speed, the rest of the original code, `<
-  \ 7 ?ERROR ;`, will be moved, instead of filling the gap with
-  \ `NOOP`.
-  \
-  \ Beside, the first `?ERROR` has to be temporary deactivated
-  \ until the new stack is ready, otherwise an error will
-  \ happen; this is done by overwritting it with `2DROP`.
 
 HEX  HERE
 
@@ -109,12 +113,13 @@ HEX  HERE
 
 ' 2DROP CFA , ' SP@ CFA , ' LIT CFA , DUP ,
 ' < CFA , ' LIT CFA , 7 , ' ?ERROR CFA , ' ;S CFA ,
+  \ XXX Unused space: 4 bytes at 0x6C4B
 
   \ Step 1: Copy the patch
 
 DUP             \ Origin: start of the compiled patch.
 ' ?STACK 0C +   \ Destination: first `?ERROR` in `?STACK`.
-OVER HERE SWAP - CMOVE  \ do it
+OVER HERE SWAP - CMOVE  \ Do it.
 
   \ Step 2: Allocate space for the new data stack
   \ (0x80 bytes minus the bytes reused from the patch).
@@ -134,9 +139,7 @@ HERE DUP 5E06 ! 5E52 ! SP!
 
   ' ?ERROR CFA ' ?STACK 0C + !
 
-DECIMAL
-
--->
+DECIMAL  -->
 
 ( Move the terminal input buffer )
 
@@ -148,9 +151,7 @@ HEX
 
 HERE DUP 5E0A ! 5E56 !  52 ALLOT
 
-DECIMAL
-
--->
+DECIMAL  -->
 
 ( Move the return stack -- old first method )
 
@@ -204,7 +205,7 @@ HERE 5E54 !
   \ RDEPTH ." RDEPTH after=" . ." RTOS="  R . KEY DROP  ;
   CR .RS  ;
 
-R>R  FORGET TASK  DECIMAL -->
+R>R  FORGET TASK  DECIMAL  -->
 
 ( Move the return stack -- second method )
 
@@ -234,7 +235,7 @@ HEX  80 ALLOT HERE  \ space for the new return stack
   \ Update `R0` and its default value.
   DUP 5E54 ! 5E08 !  ;
 
-R>R  FORGET R>R  DECIMAL -->
+R>R  FORGET R>R  DECIMAL  -->
 
 ( Compare buffers )  --> \ XXX TMP for debugging
 
@@ -264,20 +265,9 @@ B/BUF 4 + CONSTANT /BUF
   ." USE   = " OLD-USE USE @ COMPARE
   LIMIT FIRST - 0 DO
     FIRST I + C@ OLD-FIRST I + C@ - IF  I MISMATCH LEAVE  THEN
-  LOOP  DECIMAL  ; -->
+  LOOP  DECIMAL  ;  -->
 
 ( Move the disk block buffers and update FREE )
-
-  \ XXX FIXME 2015-05-15
-  \
-  \ Everything works fine when this module is loaded with
-  \ `LOADER`; but when the module is loaded manually with
-  \ `RUNT` or `LOADT 1 LOAD`, an "OT? MSG # 0" error always
-  \ happens at the end, but with no `WHERE` parameters on the
-  \ stack...
-  \
-  \ The contents of the buffers are exactly the same at the end
-  \ of the proccess, and the pointers are properly adapted.
 
 HERE  \ address of the new buffers
 DUP FIRST -  \ negative offset from the old buffers
@@ -328,4 +318,4 @@ LIMIT FIRST -  ALLOT \ space for the new buffers
 
 ' LO CFA ' FREE !
 
-
+  \ vim: filetype=abersoftforthafera

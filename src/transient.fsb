@@ -8,7 +8,7 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-  \ History of this file:
+  \ History:
 
   \ 2015-03-15: Start. Code adapted from the <TASM> file of
   \ Lennart Benschop's Spectrum Forth-83 (1988).
@@ -17,7 +17,7 @@
   \ tool.
   \
   \ 2015-05-08: Improved to work also when the system has been
-  \ lowered below 0xC000 by the <lowersys.fsb> module.
+  \ lowered below 0xC000 by the module <lowersys.fsb>. 
   \
   \ 2015-05-09: The unlinking done by `-TRANSIENT` was fixed
   \ and adapted to fig-Forth with the help of Lennart Benschop.
@@ -53,7 +53,7 @@
 
   \ The free dictionary space top limit is `SP@` in the
   \ standard memory map. But when the system has been lowered
-  \ by the <lowersys.fsb> module, it's `LO` instead (the start
+  \ by the module <lowersys.fsb>, it's `LO` instead (the start
   \ of RAM-disk). And when the system uses 16-KiB RAM-disks,
   \ the limit is the top of the memory.  `FREE` is used to get
   \ the current value, because the first word compiled in its

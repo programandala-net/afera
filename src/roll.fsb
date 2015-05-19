@@ -10,7 +10,7 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
 
   \ 2015-03: Code written in the main file of the library,
   \ using `RECURSE`, after the definition of `ROLL` in Gforth.

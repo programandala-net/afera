@@ -44,17 +44,22 @@
 
   \ #vim %substitute@\\\*@\=nr2char(127)@g
 
-( Line comments, bug fixes)
+( CHAR [CHAR] , line comments)
 
 ." Afera" CR  FORTH DEFINITIONS  HEX
 
-  \ ............................................
-  \ Line comments
+: CHAR  ( "name" -- c )  BL WORD HERE 1+ C@  ;
+: [CHAR]  ( "name" -- c )  CHAR [COMPILE] LITERAL  ; IMMEDIATE
 
 : \  ( "ccc<newline>" -- )
   IN @ C/L MOD C/L SWAP - IN +! ; IMMEDIATE
 
-: .(  ( "ccc<paren>" -- )  29 TEXT PAD COUNT TYPE  ; IMMEDIATE
+: .(  ( "ccc<paren>" -- )
+  [CHAR] ) TEXT PAD COUNT TYPE  ; IMMEDIATE
+
+-->
+
+( Bug fixes and patches)
 
   \ ............................................
   \ Fix the "11263" bug
@@ -96,18 +101,14 @@ HI LO - 1+ CONSTANT /DISC
 ' R> CFA ' EXIT !
 
   \ ............................................
-  \ Fix the `COLD` bug and patch it
+  \ Fix the `COLD` bug
 
   \ The word `COLD` has a subtle bug: it inits `PREV` and `USE`
   \ not with `FIRST`, the constant that holds the start address
   \ of the first disk buffer, but with its default value! This
   \ must be fixed in order to move the disk buffers (what does
-  \ <lowersys.fsb>).
+  \ the module <lowersys.fsb>).
   \
-  \ Beside, we need space to add a `NOOP` right before the
-  \ final `ABORT` of the definition. `TURNKEY` will substitute
-  \ the `NOOP` with the boot word.
-
   \ ' NOOP CFA ' COLD 02 + !  ' FIRST CFA ' COLD 04 + !
   \ ' NOOP CFA ' COLD 0A + !  ' FIRST CFA ' COLD 0C + !
 
@@ -121,14 +122,11 @@ HI LO - 1+ CONSTANT /DISC
 ', EMPTY-BUFFERS ', FIRST ', USE ', !  ', FIRST ', PREV ', !
 ', DR0 ', LIT 5E52 , ', LIT 5E66 , ', @ ', LIT 6 , ', +
 ', LIT 10 , ', CMOVE ', LIT 5E4C , ', @ ', LIT 6CF8 , ', !
-', NOOP ', ABORT
+', ABORT
+  \ XXX Unused space: 4 bytes at 0x6E06
 
   \ Patch `COLD` and free the used space.
-DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',  DECIMAL -->
-
-( Bug fixes, data stack and conditional compilation)
-
-HEX
+DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
 
   \ ............................................
   \ Safer `MON`
@@ -139,8 +137,16 @@ HEX
   \ system variable in ZX Spectrum, except the +3 model, where
   \ it's NMIADD.
 
-  \ Make `MON` to return to BASIC, without checking NMIADD:
+  \ Make `MON` to return to BASIC, without checking NMIADD.
 763D ' MON CFA !
+
+  \ ............................................
+  \ Cosmetic patches
+
+  \ No `CLS` in `INDEX`.
+  \ no `DECIMAL` in `LIST`
+  \ Smaller margin in `LIST`.
+' NOOP CFA ' INDEX !   ' NOOP CFA ' LIST !  2 ' LIST 23 + !
 
   \ ............................................
   \ Bugs not fixed yet
@@ -162,6 +168,12 @@ HEX
   \ proper attribute in most cases. The alternative definition
   \ provided in <color.fsb> works fine.
 
+DECIMAL -->
+
+( Data stack and conditional compilation)
+
+HEX
+  
   \ ............................................
   \ Data stack
 
@@ -185,23 +197,28 @@ CREATE TUCK  ( x1 x2 -- x2 x1 x2 )
   [COMPILE] [DEFINED] 0=  ; IMMEDIATE
 
   \ The following words provide a simple alternative to
-  \ `[IF]`, `[ELSE]` and `[THEN]`.
+  \ `[IF]`, `[ELSE]` and `[THEN]` (provided in a module).
 
 : ?--> ( f -- )  IF  [COMPILE] -->  THEN  ; IMMEDIATE
-: ?\ ( f "ccc<newline>" -- )  IF  [COMPILE] \
+: ?\  ( f "ccc<newline>" -- )  IF  [COMPILE] \
   THEN  ; IMMEDIATE  DECIMAL -->
 
 ( .CPU GREETING )
 
-  \ The original word `.CPU` prints "48K SPECTRUM".  It's
-  \ changed to "ZX Spectrum". A `NOOP` is added at the end; it
-  \ will be substituted by `.CPUK` later, to show the memory of
-  \ the specific model.
+  \ ............................................
+  \ Modified computer name
+
+  \ The original word `.CPU` prints "48K SPECTRUM ".  It's
+  \ changed to the more proper "ZX Spectrum". Two bytes are
+  \ saved, and the are used to add `NOOP` at the end; it will
+  \ be substituted by `.CPUK` later, by the module <48kq.fsb>,
+  \ in order to show the memory of the specific model.
 
 HEX HERE  0B C, 5A C, 58 C, BL C, 53 C, 70 C, 65 C, 63 C, 74 C,
-72 C, 75 C, 6D C, ' NOOP CFA ,
+          72 C, 75 C, 6D C, ' NOOP CFA ,
 DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 
+  \ ............................................
   \ New messages shown after a cold start.
 
 : .SYS         ( -- )  ." Spectrum fig-Forth"  ;
@@ -216,23 +233,32 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 
 67 10 +ORIGIN C!
 
-  \ `ABORT` must be patched to execute `GREETING` after `CLS`,
-  \ and then the rest.  The new code is shorter than the
-  \ original one, because the old messages were hardcoded in
-  \ the word.
+  \ ............................................
+  \ New system colors: black background, green foreground.
 
-HEX ' GREETING    CFA 6D62 !  ' FORTH CFA 6D64 !
-    ' DEFINITIONS CFA 6D66 !  ' QUIT  CFA 6D68 !
+: COLORS0  ( -- )
+  0 PAPER 4 INK 0 BRIGHT 0 FLASH 0 INVERSE 0 BORDER  ;
+
+: CLS0  ( -- )  COLORS0 CLS  ;
 
   \ ............................................
-  \ Cosmetic patches
+  \ Patch `ABORT`
 
-  \ No `CLS` in `INDEX`, no `DECIMAL` in `LIST`
-' NOOP CFA ' INDEX !
-' NOOP CFA ' LIST !
-         2 ' LIST 23 + !    \ smaller margin in `LIST`
+  \ `ABORT` is patched for three reasons:
+  \
+  \ Execute `CLS0` instead of `CLS`; execute `GREETING` instead
+  \ of printing its own messages; and have a `NOOP` before
+  \ `QUIT`, to be patched by `TURNKEY`.
+  \
+  \ The original code was longer (57 bytes) than the original
+  \ one (18 bytes), because of the old messages.
 
-DECIMAL -->
+' CLS0 CFA 6D60 ! ' GREETING CFA 6D62 ! ' FORTH CFA 6D64 !
+' DEFINITIONS CFA 6D66 ! ' NOOP CFA 6D68 !  ' QUIT  CFA 6D6A !
+    \ XXX Unused space: 39 bytes at 0x6D6C
+
+  \ Address of the user boot word compiled in `ABORT`.
+6D68 CONSTANT BOOT  DECIMAL -->
 
 ( Make the first screen usable )
 
@@ -259,30 +285,8 @@ DECIMAL -->
   \   R>  \ disk read?
   \   IF  SWAP  THEN  B/BUF CMOVE  ;
 
-  \ The calculation `B/BUF *` must be changed. The chosen
-  \ method is to substitute the `*` with a new word, `BUF*`:
-
-B/SCR B/BUF * CONSTANT /SCR  \ bytes per screen (1024)
-
-  \ XXX OLD
-  \ : BUF*  ( n1 +n2 -- +n3 )
-
-  \   \ Calculate the relative address +n3 of disk block n1 in the
-  \   \ Forth RAM-disk. Give error #6 when the requested disk block
-  \   \ n1 belongs to the first screen of the RAM-disk.  Finally
-  \   \ update the result one screen below.
-
-  \   \ n1 = number of sequential disk block
-  \   \ +n2 = bytes per block buffer, returned by `B/BUF`
-  \   \ +n3 = offset in the RAM-disk (from 0 to `HI B/BUF -`)
-
-  \   * DUP /SCR U< 06 ?ERROR  /SCR -  ;
-
-  \   \ Patch `R/W` with `BUF*` and update `BLK` to prevent the
-  \   \ current screen to be loaded twice. Warning: Both operations
-  \   \ must be done on the same line, to prevent them from being
-  \   \ in two different blocks of the screen.
-  \   ' BUF* CFA 7223 !  B/SCR BLK +!
+  \ Bytes per screen (1024).
+B/SCR B/BUF * CONSTANT /SCR  DP !
 
 : DISC-BLOCK  ( n -- a )
 
@@ -292,7 +296,7 @@ B/SCR B/BUF * CONSTANT /SCR  \ bytes per screen (1024)
   \
   \ This word works with the default 11-KiB RAM disk and also
   \ with the 16-KiB paged RAM-disks that can be used with the
-  \ 128K model (installed by the <16kramdisks.fsb> module).
+  \ 128K model (installed by the module <16kramdisks.fsb>).
   \
   \ The disk block number is adjusted with `OFFSET`, because
   \ the result address is the same, no matter what the current
@@ -315,7 +319,7 @@ B/SCR B/BUF * CONSTANT /SCR  \ bytes per screen (1024)
   \ f =  0 for writing; 1 for reading
 
   \ This word is created with `;S` and `NOOP` in order to make
-  \ it easier for the <16kramdisks.fsb> module to convert it
+  \ it easier for the module <16kramdisks.fsb> to convert it
   \ into the 128K version, that needs four more commands.
 
   IF  SWAP  THEN  B/BUF CMOVE [COMPILE] ;S NOOP NOOP NOOP ;
@@ -339,16 +343,7 @@ DUP ' R/W OVER SWAP OVER HERE SWAP - CMOVE  B/SCR BLK +!  DP !
   \ screen 0") to error 6 ("Out of RAM-disk range"), what seems
   \ more logical now, because there's no screen 0 anymore.
 
-6 ' LOAD 8 + !
-
-DECIMAL -->
-
-( CHAR [CHAR] )
-
-: CHAR  ( "name" -- c )  BL WORD HERE 1+ C@  ;
-: [CHAR]  ( "name" -- c )  CHAR [COMPILE] LITERAL  ; IMMEDIATE
-
--->
+6 ' LOAD 8 + !  DECIMAL -->
 
 ( Operators)
 
@@ -425,7 +420,8 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
   \ Read a new RAM-disk from tape and load its first screen.
 : RUNT  ( -- )  1 /RUNT  ;
 
-11 CONSTANT SCR/DR  \ screens per drive (RAM-disk)
+  \ Screens per drive (RAM-disk).
+11 CONSTANT SCR/DR
 
   \ DISC-SCR  ( n -- a )
   \
@@ -447,26 +443,55 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
   \ table to execute the tape or disk version, if it's been
   \ implemented by the correspondent module.
 
-  \ `DRIVE` stores the current drive, according to the
-  \ supported DOS (at the moment, only G+DOS). Zero means tape.
+  \ `DRIVE` stores the current drive, according to the DOS.
+  \ Zero means tape. `DRIVE` has nothing to do with the
+  \ fig-Forth words `DR0` (provided by the original system) and
+  \ `DR1` (defined by the module <16kramdisks.fsb>): they
+  \ change the virtual drive of the Forth RAM-disk.
 
 0 VARIABLE DRIVE
 
   \ ?FILE  ( -- )
   \
-  \ Halt the system with error 25 (unsupported tape
-  \ operation) or 26 (unsupported disk operation), depending on
-  \ `DRIVE`.  Those errors are new, implemented by Afera.
+  \ Cause error 25 (unsupported tape operation) or error 26
+  \ (unsupported disk operation), depending on `DRIVE`.  These
+  \ errors are new, implemented by Afera.
 
 : ?FILE  ( -- )  26 DRIVE @ 0= - ERROR  ;
 
-  \ Execution tables, filled with `?FILE` by default.
+  \ One execution table for every media operation that share a
+  \ common name for tape and disk.
+  \
   \ The first cfa of every table is the tape command, the
   \ second one is the disk command.
+  \
+  \ The tables are filled with `?FILE` by default, until the
+  \ correspondent words are defined.
 
 HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT '>FILE  \ save
 HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT '<FILE  \ load
 HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
+
+  \ One data table for every media datum that share a common
+  \ name for tape and disk.
+  \
+  \ The first cell of every table is the tape datum, the
+  \ second one is the disk datum.
+
+  \ XXX TODO
+
+HERE  10 , 10 , CONSTANT  '/FILENAME \ filename lenght
+
+  \  >FILE-X  ( a -- cfa | n )
+  \
+  \ Get get content of a file table element, depending on the
+  \ content of `DRIVE`: when `DRIVE` is zero, the first cell of
+  \ the given table is fetch (for tape operation), else the
+  \ second one (for disk operation).
+  \
+  \ a = execution table or data table
+
+: >FILE-X  ( a -- x )  DRIVE @ 0<> 2* + @  ;
 
   \  FILE-OP  ( a -- )
   \
@@ -478,7 +503,7 @@ HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
   \
   \ a = execution table
 
-: FILE-OP  ( a -- )  DRIVE @ 0<> 2* + @ EXECUTE  ;
+: FILE-OP  ( a -- )  >FILE-X EXECUTE  ;
 
   \ <FILE  ( a1 len1 ca2 len2  -- )
   \
@@ -502,9 +527,13 @@ HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
 
 ( NEEDS )
 
-  \ The provided `NEEDS` is used in modules of the library that
-  \ require other modules.  In a tape based system, `NEEDS`
-  \ only causes an error when the required word is not defined.
+  \ `NEEDS` is used in modules of the library that require
+  \ other modules.  Without disk support, `NEEDS` causes an
+  \ error when the required word is not defined. With disk
+  \ support (currently only for G+DOS) the required file will
+  \ be loaded from disk into the RAM-disk and then compiled;
+  \ finally the previous contents of the RAM-disk will be
+  \ restored. Any level of nesting is possible.
 
   \ (NEEDS-TAPE)  ( f "filename" -- )
   \
@@ -574,19 +603,14 @@ HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
 
   \ TURNKEY  ( cfa -- a len )
   \
-  \ XXX FIXME a QUIT is needed after the boot word. `COLD` must
-  \ be reorganized (when patched above).
-  \
   \ Prepare the system in order to save a copy that will
-  \ execute the given cfa at the end of `COLD`.  Return its
-  \ start address and length, to be used as parameters for the
-  \ tape or disk saving commands.  28164 (0x6E04) is the
-  \ address of a `NOOP` right before the `ABORT` at the end of
-  \ the patched pfa of `COLD`.
+  \ execute the given cfa after the ordinary boot process.
+  \ Return its start address and length, to be used as
+  \ parameters for the tape or disk saving commands.
 
-: TURNKEY  ( cfa -- a len )  28164 ! SYSTEM  ;
+: TURNKEY  ( cfa -- a len )  BOOT ! SYSTEM  ;
 
-EXTEND  0 PAPER 4 INK 0 BORDER CLS GREETING
+EXTEND  CLS0 GREETING
 
   \ -----------------------------------------------------------
   \ History
@@ -760,7 +784,7 @@ EXTEND  0 PAPER 4 INK 0 BORDER CLS GREETING
   \ `EVALUATE` or other method.
   \
   \ Change: `'SCR` renamed to `DISC-SCR`, after `DISC-BLOCK` in
-  \ the <16kramdisks.fsb> module.
+  \ the module <16kramdisks.fsb>.
   \
   \ 2015-05-13: `?;S` is moved to the drafts directory, until a
   \ solution is found for it.  Three unused operators are
@@ -780,7 +804,16 @@ EXTEND  0 PAPER 4 INK 0 BORDER CLS GREETING
   \ been needed yet, it's not useful with tapes.  `2*` is moved
   \ back from is own files, it's needed by several important
   \ modules. New: `0<>`. Improvement: simpler version of `\`,
-  \ copied from Matteo Vitturi's vForth (1990-2000).
+  \ copied from Matteo Vitturi's vForth (1990-2000). New:
+  \ `TURNKEY`.
+  \
+  \ 2015-05-18: `COLORS0` and `CLS0` are moved here from its
+  \ own file and modified.
+  \
+  \ 2015-05-19: The patches of `COLD` and `ABORT` have been
+  \ modified with a better approach. New: 'BOOT' returns the
+  \ address that holds the cfa of the user boot word, in the
+  \ pfa of `ABORT`.
   \
   \ -----------------------------------------------------------
 

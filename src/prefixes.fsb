@@ -13,7 +13,7 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-  \ History of this file:
+  \ History:
   \
   \ 2015-05-01: Code copied from lina.
   \ 2015-05-07: New: Prefix "0x" for hex.

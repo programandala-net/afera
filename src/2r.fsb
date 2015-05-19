@@ -98,6 +98,6 @@ CREATE 2R>  ( -- d ) ( R: d -- )
 
   \ High level version:
   \ : 2R>  ( -- d ) ( R: d -- )
-  \  COMPILE R>  COMPILE R> COMPILE SWAP  ;  IMMEDIATE
+  \  COMPILE R>  COMPILE R> COMPILE SWAP  ; IMMEDIATE
 
   \ vim: filetype=abersoftforth

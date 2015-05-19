@@ -18,7 +18,7 @@
   \ -----------------------------------------------------------
   \ Requirements
 
-  NEEDS RECURSE recurse
+  NEEDS RECURSE   recurse
 
   \ -----------------------------------------------------------
   \ History
@@ -155,4 +155,4 @@ FORTH DEFINITIONS DECIMAL
 ."   Q :      Quit." CR
  \ <------------------------------>
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

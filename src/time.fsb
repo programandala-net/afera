@@ -8,7 +8,7 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
 
   \ 2015-04-02: Start, with the code of `MS`, moved from the
   \ main file of the library.
@@ -18,6 +18,8 @@
 -->
 
 .( Time extensions )
+
+FORTH DEFINITIONS  DECIMAL
 
 23672 CONSTANT SYS-FRAMES
 

@@ -10,5 +10,10 @@
 \ http://programandala.net/en.program.afera.html
 
   \ 2015-05-17
+  \ 2015-05-18: `NEEDS`.
+
+NEEDS TRANSIENT[ transient
 
 4096 TRANSIENT[
+  
+  \ vim: filetype=abersoftforthafera

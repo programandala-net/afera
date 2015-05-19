@@ -106,13 +106,14 @@
 
   \ -----------------------------------------------------------
 
-2 6 THRU
+2 5 THRU
 
 ( Headers )
 
 30182 CONSTANT LOADT-HEADER \ load header
 17 CONSTANT /T-HEADER  \ header length
-LOADT-HEADER /T-HEADER + CONSTANT SAVET-HEADER \ save header
+  \ XXX OLD -- Save header, not needed.
+  \ LOADT-HEADER /T-HEADER + CONSTANT SAVET-HEADER
 /T-HEADER 2 * CONSTANT /T-HEADERS
 
 10 CONSTANT /T-FILENAME \ filename max length
@@ -174,7 +175,7 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   \   SAVET-HEADER /T-HEADER DUMP
   \   CR ." (TAPE) start: " (TAPE)-START @ U.  ;
 
-( <TAPE >TAPE )
+( <TAPE-FILE >TAPE-FILE )
 
 : <TAPE-FILE  ( a1 len1 ca2 len2 -- )
   \ Load a file from tape.
@@ -212,4 +213,4 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
   FLUSH 1+ DISC-SCR SWAP DISC-SCR
   DUP ROT SWAP -  S" DISC" >TAPE  ;
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

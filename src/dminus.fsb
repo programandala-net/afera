@@ -10,7 +10,7 @@
 \ `DMINUS D+` can be used instead of `D-`, but `D-` is faster.
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
   
   \ 2015-04-18: Code adapted from Lennart Benschop's Spectrum
   \ Forth-83.

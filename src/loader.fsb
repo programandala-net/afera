@@ -33,7 +33,7 @@
   \ `RP!` and then execute the boot word.
 
   \ Note: This file is the first one to be loaded, even before
-  \ the <extend.fsb> module.  That's why it can not use any
+  \ the module <extend.fsb>. That's why it can not use any
   \ word defined by the Afera library, or use the first screen
   \ for code.
 

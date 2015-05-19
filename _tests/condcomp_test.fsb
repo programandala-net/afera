@@ -1,0 +1,34 @@
+\ prueba de compilación condicional
+
+
+( 1 block)
+
+[UNDEFINED] ZX [IF]
+
+." ZX is UNDEFINED"
+
+[ELSE]
+
+." ZX is already DEFINED"
+
+[THEN] ." after first [then]"
+
+-->
+
+( 2 blocks)
+
+1 [IF]
+
+
+." noooo"
+
+[ELSE]
+
+-->
+
+( 2 blocks)
+
+." yessss"
+
+[THEN]
+

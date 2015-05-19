@@ -16,11 +16,16 @@
 
 
 : CONTINUED  ( n -- )
+
   \ Continue interpretation at screen n.
+
   \ Idea from the Forth-79 reference word set
   \ (not part of the Forth-79 Standard).
+  \
   \ The code is that of `LOAD` except
   \ saving and restoring the current position.
+  \ In fact it could be a factor of `LOAD`.
+
   0 IN ! B/SCR * BLK ! INTERPRET  ;
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

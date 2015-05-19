@@ -8,7 +8,7 @@
 \ http://programandala.net/en.program.afera.html
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
   
   \ 2015-04-16: Extracted from the main file of the library.
   \ `ON` and `OFF` are rewritten in Z80.

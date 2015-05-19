@@ -16,7 +16,7 @@
   NEEDS STR= strings
 
   \ -----------------------------------------------------------
-  \ History of this file
+  \ History
 
   \ 2015-03-28: Start, with code adapted from Forth 5mx
   \ (http://programandala.net/en.program.forth_5mx.html), that

@@ -1,7 +1,7 @@
-.( LOWERS )
+.( [TRUE] [FALSE] )
 
-\ lowers.fsb
-\ `LOWERS` for ZX Spectrum Abersoft Forth
+\ bracket-flags.fsb 
+\ Immediante flags for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -11,11 +11,11 @@
 
   \ -----------------------------------------------------------
   \ History
-  
-  \ 2015-05-06: First version.
 
-: LOWERS   ( ca len -- )
-  \ Convert a string to uppercase.
-  BOUNDS DO  I C@ LOWERC I C!  LOOP  ;
+  \ 2015-03-18
 
-  \ vim: filetype=abersoftforthafera
+         0 CONSTANT [FALSE] IMMEDIATE
+[FALSE] 0= CONSTANT [TRUE]  IMMEDIATE
+
+  \ vim: filetype=abersoftforth
+
