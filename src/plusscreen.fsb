@@ -1,13 +1,18 @@
-.( Whole screen support )
+.( Whole screen mode )
 
 \ plusscreen.fsb
-\ Whole screen support for ZX Spectrum Abersoft Forth
+\ Whole screen mode for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+NEEDS AT@ at-fetch
 
   \ -----------------------------------------------------------
   \ History
@@ -20,38 +25,13 @@
   \
   \ 2015-05-02: No constant created for the system variable.
   \
-  \ 2105-05-06: `AT` modified with `EXIT` instead of `ELSE`: 2
+  \ 2015-05-06: `AT` modified with `EXIT` instead of `ELSE`: 2
   \ bytes saved, and faster.
+  \
+  \ 2015-05-19: Fix: Now `-SCREEN` changes the print position
+  \ if it at the lower part of the screen.
 
   \ -----------------------------------------------------------
-
--->
-
-( +SCREEN -SCREEN and patches )
-
-  \ Note: 23659 is the address of the system variable DF SZ,
-  \ that holds the number of lines in the lower part of the
-  \ screen (2 by default):
-
-: +SCREEN  ( -- )
-  \ Turn whole screen mode on.
-  0 23659 C!  ;  +SCREEN
-
-: -SCREEN  ( -- )
-  \ Turn whole screen mode off.
-  2 23659 C!  ;
-
-  \ The DF SZ system variable must have its original value
-  \ restored before returning to BASIC, else the system will
-  \ crash:
-
-: MON  ( -- )  -SCREEN MON  ;
-
-  \ The definition of `CLS` has to be patched: it calls the ROM
-  \ routine CLS (0x0D6B), but CL-ALL (0x0DAF) must be used
-  \ instead (otherwise the system will crash):
-
-  HEX  0DAF 75C0 !  DECIMAL
 
 -->
 
@@ -96,7 +76,7 @@ CREATE >CHAN  ( c -- )
   \ But it's not enough: line 23 needs special treatment.  The
   \ new version of `AT` is adapted from Lennart Benschop's
   \ Spectrum Forth-83.
- 
+
   \ This version of `AT` is longer than the original one (62
   \ bytes instead of 52). Otherwise it could be possible to
   \ overwrite the original word.
@@ -113,17 +93,16 @@ CREATE >CHAN  ( c -- )
   IF  22 >CHAN >CHAN >CHAN EXIT  THEN
   \ Last line:
   1- DUP >CHAN >CHAN 0 >CHAN CR
-  \ system variable:
-  \ address in display file of print position
+  \ System variable:
+  \ address in display file of print position.
   DUP 23684 +!
-  \ system variable:
-  \ 33 minus column number for print position
-  33 SWAP - 23688 C!
-  ;
+  \ System variable:
+  \ 33 minus column number for print position.
+  33 SWAP - 23688 C!  ;
 
-( AT -- version 2 )
+-->
 
-  \ XXX TODO
+( AT -- version 2 ) -->  \ XXX TODO
 
   \ With a bit of factorization, the new word could fit the
   \ original one.
@@ -144,17 +123,55 @@ CREATE >CHAN  ( c -- )
   IF  (AT) EXIT  THEN
   \ Last line:
   1- DUP >CHAN >CHAN 0 >CHAN CR
-  \ system variable:
-  \ address in display file of print position
+  \ System variable:
+  \ address in display file of print position.
   DUP 23684 +!
-  \ system variable:
-  \ 33 minus column number for print position
+  \ System variable:
+  \ 33 minus column number for print position.
   33 SWAP - 23688 C!  ;
 
   \ Overwrite the code of the original `AT` with the code
   \ of `NEW-AT` and forget the word:
 
-  \ ' NEW-AT ' AT OVER HERE SWAP - CMOVE  
+  \ ' NEW-AT ' AT OVER HERE SWAP - CMOVE
   \ FORGET NEW-AT
+
+-->
+
+( +SCREEN -SCREEN and patches )
+
+  \ 23659 is the address of the system variable DF SZ, that
+  \ holds the number of lines in the lower part of the screen
+  \ (2 by default):
+
+: +SCREEN  ( -- )
+  \ Turn whole screen mode on.
+  0 23659 C!  ;
+
+: -SCREEN  ( -- )
+  \ Turn whole screen mode off.
+  \ Make sure the print position is above the lower part of the
+  \ screen. Otherwise the system will exit to BASIC with an
+  \ error "Out of screen", because of the way `EMIT` works.
+  AT@ SWAP 21 MIN SWAP AT
+  2 23659 C!  ;
+
+: SCREEN?  ( -- f )
+  \ Is the whole screen mode on?
+  23659 C@ 0=  ;
+
+  \ The DF SZ system variable must have its original value
+  \ restored before returning to BASIC, else the system will
+  \ crash.
+
+: MON  ( -- )  -SCREEN MON  ;
+
+  \ The definition of `CLS` has to be patched: it calls the ROM
+  \ routine CLS (0x0D6B), but CL-ALL (0x0DAF) must be used
+  \ instead (otherwise the system will crash):
+
+HEX  0DAF 75C0 !  DECIMAL
+
++SCREEN
 
   \ vim: filetype=abersoftforth

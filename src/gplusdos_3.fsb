@@ -61,7 +61,7 @@
     EMPTY-BUFFERS BLK @ BLOCK DROP
   THEN  ;
 
-' (NEEDS-DISK) CFA 'NEEDS 2+ !  \ Update the execution table.
+' (NEEDS-DISK) CFA ' ?NEEDS !
 
   \ vim: filetype=abersoftforthafera
 

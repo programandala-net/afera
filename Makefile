@@ -168,6 +168,7 @@ tapes:
 # 		tap/move.tap \
 # 		tap/2r.tap \
 # 		tap/strings.tap \
+#			tap/at-fetch.tap \
 # 		tap/plusscreen.tap \
 # 		tap/dot-s.tap \
 # 		tap/assembler.tap \
@@ -190,6 +191,7 @@ tapes:
 # 		tap/move.tap \
 # 		tap/2r.tap \
 # 		tap/strings.tap \
+#			tap/at-fetch.tap \
 # 		tap/plusscreen.tap \
 # 		tap/dot-s.tap \
 # 		tap/assembler.tap \
@@ -283,6 +285,7 @@ _tests/gplusdos_test.tap: tapes afera.mgt
 		tap/strings.tap \
 		tap/csb.tap \
 		tap/csb-256.tap \
+		tap/at-fetch.tap \
 		tap/plusscreen.tap \
 		tap/cswap.tap \
 		tap/dump.tap \
@@ -296,6 +299,7 @@ _tests/gplusdos_test.tap: tapes afera.mgt
 		tap/gplusdos_2.tap \
 		tap/gplusdos_3.tap \
 		tap/gplusdos_vars.tap \
+		tap/gplusdos_mem.tap \
 		tap/transient-remove.tap \
 		tap/loaded.tap \
 		> _tests/gplusdos_test.tap
@@ -315,6 +319,7 @@ _tests/gplusdos_128k_test.tap: tapes afera.mgt
 		tap/strings.tap \
 		tap/csb.tap \
 		tap/csb-256.tap \
+		tap/at-fetch.tap \
 		tap/plusscreen.tap \
 		tap/dot-s.tap \
 		tap/dot-vocs.tap \
@@ -325,7 +330,9 @@ _tests/gplusdos_128k_test.tap: tapes afera.mgt
 		tap/gplusdos_1.tap \
 		tap/gplusdos_2.tap \
 		tap/gplusdos_3.tap \
+		tap/gplusdos_cat.tap \
 		tap/gplusdos_vars.tap \
+		tap/gplusdos_mem.tap \
 		tap/transient-remove.tap \
 		tap/loaded.tap \
 		> _tests/gplusdos_128k_test.tap

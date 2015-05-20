@@ -47,7 +47,7 @@ FORTH DEFINITIONS DECIMAL
 
 10 CONSTANT /FILENAME  \ max filename length
 
-1 DRIVE !
+1 VARIABLE DRIVE
 
 2 6 THRU
 
@@ -60,8 +60,7 @@ FORTH DEFINITIONS DECIMAL
 
 UFIA      CONSTANT DSTR1 \ drive: 1 or 2
 UFIA 1+   CONSTANT FSTR1 \ program number
-  \ XXX OLD -- not needed
-  \ UFIA 2+   CONSTANT SSTR1 \ stream number
+UFIA 2+   CONSTANT SSTR1 \ stream number
 UFIA 3 +  CONSTANT DEVICE \ device: "D" or "d"
 UFIA 4 +  CONSTANT NSTR1 \ directory description
 UFIA 5 +  CONSTANT NSTR2 \ file name
@@ -73,6 +72,7 @@ UFIA 18 + CONSTANT HD0D  \ file start address
   \ UFIA 22 + CONSTANT HD11  \ BASIC autorun line
 
 CHAR d DEVICE C! \ "d" or "D"
+2 SSTR1 C! \ stream 2
 
   \ These variables hold a copy of the HD0B and HD0D UFIA
   \ fields. They are used by `(<DISK)`.
@@ -110,6 +110,42 @@ CHAR d DEVICE C! \ "d" or "D"
 45 CONSTANT HWSAD 46 CONSTANT OTFOC 47 CONSTANT PATCH   DECIMAL
 
 ( Error checking)
+
+  \ G+DOS Error codes and messages.
+  \ Most of them are useless for this implementation.
+
+  \ 0x00  'Nonsense in G+DOS'
+  \ 0x01  'Nonsense in GNOS'
+  \ 0x02  'Statement END error'
+  \ 0x03  'BREAK requested'
+  \ 0x04  ',SECTOR error'
+  \ 0x05  'FORMAT data lost'
+  \ 0x06  'CHECK DISC in drive'
+  \ 0x07  'No "+ SYS " file'
+  \ 0x08  'Invalid FILE NAME'
+  \ 0x09  'Invalid STATION'
+  \ 0x0A  'Invalid DEVICE'
+  \ 0x0B  'VARIABLE not found'
+  \ 0x0C  'VERIFY failed'
+  \ 0x0D  'Wrong FILE type'
+  \ 0x0E  'MERGE error'
+  \ 0x0F  'CODE error'
+  \ 0x10  'PUPIL set'
+  \ 0x11  'Invalid CODE'
+  \ 0x12  'Reading a WRITE file'
+  \ 0x13  'Writing a READ file'
+  \ 0x14  'O.K. G+DOS'
+  \ 0x15  'Network OFF'
+  \ 0x16  'Wrong DRIVE'
+  \ 0x17  'Disc WRITE protected'
+  \ 0x18  'Not enough SPACE on disc'
+  \ 0x19  'Directory FULL'
+  \ 0x1A  'File NOT FOUND'
+  \ 0x1B  'END of file'
+  \ 0x1C  'File NAME used'
+  \ 0x1D  'NO G+DOS loaded'
+  \ 0x1E  'STREAM used'
+  \ 0x1F  'CHANNEL used'
 
 : IOR>ERROR  ( ior -- f n )
 
@@ -188,5 +224,8 @@ CODE DRIVE!  ( n -- )
   DUP HD0B !  FILE-LENGTH !
   DUP HD0D !  FILE-ADDRESS !
   DRIVE @ DSTR1 C!  ;
+
+: FILENAME>UFIA  ( ca len -- )
+  0 0 2SWAP >UFIA  ;
 
   \ vim: filetype=abersoftforthafera

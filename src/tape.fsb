@@ -1,7 +1,7 @@
 .( Tape extensions )
 
 \ tape.fsb
-\ Tape extensions for ZX Spectrum Abersoft Forth.
+\ Tape extensions for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -14,24 +14,25 @@
 
   \ Abersoft Forth only includes two tape words: `LOADT` and
   \ `SAVET`, that load and save its 11-KiB RAM-disk with the
-  \ name "DISC".
-  \
-  \ No word is provided to load or save any ordinary code file,
-  \ any name and size.  Loading files is especially useful in
-  \ order to include graphics during the compilation of a Forth
-  \ program.
+  \ name "DISC".  It includes no word to load or save any code
+  \ files, any name and size, what is especially useful in
+  \ order to include graphics or data during the compilation of
+  \ a Forth program.
   \
   \ This module defines `>TAPE` ("to tape") and `<TAPE` ("from
   \ tape"). The approach used was to patch the tape load header
   \ of Abersoft Forth, passed to the ROM routine, and restore
-  \ its default values after the operation. Two more words,
-  \ `/LOADT` and `/SAVET`, let improved manipulation of the RAM
-  \ disk.
+  \ its default values after the operation.
+  \
+  \ Two more words, `/LOADT` and `/SAVET`, let improved
+  \ manipulation of the RAM-disk. As they are less needed, they
+  \ are defined in their own files, <slash-loadt.fsb> and
+  \ <slash-savet.fsb>.
   
   \ -----------------------------------------------------------
   \ Requirements
 
-  NEEDS   S"        strings
+NEEDS   S"        strings
 
   \ -----------------------------------------------------------
   \ History
@@ -106,25 +107,24 @@
 
   \ -----------------------------------------------------------
 
-2 5 THRU
+2 4 THRU
 
 ( Headers )
 
-30182 CONSTANT LOADT-HEADER \ load header
-17 CONSTANT /T-HEADER  \ header length
+30182 CONSTANT TAPE-LOAD-HEADER \ load header
+17 CONSTANT /TAPE-HEADER  \ header length
   \ XXX OLD -- Save header, not needed.
-  \ LOADT-HEADER /T-HEADER + CONSTANT SAVET-HEADER
-/T-HEADER 2 * CONSTANT /T-HEADERS
+  \ TAPE-LOAD-HEADER /TAPE-HEADER + CONSTANT TAPE-SAVE-HEADER
 
-10 CONSTANT /T-FILENAME \ filename max length
+10 CONSTANT /TAPE-FILENAME \ filename max length
 
-: >T-FILENAME  ( a1 -- a2 )   1+   ;
-: >T-LENGTH    ( a1 -- a2 )  11 +  ;
-: >T-START     ( a1 -- a2 )  13 +  ;
+: >TAPE-FILENAME  ( a1 -- a2 )   1+   ;
+: >TAPE-LENGTH    ( a1 -- a2 )  11 +  ;
+: >TAPE-START     ( a1 -- a2 )  13 +  ;
 
   \ Keep a copy of both tape headers:
-0 VARIABLE T-HEADERS-BACKUP /T-HEADERS 2 - ALLOT
-LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
+0 VARIABLE TAPE-HEADERS-BACKUP  /TAPE-HEADER 2* 2- ALLOT
+TAPE-LOAD-HEADER TAPE-HEADERS-BACKUP /TAPE-HEADER 2* CMOVE
 
 ( Tools )
 
@@ -132,85 +132,54 @@ LOADT-HEADER T-HEADERS-BACKUP /T-HEADERS CMOVE
    \ in the code of the word `(TAPE)`:
 30233 CONSTANT (TAPE)-START
 
-: T-RESTORE  ( -- )
+: TAPE-RESTORE  ( -- )
   \ Restore the original contents of both tape headers:
-  T-HEADERS-BACKUP LOADT-HEADER /T-HEADERS CMOVE
+  TAPE-HEADERS-BACKUP TAPE-LOAD-HEADER /TAPE-HEADER 2* CMOVE
   \ Unpatch `(TAPE)`
   LO (TAPE)-START !  ;
 
-: -T-FILENAME  ( -- )
+: -TAPE-FILENAME  ( -- )
   \ Blank the filename of the load header.
-  LOADT-HEADER >T-FILENAME /T-FILENAME BLANKS ;
+  TAPE-LOAD-HEADER >TAPE-FILENAME /TAPE-FILENAME BLANKS ;
 
   \  XXX TODO use the file execution table
   \  to share one word with the disk support?
-: T-FILENAME!  ( ca len -- )
+: TAPE-FILENAME!  ( ca len -- )
   \ Store a filename into the load header.
-  -T-FILENAME  /T-FILENAME MIN
-  LOADT-HEADER >T-FILENAME SWAP CMOVE  ;
+  -TAPE-FILENAME  /TAPE-FILENAME MIN
+  TAPE-LOAD-HEADER >TAPE-FILENAME SWAP CMOVE  ;
 
-: ANY-T-FILENAME  ( -- )
+: ANY-TAPE-FILENAME  ( -- )
   \ Configure the load header to load any filename.
-  255 LOADT-HEADER >T-FILENAME C!  ;
+  255 TAPE-LOAD-HEADER >TAPE-FILENAME C!  ;
 
-: T-LENGTH!  ( len -- )
+: TAPE-LENGTH!  ( len -- )
   \ Set the given code length for the next tape loading,
   \ storing it into the load header.
-  LOADT-HEADER >T-LENGTH !  ;
+  TAPE-LOAD-HEADER >TAPE-LENGTH !  ;
 
-: T-START!  ( a -- )
+: TAPE-START!  ( a -- )
   \ Set the given code start for the next tape loading,
   \ storing it into the load header and patching
   \ the code of the word `(TAPE)`.
-  DUP (TAPE)-START !  LOADT-HEADER >T-START !  ;
+  DUP (TAPE)-START !  TAPE-LOAD-HEADER >TAPE-START !  ;
 
-  \ ( Debugging tools )
+( <TAPE >TAPE )
 
-  \ XXX TMP for debugging:
-
-  \ : T-DUMP  ( -- )
-  \   CR ." Load header:"
-  \   LOADT-HEADER /T-HEADER DUMP SPACE KEY DROP
-  \   CR ." Save header:"
-  \   SAVET-HEADER /T-HEADER DUMP
-  \   CR ." (TAPE) start: " (TAPE)-START @ U.  ;
-
-( <TAPE-FILE >TAPE-FILE )
-
-: <TAPE-FILE  ( a1 len1 ca2 len2 -- )
+: <TAPE  ( a1 len1 ca2 len2 -- )
   \ Load a file from tape.
   \ a1       = destination
   \ len1     = length (or zero if unspecified)
   \ ca2 len2 = filename (len2 is zero if unspecified) 
-  DUP   \ filename specified?
-  IF  T-FILENAME!  ELSE  2DROP ANY-T-FILENAME  THEN
-  T-LENGTH! T-START!  1 (TAPE)  T-RESTORE   ;
+  DUP IF  TAPE-FILENAME!  ELSE  2DROP ANY-TAPE-FILENAME  THEN
+  TAPE-LENGTH! TAPE-START!  1 (TAPE)  TAPE-RESTORE  ;
 
-' <TAPE-FILE CFA '<FILE ,  \ Update the execution table.
-
-: >TAPE-FILE  ( a1 len1 ca2 len2 -- )
+: >TAPE  ( a1 len1 ca2 len2 -- )
   \ Save a memory region into a tape file.
-  \ a1       = start address
+  \ a1       = start
   \ len1     = length
   \ ca2 len2 = filename
-  T-FILENAME! T-LENGTH! T-START!  0 (TAPE)  T-RESTORE  ;
-
-' >TAPE-FILE CFA '>FILE ,  \ Update the execution table.
-
-( /LOADT /SAVET )
-
-: /LOADT  ( n -- )
-  \ Load the Forth RAM-disk from tape, at address of screen n.
-  \ Warning: the file will be loaded, no matter its length.
-  \ n = first screen
-  EMPTY-BUFFERS DISC-SCR 0 S" DISC" <TAPE  ;
-
-: /SAVET  ( n1 n2 -- )
-  \ Save the Forth RAM-disk to tape,
-  \ from screen n1 to screen n2.
-  \ n1 = first screen
-  \ n2 = last screen
-  FLUSH 1+ DISC-SCR SWAP DISC-SCR
-  DUP ROT SWAP -  S" DISC" >TAPE  ;
+  TAPE-FILENAME! TAPE-LENGTH! TAPE-START!
+  0 (TAPE)  TAPE-RESTORE  ;
 
   \ vim: filetype=abersoftforthafera

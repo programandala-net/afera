@@ -22,7 +22,7 @@
   \ the Abersoft Forth RAM-disk is always called "RAM-disk".
 
   \ -----------------------------------------------------------
-  \ Requirements 
+  \ Requirements
 
   \ This module needs the circular string buffer, part of the
   \ module <strings.fsb>. But `NEEDS` can not be used yet
@@ -60,7 +60,7 @@
   \ stored in UFIA, are always overwritten by the file header.
   \ Now they are saved apart and a calculation is done to
   \ decide which start address and file length must be used.
-  \ 
+  \
   \ Change: `'SCR` renamed to `DISC-SCR`, after the changes in
   \ the library.
   \
@@ -70,12 +70,18 @@
   \
   \ 2015-05-18: New: support for 16-KiB RAM-disks in memory
   \ banks.
+  \
+  \ 2015-05-20: The `CAT` code, still under development, is
+  \ moved to its own file.
+
+  \ -----------------------------------------------------------
+
 
 2 10 THRU
 
 ( Save a file)
 
-CODE (>DISK-FILE)  ( -- ior )
+CODE (>FILE)  ( -- ior )
 
   \ Save a file to disk using the data hold in UFIA.
 
@@ -96,7 +102,7 @@ CODE (>DISK-FILE)  ( -- ior )
 
 ( Load a file -- part 1 )
 
-CODE (<DISK-FILE)  ( -- ior )
+CODE (<FILE)  ( -- ior )
 
   \ Load a file from disk, using the data hold in UFIA, the
   \ file header and the parameters specified by the high level
@@ -151,23 +157,6 @@ CODE (-FILE)  ( -- ior )
   NEXT JP
   END-CODE
 
-( CAT )
-
-CODE (CAT)  ( -- )
-
-  \ XXX FIXME -- it prints garbage and makes the system
-  \ unusable
-  \ XXX TODO -- call the G+DOS routines
-
-  BC PUSH  IX PUSH  \ save the Forth registers
-  UFIA IX LDP#
-  PCAT HOOK
-  IX POP  BC POP  \ restore the Forth registers
-  NEXT JP
-  END-CODE
-
-: CAT  ( ca len -- )  0 0 2SWAP >UFIA  -SCREEN (CAT) +SCREEN  ;
-
 ( Forth RAM-disk)
 
 : DISC>UFIA  ( ca len -- )  LO 0 2SWAP >UFIA  ;
@@ -209,7 +198,7 @@ DECIMAL
   \
   \ Init the User File Information Area to load or save the
   \ Forth RAM-disk.  Zero length is specified, what will make
-  \ `(<DISK-FILE)` to use the length of the file header.
+  \ `(<FILE)` to use the length of the file header.
   \
   \ ca1 len1 = filename
 
@@ -222,7 +211,7 @@ DECIMAL
   \ During compilation, as a temporary solution,
   \ `X1` holds a flag: Use the original RAM-disk?
   DISC>UFIA       [ X1 @ ] ?\ DISC-BANK BANK
-  (>DISK-FILE)    [ X1 @ ] ?\ 0 BANK
+  (>FILE)    [ X1 @ ] ?\ 0 BANK
   IOR>ERROR  ;
 
   \ SAVED  ( ca len -- )
@@ -248,7 +237,7 @@ DECIMAL
   \ `X1` holds a flag: Use the original RAM-disk?
   SAVE-STRING 2DUP DISC-FILENAME 2!
   DISC>UFIA       [ X1 @ ] ?\ DISC-BANK BANK
-  (<DISK-FILE)    [ X1 @ ] ?\ 0 BANK
+  (<FILE)    [ X1 @ ] ?\ 0 BANK
   IOR>ERROR  ;
 
   \ LOADD  ( ca len -- )
@@ -256,7 +245,7 @@ DECIMAL
   \ Load a Forth RAM-disk from disk.
   \ (word named after Abersoft Forth's `LOADT`).
   \ ca len = filename
- 
+
 : LOADD  ( ca len -- )  LOADD? ?ERROR  ;
 
 : /RUND  ( ca len n -- )
@@ -279,15 +268,13 @@ DECIMAL
   \ ca2 len2  = filename
   \ f         = error?
   \ n         = error
-  >UFIA (<DISK-FILE) IOR>ERROR  ;
+  >UFIA (<FILE) IOR>ERROR  ;
 
-: <DISK-FILE  ( a1 len1 ca2 len2 -- )
+: <FILE  ( a1 len1 ca2 len2 -- )
   \ Load a file from disk.
   \ a1 len1   = memory region to load
   \ ca2 len2  = filename
   <FILE? ?ERROR  ;
-
-' <DISK-FILE CFA '<FILE 2+ !  \ Update the execution table.
 
 : >FILE?  ( ca1 len1 ca2 len2 -- f n )
   \ Save a file to disk.
@@ -295,22 +282,20 @@ DECIMAL
   \ ca2 len2  = filename
   \ f         = error?
   \ n         = error
-  >UFIA (>DISK-FILE) IOR>ERROR  ;
+  >UFIA (>FILE) IOR>ERROR  ;
 
-: >DISK-FILE  ( ca1 len1 ca2 len2 -- )
+: >FILE  ( ca1 len1 ca2 len2 -- )
   \ Save a file to disk.
   \ a1 len1   = memory region to save
   \ ca2 len2  = filename
   >FILE? ?ERROR  ;
-
-' >DISK-FILE CFA '>FILE 2+ !  \ Update the execution table.
 
 : -FILE?  ( ca len -- f n )
   \ Delete a disk file.
   \ ca len  = filename
   \ f       = error?
   \ n       = error
-  0 0 2SWAP >UFIA (-FILE) IOR>ERROR  ;
+  FILENAME>UFIA (-FILE) IOR>ERROR  ;
 
 : -FILE  ( ca len -- )
   \ Delete a disk file.
@@ -322,11 +307,10 @@ DECIMAL
 CODE (FILE?)  ( -- f )
 
   \ XXX FIXME this changes the current drive to 2! why?
- 
+
   BC PUSH  IX PUSH  \ save the Forth registers
   PATCH HOOK
-  NSTR2 IX LDP#
-  1146 CALL
+  NSTR2 IX LDP#  1146 CALL
   E7 OUT  \ page +D out
   IX POP  BC POP  \ restore the Forth registers
   0 HL LDP#  PUSHHL JPNZ
@@ -351,48 +335,48 @@ CODE (FILE?)  ( -- f )
 
 ( User interface: screens of the Forth RAM-disk )
 
-: (/LOADD)  ( n ca len -- a len1 ca2 len2 )
-  \ Prepare the parameters to load a RAM-disk from disk,
-  \ at address of screen n.
-  \ Warning: the file will be loaded, no matter its length.
-  \ n = first block (1..11)
-  ROT FLUSH DISC-SCR 0 2SWAP ;
+  : (/LOADD)  ( n ca len -- a len1 ca2 len2 )
+    \ Prepare the parameters to load a RAM-disk from disk,
+    \ at address of screen n.
+    \ Warning: the file will be loaded, no matter its length.
+    \ n = first block (1..11)
+    ROT FLUSH DISC-SCR 0 2SWAP ;
 
-: /LOADD  ( n ca len -- )
-  \ Load a RAM-disk from disk, at address of screen n.
-  \ Warning: the file will be loaded, no matter its length.
-  \ n = first screen (1..11)
-  (/LOADD) <DISK-FILE  ;
+  : /LOADD  ( n ca len -- )
+    \ Load a RAM-disk from disk, at address of screen n.
+    \ Warning: the file will be loaded, no matter its length.
+    \ n = first screen (1..11)
+    (/LOADD) <FILE  ;
 
-: /LOADD?  ( n ca len -- error? error )
-  \ Load a RAM-disk from disk, at address of screen n.
-  \ Warning: the file will be loaded, no matter its length.
-  \ n = first screen (1..11)
-  (/LOADD) <FILE?  ;
+  : /LOADD?  ( n ca len -- error? error )
+    \ Load a RAM-disk from disk, at address of screen n.
+    \ Warning: the file will be loaded, no matter its length.
+    \ n = first screen (1..11)
+    (/LOADD) <FILE?  ;
 
-: (/SAVED)  ( n1 n2 ca len -- ca len ca2 len2 )
-  \ Prepare the parameters to save a RAM-disk to disk,
-  \ from screen n1 to screen n2.
-  \ n1 = first screen (1..11)
-  \ n2 = last screen (1..11)
-  \ ca len = filename
-  \ ca2 len2 = memory zone
-  2SWAP 1+ DISC-SCR SWAP DISC-SCR DUP ROT SWAP - 2SWAP  ;
+  : (/SAVED)  ( n1 n2 ca len -- ca len ca2 len2 )
+    \ Prepare the parameters to save a RAM-disk to disk,
+    \ from screen n1 to screen n2.
+    \ n1 = first screen (1..11)
+    \ n2 = last screen (1..11)
+    \ ca len = filename
+    \ ca2 len2 = memory zone
+    2SWAP 1+ DISC-SCR SWAP DISC-SCR DUP ROT SWAP - 2SWAP  ;
 
-: /SAVED  ( n1 n2 ca len -- )
-  \ Save a RAM-disk to disk, from block n1 to block n2.
-  \ n1 = first block (1..11)
-  \ n2 = last block (1..11)
-  \ ca len = filename
-  (/SAVED) >DISK-FILE  ;
+  : /SAVED  ( n1 n2 ca len -- )
+    \ Save a RAM-disk to disk, from block n1 to block n2.
+    \ n1 = first block (1..11)
+    \ n2 = last block (1..11)
+    \ ca len = filename
+    (/SAVED) >FILE  ;
 
-: /SAVED?  ( n1 n2 ca len -- error? error )
-  \ Save a RAM-disk to disk, from block n1 to block n2.
-  \ n1 = first block (1..11)
-  \ n2 = last block (1..11)
-  \ ca len = filename
-  (/SAVED) >FILE?  ;
+  : /SAVED?  ( n1 n2 ca len -- error? error )
+    \ Save a RAM-disk to disk, from block n1 to block n2.
+    \ n1 = first block (1..11)
+    \ n2 = last block (1..11)
+    \ ca len = filename
+    (/SAVED) >FILE?  ;
 
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

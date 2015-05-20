@@ -1,0 +1,241 @@
+.( G+DOS -- CAT )
+
+\ gplusdos_cat.fsb
+\ G+DOS support for ZX Spectrum Abersoft Forth (`CAT`)
+
+\ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ -----------------------------------------------------------
+  \ Note
+
+  \ "DISC" in Forth words means the Forth RAM-disk, after the
+  \ name used by Abersoft Forth's documentation and vocabulary,
+  \ e.g.  `INIT-DISC`.
+  \
+  \ "DISK" means always a G+DOS disk.
+  \
+  \ In the comments of this library, "disc" is not used, and
+  \ the Abersoft Forth RAM-disk is always called "RAM-disk".
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-20: Extracted from <gplusdos_2.fsb>.
+
+  \ -----------------------------------------------------------
+  \ G+DOS addresses used by the CAT routines
+
+  \ UFIA1
+  \ 3E01 = drive number
+  \ ? 3E02 = FSTR1 = program number
+  \ 3E03 = SSTR1 = STRM_NUM1 = stream number
+  \ ? 3E04 = device
+  \ 3E05 = NSTR1 = directory description
+  \ 3E06 = NSTR2 = file name
+  \ 3E10
+  \ UFIA2
+  \ 3E1A = drive number
+
+2 10 THRU
+
+( CAT1 )
+
+CODE CAT1  ( -- )
+
+  \ Prints a compact catalogue of all files on channel 2.
+ 
+  BC PUSH  IX PUSH  \ save the Forth registers
+  PATCH HOOK
+  24AA CALL \ CAT_1
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+( CAT )
+
+  \ XXX FIXME `+SCREEN` should be used only if it was
+  \ previously activated.
+
+  \ XXX OLD
+  \ : CAT  ( ca len -- )
+  \   FILENAME>UFIA  SCREEN? >R -SCREEN (CAT)
+  \   R> IF  +SCREEN  THEN  ;
+
+CODE (CAT)  ( -- )
+
+  \ XXX FIXME -- It prints the empty directory as if the disk
+  \ were empty, why?
+  \ Beside, it prints in the lower part of the screen,
+  \ increasing the content of the system variable 23659!
+  \ XXX TODO -- call the G+DOS routines?
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+
+  \ XXX TMP this makes no difference:
+  \ UFIA IX LDP#
+  \ HXFER HOOK
+
+  \ XXX OLD -- prints empty cat on channel 0!
+  \ UFIA IX LDP#
+  \ PCAT HOOK
+
+  PATCH HOOK
+
+  \ XXX prints nothing!
+  \ 4 A LD#  \ 4=extended cat; 2= compact cat
+  \ CAT type is stored in 0x3E10
+  \ 24B5 CALL \ CAT_RUN
+
+  \ XXX prints a compact cat of all files on channel 2:
+  \ 4 A LD#
+  \ 3E10 STA
+  \ 24AA CALL \ CAT_1
+
+  \ XXX prints nothing!
+  \ 4 A LD#
+  \ 3E10 STA \ useless
+  \ 24B5 CALL \ CAT_RUN
+
+
+  E7 OUT  \ page +D out
+
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+  \ XXX FIXME `+SCREEN` should be used only if it was
+  \ previously activated.
+
+  \ XXX OLD
+  \ : CAT  ( ca len -- )
+  \   FILENAME>UFIA  SCREEN? >R -SCREEN (CAT)
+  \   R> IF  +SCREEN  THEN  ;
+
+: CAT  ( ca len -- )
+  FILENAME>UFIA  (CAT)  ;
+
+( XCAT )
+
+CODE (XCAT)  ( ca len -- )
+
+  \ XXX FIXME prints nothing!
+
+  DE POP  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH  DE PUSH
+
+  PATCH HOOK
+
+  \ 0x3E06 = filename in UFIA1
+  \ clear filename in UFIA1
+  3E06 HL LDP#  3E07 DE LDP#  9 BC LDP#  BL (HL) LD#  LDIR
+
+  \ copy filename to UFIA1
+  BC POP  HL POP  3E06 DE LDP#  LDIR
+
+  4 A LD#
+  24B5 CALL \ CAT_RUN
+
+  E7 OUT  \ page +D out
+
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+: XCAT  ( ca len -- )  10 MIN (XCAT)  ;
+
+( XCAT2 )
+
+CODE (XCAT2)  ( ca len -- )
+
+  \ first time:
+
+  DE POP  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH  DE PUSH
+
+  PATCH HOOK
+
+  \ 0x3E06 = filename in UFIA1
+  \ clear filename in UFIA1
+  3E06 HL LDP#  3E07 DE LDP#  9 BC LDP#  BL (HL) LD#  LDIR
+
+  \ Copy filename to UFIA1.
+  BC POP  HL POP  3E06 DE LDP#  LDIR
+
+  \ 3E03 HL LDP#  2 (HL) LD#  \ set stream
+  \ 2 A LD#  \ compact cat
+  \ \ 4 A LD#  \ detailed cat
+  \ 24AA CALL \ CAT_1
+  
+  \ XXX  s" *" xcat \ crash!
+  \ XXX  s" auto*" xcat \ prints nothing!
+  2 A LD#  3E03 STA  \ set stream
+  4 A LD# \ detailed cat
+  24B5 CALL \ CAT_RUN
+
+  E7 OUT  \ page +D out
+
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+: XCAT2  ( ca len -- )  10 MIN (XCAT)  ;
+
+( XCAT3 )
+
+HEX 3E01 CONSTANT UFIA1
+
+CODE (XCAT3)  ( -- )
+
+  \ XXX works!
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+  PATCH HOOK
+
+  \ Copy UFIA to UFIA1.
+  UFIA HL LDP#  UFIA1 DE LDP#  /UFIA BC LDP#  LDIR
+
+  4 A LD# \ detailed cat
+  24B5 CALL \ CAT_RUN
+  168E CALL \ BORD_REST = restore the border
+
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+: XCAT3  ( ca len -- )  FILENAME>UFIA  (XCAT3)  ;
+
+( XCAT4 )
+
+CODE (CAT4)  ( n -- )
+
+  \ XXX works!
+
+  AF POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  AF PUSH  PATCH HOOK
+
+  \ Copy Forth UFIA to G+DOS UFIA1.
+  UFIA HL LDP#  UFIA1 DE LDP#  /UFIA BC LDP#  LDIR
+
+  HL POP  L A LD  \ CAT type: 2=compact;4=detailed
+  24B5 CALL \ CAT_RUN
+  168E CALL \ BORD_REST = restore the border
+
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP  END-CODE
+
+: XCAT4  ( ca len -- )  FILENAME>UFIA  4 (CAT4)  ;
+: CAT4  ( ca len -- )  FILENAME>UFIA  2 (CAT4)  ;
+
+DECIMAL
+
+  \ vim: filetype=abersoftforthafera

@@ -286,7 +286,7 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
   \   IF  SWAP  THEN  B/BUF CMOVE  ;
 
   \ Bytes per screen (1024).
-B/SCR B/BUF * CONSTANT /SCR  DP !
+B/SCR B/BUF * CONSTANT /SCR
 
 : DISC-BLOCK  ( n -- a )
 
@@ -432,100 +432,10 @@ HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
   \     1..16 for 128K (with the <16kramdisks.fsb> installed)
 
 : DISC-SCR  ( n -- a )
-  1- DUP SCR/DR U< 0= 6 ?ERROR  /SCR * LO +  ;  -->
+  1- DUP SCR/DR U< 0= 6 ?ERROR  /SCR * LO +  ;
 
-( DRIVE ?FILE FILE-OP <FILE >FILE )
-
-  \ This screen defines the basic file support, required  by
-  \ optional modules <tape.fsb> (improved tape support), and
-  \ disk support modules (currently only for G+DOS, under
-  \ development). The common file operations use an execution
-  \ table to execute the tape or disk version, if it's been
-  \ implemented by the correspondent module.
-
-  \ `DRIVE` stores the current drive, according to the DOS.
-  \ Zero means tape. `DRIVE` has nothing to do with the
-  \ fig-Forth words `DR0` (provided by the original system) and
-  \ `DR1` (defined by the module <16kramdisks.fsb>): they
-  \ change the virtual drive of the Forth RAM-disk.
-
-0 VARIABLE DRIVE
-
-  \ ?FILE  ( -- )
-  \
-  \ Cause error 25 (unsupported tape operation) or error 26
-  \ (unsupported disk operation), depending on `DRIVE`.  These
-  \ errors are new, implemented by Afera.
-
-: ?FILE  ( -- )  26 DRIVE @ 0= - ERROR  ;
-
-  \ One execution table for every media operation that share a
-  \ common name for tape and disk.
-  \
-  \ The first cfa of every table is the tape command, the
-  \ second one is the disk command.
-  \
-  \ The tables are filled with `?FILE` by default, until the
-  \ correspondent words are defined.
-
-HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT '>FILE  \ save
-HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT '<FILE  \ load
-HERE  ' ?FILE CFA , ' ?FILE CFA ,  CONSTANT 'NEEDS  \ needs
-
-  \ One data table for every media datum that share a common
-  \ name for tape and disk.
-  \
-  \ The first cell of every table is the tape datum, the
-  \ second one is the disk datum.
-
-  \ XXX TODO
-
-HERE  10 , 10 , CONSTANT  '/FILENAME \ filename lenght
-
-  \  >FILE-X  ( a -- cfa | n )
-  \
-  \ Get get content of a file table element, depending on the
-  \ content of `DRIVE`: when `DRIVE` is zero, the first cell of
-  \ the given table is fetch (for tape operation), else the
-  \ second one (for disk operation).
-  \
-  \ a = execution table or data table
-
-: >FILE-X  ( a -- x )  DRIVE @ 0<> 2* + @  ;
-
-  \  FILE-OP  ( a -- )
-  \
-  \ Execute the proper file operation from the given execution
-  \ table, depending on the content of `DRIVE`: when `DRIVE` is
-  \ zero, the cfa contained in the first cell of the given
-  \ execution table is executed (for tape operation), else the
-  \ second one (for disk operation).
-  \
-  \ a = execution table
-
-: FILE-OP  ( a -- )  >FILE-X EXECUTE  ;
-
-  \ <FILE  ( a1 len1 ca2 len2  -- )
-  \
-  \ Load a file from tape or disk.
-  \ a1      = destination
-  \ len1    = length (or zero if unspecified)
-  \ a2 len2 = filename (len2 is zero if unspecified)
-
-: <FILE  ( a1 len1 ca2 len2  -- )  '<FILE FILE-OP  ;
-
-  \ >FILE  ( a1 len1 ca2 len2  -- )
-  \
-  \ Save a file from tape or disk.
-  \ a1      = start address
-  \ len1    = length
-  \ a2 len2 = filename (len2 is zero if unspecified)
-
-: >FILE  ( a1 len1 ca2 len2  -- )  '>FILE FILE-OP  ;
-
--->
-
-( NEEDS )
+  \ ............................................
+  \ Required files
 
   \ `NEEDS` is used in modules of the library that require
   \ other modules.  Without disk support, `NEEDS` causes an
@@ -551,11 +461,9 @@ HERE  10 , 10 , CONSTANT  '/FILENAME \ filename lenght
 
 : (NEEDS-TAPE)  ( f "filename" -- )  27 ?ERROR  BL WORD  ;
 
-' (NEEDS-TAPE) CFA 'NEEDS !  \ Update the execution table.
-
   \ ?NEEDS  ( f "filename" -- )
   \
-  \ If f is not zero, load file "filename", if possible; else
+  \ If f is not zero, load RAM-disk file "filename", else
   \ remove the parameters.  The loading works only with disks
   \ drives, when the correspondent module is installed; the
   \ default tape-only system will stop with an error.
@@ -563,7 +471,7 @@ HERE  10 , 10 , CONSTANT  '/FILENAME \ filename lenght
   \ does not define a word it can be identified with. This
   \ happens with modules that simply patch the system.
 
-: ?NEEDS  ( f "filename" -- )  'NEEDS FILE-OP  ;
+: ?NEEDS  ( f "filename" -- )  (NEEDS-TAPE)  ;
 
   \ NEEDS  ( "name" "filename" -- )
 

@@ -43,6 +43,8 @@
   \ the free address.
   ( len -- ca )  ?CSB CSB0 CSB-UNUSED @ +  ;
 
+-->
+
 ( Circular string buffer -- interface)
 
 : SET-CSB  ( a len -- )

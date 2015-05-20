@@ -15,7 +15,7 @@
 
 : AT@  ( -- line col )
   \ Line and column of the current print position.
-  \ System variable: 24 minus line number for print position
-  24 23689 C@ -
-  \ System variable: 33 minus column number for print position
-  33 23688 C@ -  ;
+  \ System variable S_POSN:
+  \ 23688 = 33 minus column number for print position
+  \ 23689 = 24 minus line number for print position.
+  24 23689 C@ -  33 23688 C@ -  ;
