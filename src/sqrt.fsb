@@ -25,12 +25,12 @@
   IF  DROP 0 -1  ELSE
     0 SWAP 16384 ( 2^14 )
     BEGIN
-      >R  DUP  2 PICK  -  R@ -  DUP 0<
+      >R  DUP  2 PICK  -  R -  DUP 0<
       IF    DROP SWAP 2/
-      ELSE  NIP  SWAP 2/  R@ +  THEN
+      ELSE  NIP  SWAP 2/  R +  THEN
       SWAP  R> 2/
       2/  DUP 0=
     UNTIL  DROP
   THEN  ;
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

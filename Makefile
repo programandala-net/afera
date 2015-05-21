@@ -55,6 +55,7 @@ MAKEFLAGS = --no-print-directory
 
 source_files=$(wildcard src/*.fsb)
 tape_files=$(wildcard tap/*.tap)
+test_files=$(wildcard _tests/*_test.tap)
 
 .PHONY : all
 all: \
@@ -224,18 +225,129 @@ backup:
 		_ex/*
 
 # ##############################################################
+# Files grouped for disk
+
+# XXX TODO This is experimental. Not used yet.
+# 
+# The goal is to create an MGT disk with less files. The files of the
+# library are small, and an MGT disk can have only 80 files. As as
+# result, soon the disk is full of files, but mostly empty.
+#
+# The approach is to pack the files into wordsets, but something has to
+# be done about the source headers, maybe convert them to metacomments.
+#
+# If RAM-disks are used, the grouped files can not be larger than 16
+# KiB, and word `NEEDS`, that currently only gets the file into the
+# RAM-disk and interprets it, must be improved to search the file and
+# load the required word a word. A draft is already started in
+# <_drafts/require.fsb>.
+#
+# The second approach is to implement actual disk support. Then files
+# could be of any length.
+
+groups_for_disk:
+	cat \
+		src/2nip.fsb \
+		src/2slash.fsb \
+		src/cswap.fsb \
+		src/dminus.fsb \
+		src/sqrt.fsb \
+		src/sgn.fsb \
+		src/notequals.fsb \
+		> src.grouped_for_disk/operators.fsb ; \
+	cat \
+		src/2rdrop.fsb \
+		src/2r.fsb \
+		src/qrstack.fsb \
+		src/rdepth.fsb \
+		src/rdrop.fsb \
+		> src.grouped_for_disk/rstack.fsb ; \
+	cat \
+		src/roll.fsb \
+		src/pick.fsb \
+		src/minus-rot.fsb \
+		> src.grouped_for_disk/stack.fsb ; \
+	cp src/assembler.fsb src.grouped_for_disk/ ; \
+	cp src/afera.fsb src.grouped_for_disk/ ; \
+	cat \
+		src/akey.fsb \
+		src/inkeyq.fsb \
+		src/keyboard.fsb \
+		src/key_identifiers.fsb \
+		> src.grouped_for_disk/keyboard.fsb ; \
+	cat \
+		src/color.fsb \
+		src/plot.fsb \
+		src/plusscreen.fsb \
+		src/point.fsb \
+		src/scroll.fsb \
+		src/graphics.fsb \
+		src/logo.fsb \
+		src/udg-store.fsb \
+		src/at-fetch.fsb \
+		> src.grouped_for_disk/graphics.fsb ; \
+	cat \
+		src/bracket-if.fsb \
+		src/dot-s.fsb \
+		src/dot-rs.fsb \
+		src/dot-vocs.fsb \
+		src/dump.fsb \
+		src/decode.fsb \
+		src/time.fsb \
+		> src.grouped_for_disk/tools.fsb ; \
+	cat \
+		src/strings.fsb \
+		src/csb.fsb \
+		src/upperc.fsb \
+		src/uppers.fsb \
+		src/lowerc.fsb \
+		src/lowers.fsb \
+		src/s-plus.fsb \
+		src/move.fsb \
+		> src.grouped_for_disk/strings.fsb ; \
+	cat \
+		src/gplusdos_1.fsb \
+		src/gplusdos_2.fsb \
+		src/gplusdos_3.fsb \
+		src/gplusdos_cat.fsb \
+		src/gplusdos_mem.fsb \
+		src/gplusdos_vars.fsb \
+		> src.grouped_for_disk/gplusdos.fsb ; \
+	cat \
+		src/slash-loadt.fsb \
+		src/slash-savet.fsb \
+		src/tape.fsb \
+		> src.grouped_for_disk/tape.fsb ; \
+	cat \
+		src/alias.fsb \
+		src/bracket-flags.fsb \
+		src/buffercol.fsb \
+		src/caseins.fsb \
+		src/cell.fsb \
+		src/continued.fsb \
+		src/defer.fsb \
+		src/flags.fsb \
+		src/lowersys.fsb \
+		src/noname.fsb \
+		src/prefixes.fsb \
+		src/qexit.fsb \
+		src/random.fsb \
+		src/recurse.fsb \
+		src/renamings.fsb \
+		src/transient.fsb \
+		src/traverse.fsb \
+		src/unloop.fsb \
+		src/value.fsb \
+		> src.grouped_for_disk/to-do.fsb
+
+
+# ##############################################################
 # Temporary for development
 
 #	_tests/512bbuf_test.tap \
 
-tests: \
-	_tests/lowersys_test.tap \
-	_tests/bank_test.tap \
-	_tests/gplusdos_test.tap \
-	_tests/gplusdos_128k_test.tap \
-	_tests/bracket-if.tap \
-	_tests/16kramdisks_test.tap \
-	_tests/transient_test.tap
+.PHONY: tests
+tests: $(test_files)
 
 _tests/lowersys_test.tap: tapes
 	cat \
@@ -385,3 +497,24 @@ _tests/16kramdisks_test.tap: tapes
 		tap/16kramdisks.tap \
 		tap/loaded.tap \
 		> _tests/16kramdisks_test.tap
+
+_tests/deasm_test.tap: tapes
+	cat \
+		sys/abersoft_forth.tap \
+		tap/loader.tap \
+		tap/afera.tap \
+		tap/lowersys.tap \
+		tap/bank.tap \
+		tap/16kramdisks.tap \
+		tap/upperc.tap \
+		tap/uppers.tap \
+		tap/caseins.tap \
+		tap/move.tap \
+		tap/flags.tap \
+		tap/pick.tap \
+		tap/strings.tap \
+		tap/recurse.tap \
+		tap/decode.tap \
+		tap/deasm.tap \
+		tap/loaded.tap \
+		> _tests/deasm_test.tap

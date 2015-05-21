@@ -37,4 +37,4 @@ CODE D-  ( d1 d2 -- d3 )
   NEXT JP
 END-CODE
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

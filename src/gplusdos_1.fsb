@@ -49,6 +49,10 @@ FORTH DEFINITIONS DECIMAL
 
 1 VARIABLE DRIVE
 
+  \ G+DOS addresses (in it own paged memory).
+HEX 3E01 CONSTANT UFIA1 DECIMAL
+\ 3E1A CONSTANT UFIA2
+
 2 6 THRU
 
 ( UFIA: User File Information Area)

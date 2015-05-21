@@ -100,10 +100,20 @@
   \ The lower bound has to be changed: instead of `HERE 128 +`
   \ it must be the new fixed address.
 
-HEX  HERE
+  \ -----------------------------------------------------------
+
+HEX
 
   \ The current dictionary pointer is both the start of the
   \ patch and the new lower bound of the data stack.
+
+  \ XXX FIXME 2015-05-21: When the stacks fulls and error 7
+  \ happens, the system is corrupted. But 2..8 cells compiled
+  \ here as a buffer don't make any difference:
+
+  \  0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,  
+
+HERE
 
   \ Step 0: Compile the patch for `?STACK`.
   \
