@@ -498,7 +498,7 @@ _tests/16kramdisks_test.tap: tapes
 		tap/loaded.tap \
 		> _tests/16kramdisks_test.tap
 
-_tests/deasm_test.tap: tapes
+_tests/dis_test.tap: tapes
 	cat \
 		sys/abersoft_forth.tap \
 		tap/loader.tap \
@@ -511,10 +511,13 @@ _tests/deasm_test.tap: tapes
 		tap/caseins.tap \
 		tap/move.tap \
 		tap/flags.tap \
+		tap/qexit.tap \
 		tap/pick.tap \
 		tap/strings.tap \
+		tap/cswap.tap \
+		tap/dump.tap \
 		tap/recurse.tap \
 		tap/decode.tap \
-		tap/deasm.tap \
+		tap/dis.tap \
 		tap/loaded.tap \
-		> _tests/deasm_test.tap
+		> _tests/dis_test.tap
