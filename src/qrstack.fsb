@@ -9,6 +9,12 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ History of this code/file
   
@@ -25,5 +31,5 @@
   R0 @ RP@ U< 1 ?ERROR      \ stack empty
   RP@ @ S0 U< 7 ?ERROR  ;   \ stack full
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

@@ -8,15 +8,21 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ Description
  
   \ This file patches `INK`, `PAPER`, `BRIGHT`, `FLASH`,
   \ `INVERSE` and `GOVER` with faster code.
   \
-  \ The original `INK` and `PAPER` are specially slow.  Beside,
-  \ it seems the original `INK` has a bug that causes `PLOT` to
-  \ use 0 instead the proper attribute in most cases.
+  \ The original `INK` and `PAPER` are especially slow.
+  \ Beside, it seems the original `INK` has a bug that causes
+  \ `PLOT` to use 0 instead the proper attribute in most cases.
   \
   \ Note: The percentages show the execution time, compared to
   \ the original word.
@@ -89,7 +95,7 @@
   \ 2015-05-05:
   \
   \ Much faster `INK` and `PAPER`, by calling the ROM routine
-  \ at 0x1CAD (idea from Matteo Vitturi's vForth) and writting
+  \ at 0x1CAD (idea from Matteo Vitturi's v.Forth) and writting
   \ the whole definition in Z80.
   \
   \ `BRIGHT`, `FLASH`, `INVERSE` and `GOVER` are rewritten in
@@ -139,6 +145,7 @@ DECIMAL  -->
 ( BRIGHT )
 
 HERE  ' BRIGHT DUP CFA !  ( f -- )
+  \ XXX FIXME don't check the l register, but the whole hl
   HEX
   E1 C,                 \ pop hl
   7D C,                 \ ld a,l
@@ -159,6 +166,7 @@ HERE  ' BRIGHT DUP CFA !  ( f -- )
 ( FLASH )
 
 HERE  ' FLASH DUP CFA !  ( f -- )
+  \ XXX FIXME don't check the l register, but the whole hl
   HEX
   E1 C,                 \ pop hl
   7D C,                 \ ld a,l
@@ -179,6 +187,7 @@ HERE  ' FLASH DUP CFA !  ( f -- )
 ( GOVER )
 
 HERE  ' GOVER DUP CFA !  ( f -- )
+  \ XXX FIXME don't check the l register, but the whole hl
   HEX
   E1 C,                 \ pop hl
   7D C,                 \ ld a,l
@@ -199,6 +208,7 @@ HERE  ' GOVER DUP CFA !  ( f -- )
 ( INVERSE )
 
 HERE  ' INVERSE DUP CFA !  ( f -- )
+  \ XXX FIXME don't check the l register, but the whole hl
   HEX
   E1 C,                   \ pop hl
   7D C,                   \ ld a,l
@@ -214,4 +224,4 @@ HERE  ' INVERSE DUP CFA !  ( f -- )
   DUP ' INVERSE OVER HERE SWAP - CMOVE
   DP !  DECIMAL
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

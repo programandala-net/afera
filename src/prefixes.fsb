@@ -13,10 +13,13 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-  \ History:
-  \
+  \ -----------------------------------------------------------
+  \ History
+
   \ 2015-05-01: Code copied from lina.
   \ 2015-05-07: New: Prefix "0x" for hex.
+  \ 2015-06-06: Improved: the current value of `WIDTH` is
+  \ preserved instead of using the default 0x1F.
 
 .( Number prefixes )
 
@@ -30,17 +33,17 @@ DECIMAL
 
 ( " character prefix )
 
-HEX  1 WIDTH !
+HEX  WIDTH @ 1 WIDTH !
 
 : ".
   \ Leave ASCII character; example: "A leaves 41H
   HERE 2 + C@ [COMPILE] LITERAL  ; IMMEDIATE
 
-1F WIDTH ! DECIMAL
+WIDTH ! DECIMAL
 
 ( 0x hex prefix )
 
-1 WIDTH !
+WIDTH @  1 WIDTH !
 
 : $..
   \ Leave hex number; example: $0A leaves 0AH
@@ -53,20 +56,20 @@ HEX  1 WIDTH !
   [COMPILE] LITERAL
   ; IMMEDIATE
 
-1F WIDTH ! DECIMAL
+WIDTH ! DECIMAL
 
 ( ^ control prefix )
 
-HEX  1 WIDTH !
+HEX  WIDTH @ 1 WIDTH !
 
 : ^.  \ Leave control character; example: ^A leaves 01H
   HERE 2 + C@ 1F AND [COMPILE] LITERAL  ; IMMEDIATE
 
-1F WIDTH ! DECIMAL
+WIDTH ! DECIMAL
 
 ( 0x hex prefix )
 
-HEX  2 WIDTH !
+HEX  WIDTH @ 2 WIDTH !
 
 : 0x..  \ Leave hex number; example: 0x0A leaves 0AH
   HERE 3 + C@ C>HEX 10 * HERE 4 + C@ C>HEX + [COMPILE] LITERAL
@@ -77,6 +80,6 @@ HEX  2 WIDTH !
   [COMPILE] LITERAL
   ; IMMEDIATE
 
-1F WIDTH ! DECIMAL
+WIDTH ! DECIMAL
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

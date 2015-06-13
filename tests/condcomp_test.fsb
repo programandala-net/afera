@@ -1,4 +1,5 @@
-\ prueba de compilación condicional
+\ Conditional compilation test
+\ 2015-04-08
 
 
 ( 1 block)
@@ -19,8 +20,7 @@
 
 1 [IF]
 
-
-." noooo"
+." no"
 
 [ELSE]
 
@@ -28,7 +28,7 @@
 
 ( 2 blocks)
 
-." yessss"
+." yes"
 
 [THEN]
 

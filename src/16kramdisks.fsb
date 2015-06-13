@@ -9,6 +9,11 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
 
   \ -----------------------------------------------------------
   \ Description
@@ -39,8 +44,8 @@
   \ caused `LIST` could be used with screen numbers greater
   \ than 16.
   \
-  \ Fix: Also `(TAPE)` needed a patch, the same way the
-  \ module <tape.fsb> does.
+  \ Fix: Also `(TAPE)` needed a patch, the same way the module
+  \ <tape.fsb> does.
   \
   \ First working version.
   \
@@ -63,30 +68,34 @@
   \ current permanent paper color is used to hide the screen
   \ during the RAM-disk copying, instead of white; this way any
   \ screen color set in the main file of the library will work.
+  \
+  \ 2015-06-02: Simpler method for patches, with `]` and `[`.
+  \
+  \ 2015-06-06: Fix: the patch of `R/W` can not use `]` and
+  \ `[`, because  it's done in `INSTALL`, during compilation!
+  \
+  \ 2015-06-13: Fix: `DISC-BANK` did a wrong calculation. New:
+  \ `B/DR`.
 
+  \ -----------------------------------------------------------
+  \ TO-DO 
+
+  \ `MESSAGE` would need a patch to get the messages always
+  \ from the first RAM-disk, not from the current one.
+ 
 -->
 
-( DR1 DISC-BANK INIT-DISC )
+( DISC DR1 DISC-BANK INIT-DISC )
+
+0 CONSTANT B/DR \ blocks per drive (will be updated later)
 
 : DR1  ( -- )
   \ Select the second RAM-disk.
-  SCR/DR B/SCR * OFFSET !  ;
+  B/DR OFFSET !  ;
 
 : DISC-BANK  ( -- n )
   \ Memory bank of the current RAM-disk.
-    \ XXX OLD
-    \ n = 4 for the first RAM-disk;
-    \     6 for the second RAM-disk
-    \ 6 OFFSET @ 0= 2* -  ;
-
-  \ XXX OLD
-  \ n = 3 for the first RAM-disk;
-  \     4 for the second RAM-disk
-  \ 4 OFFSET @ 0= -  ;
-
-  \ n = 1 for the first RAM-disk;
-  \     3 for the second RAM-disk
-  1 OFFSET @ 2 * + ;
+  1 OFFSET @ B/DR 1- > 2* + ;
 
 : (INIT-DISC)  ( -- )
   \ Blank the current RAM-disk, that must be already paged in.
@@ -95,14 +104,12 @@
 HERE
   \ Compile the patch for `INIT-DISC`
   \ (the original word occupies the same):
-  ' DISC-BANK CFA , ' BANK CFA ,
-  ' (INIT-DISC) CFA ,
-  ' 0 CFA , ' BANK CFA ,
+  ]  DISC-BANK BANK (INIT-DISC) 0 BANK  [
   \ Move it:
 DUP  ' INIT-DISC OVER HERE SWAP - CMOVE
 DP ! \ restore the disctionary pointer
 
-DECIMAL -->
+-->
 
 ( LOADT SAVET VERIFY )
 
@@ -144,6 +151,9 @@ HEX
   \ Update the number of screens per drive (RAM-disk):
   10 ' SCR/DR !
 
+  \ Update the number of blocks per drive (RAM-disk):
+  SCR/DR B/SCR * ' B/DR !
+
   \ Make sure the buffers are empty before patching `R/W`:
   EMPTY-BUFFERS
 
@@ -151,16 +161,9 @@ HEX
   \ with additional space required to patch it now
   \ with the new code required by the 128K version.
 
-  \ Method 0
-  \ ' DISC-BANK   CFA ' R/W 08 + !
-  \ ' BANK        CFA ' R/W 0A + !
-  \ ' CMOVE       CFA ' R/W 0C + !
-  \ ' 0           CFA ' R/W 0E + !
-  \ ' BANK        CFA ' R/W 10 + !
+  HERE  ' DISC-BANK CFA , ' BANK CFA , ' CMOVE CFA ,
+  ' 0 CFA , ' BANK CFA ,
 
-  \ Method 1
-  HERE  ' DISC-BANK CFA ,  ' BANK CFA , ' CMOVE CFA ,
-        ' 0 CFA ,  ' BANK CFA ,
   DUP ' (R/W) 08 + OVER HERE SWAP - CMOVE  DP !
 
 -->
@@ -237,4 +240,4 @@ HEX
 
   EXTEND  DECIMAL  ;  INSTALL
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

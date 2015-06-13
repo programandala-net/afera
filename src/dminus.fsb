@@ -2,26 +2,59 @@
 \ `D-` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-\ `DMINUS D+` can be used instead of `D-`, but `D-` is faster.
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ In fig-Forth `DMINUS D+` can be used instead of `D-`,
+  \ but `D-` is faster.
 
   \ -----------------------------------------------------------
   \ History
   
   \ 2015-04-18: Code adapted from Lennart Benschop's Spectrum
   \ Forth-83.
+  \
+  \ 2015-06-06: New version compiled directly with opcodes,
+  \ without the assembler.
   
   \ -----------------------------------------------------------
 
 -->
 
-( D- )
+( D- ) \ version compiled with opcodes
 
-\ XXX TODO rewrite without assembler, with opcodes
+CREATE D-  ( d1 d2 -- d3 )
+  HEX
+  D9 C,             \ exx
+  C1 C,             \ pop bc
+  D1 C,             \ pop de
+  E1 C,             \ pop hl
+  E3 C,             \ ex (sp),hl
+  A0 07 + C,        \ and a
+  ED C, 52 C,       \ sbc hl,de
+  E3 C,             \ ex (sp),hl
+  A0 07 + C,        \ and a
+  ED C, 42 C,       \ sbc hl,bc
+  E5 C,             \ push hl
+  D9 C,             \ exx
+  C3 C, NEXT ,      \ jp NEXT
+  SMUDGE DECIMAL
+
+( D- ) \ assembler version
+
+NEEDS CODE assembler
 
 CODE D-  ( d1 d2 -- d3 )
   EXX

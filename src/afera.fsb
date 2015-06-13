@@ -7,6 +7,12 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ Description
 
@@ -15,10 +21,10 @@
   \ It defines words required by other modules or that are
   \ considered essential;
   \
-  \ patches the system with faster code that doesn't use
+  \ it patches the system with faster code that doesn't use
   \ additional memory;
   \
-  \ fixes most of the known bugs of the system.
+  \ it fixes most of the known bugs of the system.
 
   \ -----------------------------------------------------------
   \ History
@@ -39,7 +45,7 @@
   \ fsb directives
 
   \ The following #vim directive, processed by fsb, translate
-  \ every "\*" into the copyright symbol code in the ZX
+  \ every "\*" into the copyright symbol code of the ZX
   \ Spectrum character set (0x7F):
 
   \ #vim %substitute@\\\*@\=nr2char(127)@g
@@ -108,13 +114,10 @@ HI LO - 1+ CONSTANT /DISC
   \ of the first disk buffer, but with its default value! This
   \ must be fixed in order to move the disk buffers (what does
   \ the module <lowersys.fsb>).
-  \
+
+  \ XXX OLD method
   \ ' NOOP CFA ' COLD 02 + !  ' FIRST CFA ' COLD 04 + !
   \ ' NOOP CFA ' COLD 0A + !  ' FIRST CFA ' COLD 0C + !
-
-  \ XXX TODO
-\ ' FIRST CFA 6DD4 + !
-  \ 6E06 6DD6 2DUP SWAP - CMOVE
 
 : ',  ( "name" -- )  [COMPILE] ' CFA ,  ;  HERE
 
@@ -123,7 +126,7 @@ HI LO - 1+ CONSTANT /DISC
 ', DR0 ', LIT 5E52 , ', LIT 5E66 , ', @ ', LIT 6 , ', +
 ', LIT 10 , ', CMOVE ', LIT 5E4C , ', @ ', LIT 6CF8 , ', !
 ', ABORT
-  \ XXX Unused space: 4 bytes at 0x6E06
+  \ XXX Space freed: 4 bytes at 0x6E06
 
   \ Patch `COLD` and free the used space.
 DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
@@ -151,9 +154,9 @@ DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
   \ ............................................
   \ Bugs not fixed yet
 
-  \ `MESSAGE` does not work with odd negative numbers: they
-  \ print the content of an unknown memory zone. The problem is
-  \ the calculation done by `(LINE)`. In fact `*/MOD`, `MOD`
+  \ `MESSAGE` does not work with odd negative numbers: it
+  \ prints the contents of an unknown memory zone. The problem
+  \ is the calculation done by `(LINE)`. In fact `*/MOD`, `MOD`
   \ and `/MOD`, with certain negative values, return different
   \ results in Abersoft Forth and other Forth systems that have
   \ been tested (some of them are fig-Forth).  The problem
@@ -255,7 +258,7 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 
 ' CLS0 CFA 6D60 ! ' GREETING CFA 6D62 ! ' FORTH CFA 6D64 !
 ' DEFINITIONS CFA 6D66 ! ' NOOP CFA 6D68 !  ' QUIT  CFA 6D6A !
-    \ XXX Unused space: 39 bytes at 0x6D6C
+    \ XXX Space freed: 39 bytes at 0x6D6C
 
   \ Address of the user boot word compiled in `ABORT`.
 6D68 CONSTANT BOOT  DECIMAL -->
@@ -318,20 +321,21 @@ B/SCR B/BUF * CONSTANT /SCR
   \ a2 = address in the RAM-disk
   \ f =  0 for writing; 1 for reading
 
-  \ This word is created with `;S` and `NOOP` in order to make
-  \ it easier for the module <16kramdisks.fsb> to convert it
-  \ into the 128K version, that needs four more commands.
+  \ This word is created with `;S` and `NOOP` at the end in
+  \ order to make it easier for the module <16kramdisks.fsb> to
+  \ convert it into the 128K version, that needs four more
+  \ commands.
 
   IF  SWAP  THEN  B/BUF CMOVE [COMPILE] ;S NOOP NOOP NOOP ;
 
   \ Compile the new code of `R/W`.
 
-HERE  ' >R CFA , ' DISC-BLOCK CFA , ' R> CFA ,
-      ' (R/W) CFA , ' ;S CFA ,
+HERE  ] >R DISC-BLOCK R> (R/W) ;S [
 
-  \ Patch `R/W` with the new code.  Update `BLK` to prevent the
-  \ current screen to be loaded twice, because of the patch.
-  \ Finally, free the dictionary space used by the patch.
+  \ Patch `R/W` with the new code.  Also update `BLK` to
+  \ prevent the current screen to be loaded twice, because of
+  \ the patch.  Finally, free the dictionary space used by the
+  \ patch.
   \
   \ Warning: `CMOVE` and `B/SCR BLK +!` must be on the same
   \ line, otherwise there's a chance they could be in different
@@ -723,6 +727,9 @@ EXTEND  CLS0 GREETING
   \ address that holds the cfa of the user boot word, in the
   \ pfa of `ABORT`.
   \
+  \ 2015-06-02: Simpler method to create the patch of `R/W`,
+  \ with `]` and `[`.
+  \
   \ -----------------------------------------------------------
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

@@ -4,16 +4,24 @@
 \ `DECODE` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1984 EHR
+\ Copyright (C) 1982 Robert Dudley Ackerman
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-\ Adapted and modified from:
+\ Adapted and deeply modified from:
 
 \ Original code by Robert Dudley Ackerman, published in:
 \   FORTH DIMENSIONS IV,#2 p28 (July/August 1982)
-\ Modified by Dennis Wilson for Z80 CP/M fig-Forth 1.1g
+\ Modified by EHR for Z80 CP/M fig-Forth 1.1g
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
 
   \ -----------------------------------------------------------
   \ Requirements
@@ -142,17 +150,5 @@ FORTH DEFINITIONS DECIMAL
   DECODE-USAGE
   -FIND IF    DROP 0 DECODE-LEVEL ! (DECODE)
         ELSE  ." Not Found"  THEN  ;
-
-;S
-
-  \ XXX OLD
- \ <------------------------------>
-." Keys:" CR
-."   Space:  Show next word" CR
-."           at same level;" CR
-."   Return: Decode last word shown"
-."           (except primitives);" CR
-."   Q :      Quit." CR
- \ <------------------------------>
 
   \ vim: filetype=abersoftforthafera

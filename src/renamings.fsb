@@ -9,17 +9,28 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Three more modern names for fig-Forth words, without using
+  \ any memory.
+
   \ -----------------------------------------------------------
   \ History
   
-  \ 2015-03:
+  \ 2015-03: `BYE`.
   \
-  \ `BYE`.
+  \ 2015-03-29: Extracted from the main file of the library.
+  \ New: `WORDS`, `?DUP`.
   \
-  \ 2015-03-29:
-  \
-  \ Extracted from the main file of the library. New: `WORDS`,
-  \ `?DUP`.
+  \ 2015-06-13: Fix: the start bit was missing in the first
+  \ letter of the new names!
 
   \ -----------------------------------------------------------
 
@@ -28,7 +39,7 @@
 : MON>BYE  ( -- )
   \ Rename `MON` to `BYE`:
   [ -FIND MON ] 0= ?EXIT
-  ' MON NFA 1+  [CHAR] B OVER C!
+  ' MON NFA 1+  [CHAR] B 128 + OVER C!
                 [CHAR] Y OVER 1+ C!
                 [CHAR] E 128 + SWAP 2+ C!
   ;  MON>BYE  FORGET MON>BYE
@@ -41,7 +52,7 @@
   \ Rename `VLIST` to `WORDS`:
   [ -FIND MON ] 0= ?EXIT
   [ -FIND VLIST ] 0= ?EXIT
-  ' VLIST NFA 1+  [CHAR] W OVER C!
+  ' VLIST NFA 1+  [CHAR] W 128 + OVER C!
                   [CHAR] O OVER 1+ C!
                   [CHAR] R OVER 2+ C!
                   [CHAR] D OVER 3 + C!
@@ -55,8 +66,8 @@
 : -DUP>?DUP  ( -- )
   \ Rename `-DUP` to `?DUP`:
   [ -FIND -DUP ] 0= ?EXIT
-  ' -DUP NFA 1+  [CHAR] ? SWAP C!
+  ' -DUP NFA 1+  [CHAR] ? 128 + SWAP C!
   ;  -DUP>?DUP  FORGET -DUP>?DUP
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

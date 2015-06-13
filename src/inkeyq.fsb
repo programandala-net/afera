@@ -9,12 +9,20 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ History
 
   \ 2015-03-31: Code written in the main file of the library.
+  \
   \ 2015-04-09: Code extracted from the main file of the
   \ library. Moved to a keyboard module.
+  \
   \ 2015-05-03: Code moved to its own file.
 
   \ -----------------------------------------------------------
@@ -25,5 +33,5 @@
   INKEY DUP 255 <> DUP 0= IF  NIP  THEN  ;
   \ INKEY DUP 255 <> DUP ?EXIT NIP  ;
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

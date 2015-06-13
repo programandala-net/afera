@@ -3,12 +3,20 @@
 \ Transient code for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-  \ History:
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
 
   \ 2015-03-15: Start. Code adapted from the <TASM> file of
   \ Lennart Benschop's Spectrum Forth-83 (1988).
@@ -89,4 +97,4 @@
 
   OLD-LATEST @ OLD-DP @ PFA LFA !  ;
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

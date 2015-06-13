@@ -9,6 +9,12 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ Note
 
@@ -44,14 +50,16 @@
 
   \ (NEEDS-DISK)  ( f "filename" -- )
   \
-  \ Tape version of `(NEEDS)`.
+  \ Disk version of `(NEEDS)`.
   \
   \ f = is there a word needed from the given filename?
 
   \ XXX FIXME -- This can not work with several nesting levels.
   \ The buffers must be emptied at the start and the current
   \ block must be refreshed at the end.  (new code required to
-  \ do it) 
+  \ do it) .
+
+  \ XXX TODO -- Already solved? Try it.
 
 : (NEEDS-DISK)  ( f "filename" -- )
   BL WORD  IF

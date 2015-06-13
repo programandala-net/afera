@@ -9,6 +9,19 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS 2>R 2r
+  NEEDS 2R> 2r
+  NEEDS MOVE move
+
   \ -----------------------------------------------------------
   \ History
 
@@ -19,6 +32,8 @@
   \ 2015-05-18: Moved to its own file. This way, applications
   \ that just need transient strings do not waste the
   \ dictionary space occupied by this code.
+  \
+  \ 2015-05-23: Requirements with `NEEDS`.
 
 -->
 

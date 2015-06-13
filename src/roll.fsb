@@ -9,6 +9,12 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ History
 
@@ -31,5 +37,42 @@
   DUP 1 <
   IF    DROP
   ELSE  SWAP >R 1 - RECURSE R> SWAP
-  THEN  ;
+  THEN  ;  ;S
 
+( Spectrum Forth-83 ROLL )
+
+  \ XXX TODO -- Compare with the version of DZX-Forth.
+
+CODE ROLL ( u ---)
+     EXX    \ Use shadow registers.
+    EXSP    \ Operand now in HL
+   H INC
+  H ADDP    \ Add 1 and multiply by 2.
+  H B LD
+  L C LD    \ Byte count in BC = 2*(u+1)
+ SP ADDP    \ Add to SP,
+            \ Address of cell to pick up and move to top.
+  M E LD
+   H INC
+  M D LD    \ Read the cell that must be moved to top.
+  D PUSH    \ Save it.
+  L E LD
+
+( Spectrum Forth-83 ROLL )
+
+  H D LD
+   H DEC
+   H DEC    \ Source address is destination address - 2.
+  B A LD
+    C OR
+   NZ IF    \ Test for byte count zero is unnecessary
+            \ BC=2 even for 0 ROLL.
+       LDDR \ Move the remaining stack cells up.
+   THEN
+   H POP    \ Get saved top.
+   B POP    \ Remove junk cell.
+    EXSP    \ Put top back.
+     EXX      \ Back to normal registers
+    JPIX ;C
+  
+  \ vim: filetype=abersoftforthafera

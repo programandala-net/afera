@@ -5,12 +5,18 @@
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
-\ High level version adapted from lina:
-\ Copyright (c) 2000-2004 Albert van der Horst, The Netherlands
+\ The high level alternative versions were adapted from lina:
+\ Copyright (C) 2000-2004 Albert van der Horst
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
 
   \ -----------------------------------------------------------
   \ History
@@ -100,4 +106,4 @@ CREATE 2R>  ( -- d ) ( R: d -- )
   \ : 2R>  ( -- d ) ( R: d -- )
   \  COMPILE R>  COMPILE R> COMPILE SWAP  ; IMMEDIATE
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

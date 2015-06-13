@@ -3,17 +3,25 @@
 \ bracket-if.fsb 
 \ Conditional compilation for ZX Spectrum Abersoft Forth
 
-\ Copyright (C) 2005-2010,2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 2000-2004 Albert van der Horst
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ Requirements
 
-  NEEDS S" strings
-  NEEDS STR= strings
+  NEEDS S"          strings
+  NEEDS S=          strings
+  NEEDS PARSE-NAME  strings
 
   \ -----------------------------------------------------------
   \ History
@@ -33,6 +41,8 @@
   \ 2015-05-15: New version, adapted from lina.
   \
   \ 2015-05-17: `NEEDS` used.
+  \
+  \ 2015-06-04: `STR=` updated to `S=`.
 
 -->
 
@@ -46,11 +56,11 @@
 : [ELSE]  ( "..." -- )
 
   1 BEGIN   PARSE-NAME 2DUP SWAP C@ AND
-    WHILE   2DUP S" [IF]" STR=
+    WHILE   2DUP S" [IF]" S=
             IF    2DROP 1+
-            ELSE  2DUP S" [ELSE]" STR=
+            ELSE  2DUP S" [ELSE]" S=
                   IF    2DROP 1- DUP IF  1+  THEN
-                  ELSE  S" [THEN]" STR= IF  1-  THEN
+                  ELSE  S" [THEN]" S= IF  1-  THEN
                   THEN
             THEN  -DUP 0= IF  EXIT  THEN
   REPEAT  2DROP DROP  ; IMMEDIATE
@@ -59,5 +69,5 @@
 
 : [THEN]  ( -- )  ; IMMEDIATE
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

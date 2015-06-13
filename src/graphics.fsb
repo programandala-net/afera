@@ -8,8 +8,20 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
-\ 2015-03-28: Code extracted from the main file of the library.
-\ 2015-04-22: `UDG!` is moved to its own file <udg-store.fsb>.
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-28: Code extracted from the main file of the
+  \ library.
+  \
+  \ 2015-04-22: `UDG!` is moved to its own file
+  \ <udg-store.fsb>.
 
 -->
 
@@ -39,6 +51,7 @@ SYS-COORDS 1+ CONSTANT Y-COORD
 
 : XY>ATTRA  ( x y -- a )
   \ Convert a pixel coordinate to its attribute address.
+  \ XXX TODO Rewrite in Z80, using the ROM routine.
   175 SWAP - 8 / 32 *  SWAP 8 /  + ATTRIBUTES +  ;
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

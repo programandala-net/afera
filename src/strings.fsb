@@ -9,6 +9,12 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ Requirements
 
@@ -50,6 +56,8 @@ NEEDS PICK    pick
   \ file.  This way, applications that just need transient
   \ strings do not waste the dictionary space occupied by the
   \ code of the buffer.
+  \
+  \ 2015-05-26: `STR=` is renamed as `S=`.
 
 2 4 THRU 
 
@@ -82,14 +90,14 @@ NEEDS PICK    pick
 : S'  ( Compilation: "ccc<'>" -- ) ( Run-time:  -- ca len )
   [CHAR] ' (S)  ; IMMEDIATE
 
-( LENGTHS STR= )
+( LENGTHS S= )
 
 : LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
   2 PICK OVER  ;
 
   \ XXX TODO move to its own file (check requiment of [if]):
 
-: STR=  ( ca1 len1 ca2 len2 -- f )
+: S=  ( ca1 len1 ca2 len2 -- f )
   LENGTHS -  \ different lenghts?
   IF    2DROP 2DROP FALSE EXIT
   ELSE  DROP [ CONTEXT @ EDITOR ] -TEXT [ CONTEXT ! ] 0= 0=

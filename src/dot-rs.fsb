@@ -8,6 +8,13 @@
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
   \ History
 
   \ 2015-05-15: Written after the code of `.S`.
@@ -20,9 +27,7 @@
   RDEPTH 2- DUP
   S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
   
-  IF  RP@ 2- R0 @ 2- DO I @ . -2 +LOOP  THEN
+  IF  RP@ 2- R0 @ 2- DO I @ . -2 +LOOP  THEN  ;
 
-  ;
-
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

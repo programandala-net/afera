@@ -9,6 +9,17 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS CODE assembler
+
   \ -----------------------------------------------------------
   \ History
 
@@ -42,6 +53,8 @@
   \ 2015-05-12: Improvement: `DEVICE` is not a variable to
   \ update UFIA with anymore, but the address of the
   \ correspondent byte in UFIA, faster and shorter.
+
+  \ -----------------------------------------------------------
 
 FORTH DEFINITIONS DECIMAL
 

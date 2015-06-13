@@ -4,15 +4,22 @@
 \ `PICK` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 1987,2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1985 Edmund Ramm
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ History
 
-  \ 1987-01-09: Code written.
+  \ 1987-01-09: First version.
   \ 2015-03: Code included in the main file of the library.
   \ 2015-04-16: Code rewritten in Z80.
   \ 2015-05-02: Code moved to this file.
@@ -33,5 +40,5 @@ CREATE PICK  ( u -- x )
   SMUDGE
   DECIMAL
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

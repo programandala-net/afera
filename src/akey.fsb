@@ -1,13 +1,30 @@
 .( AKEY )
 
 \ akey.fsb
-\ `AKEY` for ZX Spectrum Abersoft Forth
+\ `AKEY`, an alternative `KEY` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ The `KEY` of Abersoft Forth shows the flashing cursor and
+  \ lets the user to change the input mode (C, L and G). But
+  \ that can be an inconvenient in certain cases, when the
+  \ actual pressed key is needed (even the codes that change the
+  \ input mode), and the cursor ruins the layout.
+  \
+  \ This module provides an alternative for such cases.
 
   \ -----------------------------------------------------------
   \ History
@@ -20,11 +37,9 @@
   \ -----------------------------------------------------------
 
 : AKEY  ( -- c )
-  \ Wait for a key to be pressed and return its code.
-  \ This is an alternative to 'KEY', because 'KEY'
-  \ always shows the flashing cursor, even if the
-  \ current attributes are changed.
+  \ Wait for a key to be pressed and return its code,
+  \ whatever it is, without showing the cursor.
   BEGIN  INKEY DUP 255 =  WHILE  DROP  REPEAT  ;
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

@@ -12,17 +12,18 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ Description
 
-  \ XXX experimental
   \ This file must be the last one to be loaded. It is an
-  \ alternative to...
-  \ 
-  \ what causes the
-  \ loader to stop.
-  \
-  \ See <loader.fsb> for details.
+  \ alternative to <loaded.fsb>.  See <loader.fsb> and
+  \ <loaded.fsb> for details.
 
   \ -----------------------------------------------------------
   \ History
@@ -33,5 +34,5 @@
 
 RP! QUIT
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
 

@@ -4,14 +4,21 @@
 \ Assembler for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988? Coos Haak
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
 \ This is a modified version of an assembler designed by Coos
-\ Haak for his own Forth, and used by L. C.  Benschop with his
+\ Haak for his own Forth, and used by Lennart Benschop with his
 \ Spectrum Forth-83 (1988).
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
 
   \ -----------------------------------------------------------
   \ Differences from the original version
@@ -23,7 +30,7 @@
   \ Example: both `1 B LDP#` and `1 BC LDP#` are valid and
   \ produce the same machine code.
 
-  \ `(HL)` is used instead of `M`.
+  \ `(HL)` can be used instead of `M`.
 
   \ Special mnemonic `0OUTBC` is provided.
 
@@ -40,7 +47,9 @@
   \ The set of conditional calls and returns has been completed
   \ (the original included only `CALLC` and `RETC`).
 
-  \ Many comments and stack comments have been added.
+  \ Comments have been added.
+
+  \ Case insensitive.
 
   \ -----------------------------------------------------------
   \ History
@@ -76,11 +85,11 @@ FORTH DEFINITIONS
 
 VOCABULARY ASSEMBLER IMMEDIATE  ASSEMBLER DEFINITIONS HEX
 
-0 CONSTANT B   1 CONSTANT C   2 CONSTANT D    3 CONSTANT E
-4 CONSTANT H   5 CONSTANT L   6 CONSTANT (HL) 7 CONSTANT A
+0 CONSTANT B   1 CONSTANT C   2 CONSTANT D   3 CONSTANT E
+4 CONSTANT H   5 CONSTANT L   6 CONSTANT M   7 CONSTANT A
 
 0 CONSTANT BC  2 CONSTANT DE  4 CONSTANT HL
-6 CONSTANT SP  6 CONSTANT AF
+6 CONSTANT SP  6 CONSTANT AF                 6 CONSTANT (HL)
 
 DD CONSTANT IX-OP  FD CONSTANT IY-OP
 
@@ -300,4 +309,4 @@ FORTH DEFINITIONS
 
 DECIMAL
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

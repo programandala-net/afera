@@ -9,11 +9,27 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+  
+  \ This module provides words to use the memory of the +D
+  \ interface: ROM 0x0000..0x1FFFF; RAM 0x2000..0x3FFFF.
+  
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS CODE assembler
+
   \ -----------------------------------------------------------
   \ History
 
   \ 2015-05-19: Start.
-
 
 2 5 THRU
 
@@ -64,7 +80,7 @@ CODE DOSC!  ( b a -- )
 ( DOS! )
 
 CODE DOS!  ( n a -- )
-  \ Store n into the D memory address a.
+  \ Store n into the +D memory address a.
   HL POP  DE POP
   BC PUSH  IX PUSH  \ save the Forth registers
   DE PUSH  HL PUSH

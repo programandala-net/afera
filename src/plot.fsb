@@ -2,10 +2,17 @@
 \ Faster `PLOT` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop.
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
 
   \ -----------------------------------------------------------
   \ History
@@ -44,4 +51,4 @@ HERE ' PLOT  ( pfa a )
 
 DECIMAL
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

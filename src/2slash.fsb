@@ -2,26 +2,35 @@
 \ `2/` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
-
-\ Adapted from the `2/` written on 1985-05-07 by Edmund
-\ Ramm for the Z80 fig-Forth implementation written by Dennis
-\ L. Wilson (1980-09-07).
+\ Copyright (C) 1985 Edmund Ramm
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ History
  
   \ 2015-04-16: Code written in the main file of the library.
+  \
   \ 2015-04-23: Code fixed. Negative numbers didn't work
   \ because a wrong relative jump.
+  \
   \ 2015-05-05: Extracted from the main file of the library.
 
 -->
 
 .( 2/ )
+
+  \ Code adapted from the `2/` written on 1985-05-07 by Edmund
+  \ Ramm for the Z80 fig-Forth implementation written by Dennis
+  \ L. Wilson (1980-09-07).
 
 CREATE 2/  ( n1 -- n2 )
 
@@ -38,4 +47,20 @@ CREATE 2/  ( n1 -- n2 )
   C3 C, PUSHHL ,  \ jp PUSHHL
   SMUDGE  DECIMAL
 
-  \ vim: filetype=abersoftforth
+;S
+
+.( Spectrum Forth-83 2/ )
+
+  \ This is the code used by Lennart Benschop in his Spectrum
+  \ Forth-83 (1988).
+
+  \ XXX TODO try and compare
+
+CODE 2/  ( n1 --- n2)
+   H POP
+   H SRA  \ Signed division by 2, so arithmetic shift
+    L RR
+  H PUSH
+    JPIX ;C
+
+  \ vim: filetype=abersoftforthafera

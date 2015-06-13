@@ -9,6 +9,12 @@
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ History
   
@@ -39,4 +45,4 @@ CREATE -ROT  ( x1 x2 x3 -- x3 x1 x2 )
 
   DECIMAL  SMUDGE
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

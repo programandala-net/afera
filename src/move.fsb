@@ -4,15 +4,23 @@
 \ `MOVE` and `CMOVE>` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1998 Phil Burk
+\ Copyright (C) 1988 Lennart Benschop
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
 
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
   \ -----------------------------------------------------------
   \ Acknowledgments
 
-  \ Includes code, marked with comments, from:
+  \ This file includes code from:
   \   Lennart Benschop's Spectrum Forth-83 (1988)
   \   Phil Burk's pForth V19 (1998)
 
@@ -60,4 +68,4 @@ CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
 
   >R 2DUP - 0< IF  R> CMOVE>  ELSE  R> CMOVE  THEN  ;
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera
