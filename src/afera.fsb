@@ -144,6 +144,21 @@ DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
 763D ' MON CFA !
 
   \ ............................................
+  \ Fix the `0 MESSAGE` bug
+
+  \ The word `MESSAGE` does not print error message number 0
+  \ when `WARNING` is 1, in other words, when error messages
+  \ are the text of a line relative to screen 4.  This
+  \ condition is in other fig-Forth implementations, but in
+  \ Abersoft Forth it can be regarded as a bug, because error
+  \ number 0 is used by the system ("Word not found"), and
+  \ therefore its text is not printed when `WARNING` is 1.
+  \
+  \ The following patch removes the buggy condition:
+
+' NOOP CFA DUP 6F97 ! DUP 6F99 ! 6F9B !
+
+  \ ............................................
   \ Cosmetic patches
 
   \ No `CLS` in `INDEX`.
@@ -341,7 +356,7 @@ HERE  ] >R DISC-BLOCK R> (R/W) ;S [
   \ line, otherwise there's a chance they could be in different
   \ blocks of the screen, what would cause trouble.
 
-DUP ' R/W OVER SWAP OVER HERE SWAP - CMOVE  B/SCR BLK +!  DP !
+' R/W OVER SWAP OVER HERE SWAP - CMOVE B/SCR BLK +!  DP !
 
   \ Change the error 9 caused by `0 LOAD` ("Trying to load from
   \ screen 0") to error 6 ("Out of RAM-disk range"), what seems
@@ -729,6 +744,8 @@ EXTEND  CLS0 GREETING
   \
   \ 2015-06-02: Simpler method to create the patch of `R/W`,
   \ with `]` and `[`.
+  \
+  \ 2015-06-19: Fix: `0 MESSAGE` bug.
   \
   \ -----------------------------------------------------------
 

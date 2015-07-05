@@ -49,6 +49,9 @@
   \ one byte bigger): no dictionary space is used.  The
   \ execution time is still almost the same, only one system
   \ frame less.
+  \
+  \ 2015-07-05: Fix: the y coordinate was not converted at the
+  \ start.
 
 -->
 
@@ -60,11 +63,13 @@ HERE  \ save the current dictionary pointer
   HEX
   E1 C,               \ pop hl ; l = y coordinate
   D1 C,               \ pop de ; e = x coordinate
-  C5 C,               \ push bc
+  C5 C,               \ push bc ; save the Forth IP
   40 05 + C,          \ ld b,l ; b = y coordinate
   48 03 + C,          \ ld c,e ; c = x coordinate
   \ ; C = x coordinate
   \ ; B = y coordinate
+  3E C, AF C,         \ ld a,175 ; max y coordinate
+  90 00 + C,          \ sub b
   CD C, 22AA 6 + ,    \ call PIXELADD ; +6 to skip BASIC error
   \ ; HL = screen address
   \ ; A = pixel position in HL

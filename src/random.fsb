@@ -25,61 +25,47 @@
   \ 
   \ 2015-05-17: Reference of the Matteo Vitturi's
   \ implementation.
-
+  \
+  \ 2015-07-04: The version based on Leo Brodie's code is the
+  \ default one.
 
   \ -----------------------------------------------------------
+  
+  \ [Code adapted from Leo Brodie's code and Gforth.]
 
-  \ The code of `RND` was adapted from Bertie, the demo program
-  \ bundled with Abersoft Forth:
+23670 CONSTANT SYS-SEED
+
+: RND  ( -- n )
+  SYS-SEED @ 31421 * 6927 +  DUP SYS-SEED !  ;
+
+: RANDOM  ( u -- 0..u-1 )
+  RANDOM U* NIP  ;
+
+: RANDOMIZE  ( n -- )  SYS-SEED !  ;
+
+( Alternative: RND of Abersoft Forth )
+
+  \ Code from Bertie, the demo program bundled with Abersoft
+  \ Forth.
 
 23670 CONSTANT SYS-SEED
 
 : RND  ( u1 -- u2 )
   SYS-SEED @ 75 U* 75 0 D+
   OVER OVER U< - - 1 - DUP SYS-SEED !
-  U* SWAP DROP ;
+  U* NIP ;
 
-;S
+( Alternative: RND of vForth )
 
-.( Leo Brodie )
-
-  \ From Brodie's book,
-  \ for reference,
-  \ in an old message from comp.lang.forth:
-
-VARIABLE RND    HERE RND !
-: RANDOM ( -- n ) RND @   31421 *  6927 +   DUP  RND ! ;
-: CHOOSE ( u1 -- u2 )   RANDOM UM*   SWAP DROP  ;
-
-  \ ____ Quote:
-  \ So I assume that what you really want is UM* . That is a
-  \ primitive that most Forth's have. I know MAXforth does. And
-  \ Brodie's code works there.  Didacticism: * is either a
-  \ signed or unsigned operator depending how you interpret the
-  \ result.  UM* specifies unsigned beacuse, with mixed
-  \ arithmetic, it matters. (The sign of the result might not
-  \ be what you expect if the operands are negative.) Stack
-  \ Diag for UM* : ( u u -- d) Email me if i missed the point.
-  \ Jerry
-  \ ____
-
-\ 2015-05-16: Adapted.
-
-HERE SYS-SEED !
-: RANDOM  ( -- n )
-  SYS-SEED @ 31421 * 6927 +  DUP SYS-SEED !  ;
-: CHOOSE  ( u1 -- u2 )
-  RANDOM U* SWAP DROP  ;
-
-( Matteo Vitturi's vForth )
-
-\ 2015-05-17: From Matteo Vitturi's vForth 1.3 (1990-2000).
+  \ Code from Matteo Vitturi's vForth 1.3 (1990-2015).
 
 23670 CONSTANT SYS-SEED
-: RND
+
+: RND  ( n1 -- n2 )
   1+ 8195 23672 @ U* 1 0 D+
-  16383 U/ DROP DUP 23672 !
+  16383 U/ DROP DUP SYS-SEED !
   SWAP MOD ;
-: SEED  ( n -- ) 23672 ! ;
+
+: SEED  ( n -- ) SYS-SEED ! ;
 
   \ vim: filetype=abersoftforthafera

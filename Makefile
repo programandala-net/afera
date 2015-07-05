@@ -264,7 +264,7 @@ afera.mgt: tapes sys/abersoft_forth_gplusdos.bas.tap
 # Backups
 
 backup:
-	tar -czf backups/$$(date +%Y%m%d%H%M)_afera.tgz \
+	tar -cJf backups/$$(date +%Y%m%d%H%M)_afera.tar.xz \
 		Makefile \
 		src/*.fsb \
 		sys/*.bas \
@@ -292,21 +292,23 @@ tarball:
 
 # XXX TODO This is experimental. Not used yet.
 # 
-# The goal is to create an MGT disk with less files. The files of the
-# library are small, and an MGT disk can have only 80 files. As as
-# result, soon the disk is full of files, but mostly empty.
+# The goal is to create an MGT disk with less files. The
+# files of the library are small, and an MGT disk can have
+# only 80 files. As as result, soon the disk is full of
+# files, but mostly empty.
 #
-# The approach is to pack the files into wordsets, but something has to
-# be done about the source headers, maybe convert them to metacomments.
+# The approach is to pack the files into wordsets, but
+# something has to be done about the source headers, maybe
+# convert them to metacomments.
 #
-# If RAM-disks are used, the grouped files can not be larger than 16
-# KiB, and word `NEEDS`, that currently only gets the file into the
-# RAM-disk and interprets it, must be improved to search the file and
-# load the required word a word. A draft is already started in
-# <_drafts/require.fsb>.
+# If RAM-disks are used, the grouped files can not be larger
+# than 16 KiB, and word `NEEDS`, that currently only gets
+# the file into the RAM-disk and interprets it, must be
+# improved to search the file and load the required word. A
+# draft is already started in <_drafts/require.fsb>.
 #
-# The second approach is to implement actual disk support. Then files
-# could be of any length.
+# An alternative is actual disk support.  Then files could
+# be of any length.
 
 groups_for_disk:
 	cat \
@@ -562,6 +564,14 @@ tests/16kramdisks_test.tap: tapes
 		tap/loaded.tap \
 		> tests/16kramdisks_test.tap
 
+tests/rdrop_test.tap: tapes
+	cat \
+		sys/abersoft_forth_afera_tools_inc.tap \
+		tap/rdrop.tap \
+		tap/2rdrop.tap \
+		tap/loaded.tap \
+		> tests/rdrop_test.tap
+
 # ##############################################################
 # History
 
@@ -590,3 +600,5 @@ tests/16kramdisks_test.tap: tapes
 # 2015-05-15: New: backup recipe; tapes recipe, factored from afera.mgt.
 #
 # 2015-06-06: Updated.
+#
+# 2015-07-05: Updated.

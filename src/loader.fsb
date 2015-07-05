@@ -39,9 +39,8 @@
   \ `RP!` and then execute the boot word.
 
   \ Note: This file is the first one to be loaded, even before
-  \ the module <extend.fsb>. That's why it can not use any
-  \ word defined by the Afera library, or use the first screen
-  \ for code.
+  \ the <afera.fsb>. That's why it can not use any word defined
+  \ by the Afera library, or use the first screen for code.
 
   \ -----------------------------------------------------------
   \ History
@@ -51,6 +50,8 @@
   \
   \ 2015-05-17: Fix: `LOADER` didn't reset `LOADED?` at the
   \ start.
+  \
+  \ 2015-07-05: Fix: Typo.
 
 ( Library modules loader )
 

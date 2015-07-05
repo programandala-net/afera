@@ -22,7 +22,12 @@
   \ stack words.
   \
   \ 2015-05-10: Code moved to this file and rewritten in Z80.
-  \ `EXIT` patched.
+  \ `EXIT` is patched to execute `RDROP`.
+  \
+  \ 2015-06-17: Fix: `EXIT` can not execute the code of
+  \ `RDROP`. `EXIT` is a colon definition, thus it removes its
+  \ own nesting; but `RDROP` is a primitive, thus it does not
+  \ adds a nesting level. The patch is removed.
 
   \ -----------------------------------------------------------
 
@@ -33,8 +38,6 @@
 
 CREATE RDROP  ( -- ) ( R: x -- )
 
-  \ R> DROP
-
   HEX
 
   2A C, 5E68 ,  \ ld hl,(RP) ; return stack pointer
@@ -44,11 +47,5 @@ CREATE RDROP  ( -- ) ( R: x -- )
   C3 C, NEXT ,  \ jp NEXT
 
   DECIMAL
-
-  \ `EXIT` does the same than `RDROP`, but it's a colon
-  \ definition, so we redefine it to jump to the Z80 code of
-  \ `RDROP`:
-
-' RDROP ' EXIT CFA !
 
   \ vim: filetype=abersoftforthafera

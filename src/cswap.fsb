@@ -34,17 +34,14 @@
 
   \ -----------------------------------------------------------
 
-HEX
-
 CREATE CSWAP  ( n1 -- n2 )
   \ Swap the low and high bytes within n1.
+  HEX
   E1 C,           \ pop hl
   78 04 + C,      \ ld a,h
   60 05 + C,      \ ld h,l
   68 07 + C,      \ ld l,a
   C3 C, PUSHHL ,  \ jp PUSHHL
-  SMUDGE
-
-DECIMAL
+  SMUDGE DECIMAL
 
   \ vim: filetype=abersoftforthafera
