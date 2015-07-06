@@ -254,10 +254,14 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
   \ ............................................
   \ New system colors: black background, green foreground.
 
-: COLORS0  ( -- )
+: (COLORS0)  ( -- )
   0 PAPER 4 INK 0 BRIGHT 0 FLASH 0 INVERSE 0 BORDER  ;
 
-: CLS0  ( -- )  COLORS0 CLS  ;
+  \ By storing a cfa of other word than `(COLORS0)` in the pfa
+  \ of `COLORS0`, the user can change the default system
+  \ colors.
+
+: COLORS0  ( -- )  (COLORS0)  ;  : CLS0  ( -- )  COLORS0 CLS  ;
 
   \ ............................................
   \ Patch `ABORT`
@@ -746,6 +750,9 @@ EXTEND  CLS0 GREETING
   \ with `]` and `[`.
   \
   \ 2015-06-19: Fix: `0 MESSAGE` bug.
+  \
+  \ 2015-07-06: Improvement: `COLORS0` is factored to
+  \ `(COLORS0)` in order to make it configurable by the user.
   \
   \ -----------------------------------------------------------
 

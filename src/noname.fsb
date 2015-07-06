@@ -18,15 +18,44 @@
   \ History
 
   \ 2015-04-15: First draft.
+  \
   \ 2015-05-04: First working version.
+  \
+  \ 2015-07-06: Bug found and fixed: the `SMUDGE` included to
+  \ compensate the `SMUDGE` done later by `;` made it
+  \ impossible to call the latest defined word from the word
+  \ defined with `:NONAME`. The solution is to patch `;` and
+  \ make `;` to unpatch itself every time. `;SMUDGE` is written
+  \ for that.
 
   \ -----------------------------------------------------------
 
+-->
+
+( Patch ; )
+
+: ;SMUDGE  ( -- )
+  \ Called by `;` to do `SMUDGE`.
+  [ HERE ]  \ Save the address of `SMUDGE`.
+  SMUDGE \ When patched by `:NONAME`, this is `NOOP`.
+  \ Unpatch a possible patch done by `:NONAME`,
+  \ using the saved address where `SMUDGE` was compiled:
+  [ ' SMUDGE CFA ] LITERAL LITERAL !  ;
+
+  \ Substitute the `SMUDGE` in `;` with `;SMUDGE`:
+
+' ;SMUDGE CFA 25378 !
+
+-->
+
+( :NONAME )
+
 : :NONAME  ( -- cfa )
   ?EXEC  CURRENT @ CONTEXT !
-  SMUDGE  \ deactivate the effect of the next `SMUDGE` in `;`
-  HERE !CSP
-  25350 , \ cfa = colon definition
+  \ Deactivate the `SMUDGE` in `;SMUDGE`:
+  [ ' NOOP CFA ] LITERAL ' ;SMUDGE !
+  \ Create a code field of a colon definition:
+  HERE !CSP  25350 ,
   ]  ;
 
   \ vim: filetype=abersoftforthafera
