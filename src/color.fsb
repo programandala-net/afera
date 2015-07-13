@@ -113,6 +113,30 @@
   \ patch, but it doesn't work because `WORD` does `HERE 34
   \ BLANKS`, what corrupts the space ahead, the next word in
   \ the dictionary.
+  \
+  \ 2015-07-13: Bug found and fixed:
+  \
+  \ `1 INVERSE` is deactivated by `INK` or `PAPER` when nothing
+  \ is printed between them. Examples:
+
+  \   1 INVERSE 2 INK  ." No inverse mode!"
+  \   1 INVERSE 2 PAPER  ." No inverse mode!"
+
+  \ This does not happen in Abersoft Forth. The Afera's
+  \ `INVERSE` does exactly the same than its Abersoft Forth
+  \ version, simply much faster. When the new definition of
+  \ `INVERSE` is omitted nothing changes. The problem is in the
+  \ improved definitions of `INK` and `PAPER`: they call the
+  \ ROM address 0x1CAD to set the permanent colors, what
+  \ includes the print flags (system variable 23697). Then the
+  \ bits that mark the temporary status of `inverse` and
+  \ `gover`, not changed by these words, overwrite the bits
+  \ that mark their permanent status. The solution was to
+  \ (re)set both bits.
+  \
+  \ Fix: `INVERSE`, `BRIGHT`, `FLASH` and `GOVER` checked the
+  \ lower 8 bits of the input flag. Now they check all the 16
+  \ bits.
 
 -->
 
@@ -145,12 +169,11 @@ DECIMAL  -->
 ( BRIGHT )
 
 HERE  ' BRIGHT DUP CFA !  ( f -- )
-  \ XXX FIXME don't check the l register, but the whole hl
   HEX
   E1 C,                 \ pop hl
-  7D C,                 \ ld a,l
+  78 04 + C,            \ ld a,h
+  BC 05 + C,            \ or l
   21 C, 5C8D ,          \ ld hl,23693
-  A0 07 + C,            \ and a
   CA C, ' BRIGHT 0E + , \ jp z,turn_off
                         \ ; turn on
   CB C, C6 8 6 * + C,   \ set 6,(hl)
@@ -166,12 +189,11 @@ HERE  ' BRIGHT DUP CFA !  ( f -- )
 ( FLASH )
 
 HERE  ' FLASH DUP CFA !  ( f -- )
-  \ XXX FIXME don't check the l register, but the whole hl
   HEX
   E1 C,                 \ pop hl
-  7D C,                 \ ld a,l
+  78 04 + C,            \ ld a,h
+  BC 05 + C,            \ or l
   21 C, 5C8D ,          \ ld hl,23693
-  A0 07 + C,            \ and a
   CA C, ' FLASH 0E + ,  \ jp z,turn_off
                         \ ; turn on
   CB C, C6 8 7 * + C,   \ set 7,(hl)
@@ -187,39 +209,39 @@ HERE  ' FLASH DUP CFA !  ( f -- )
 ( GOVER )
 
 HERE  ' GOVER DUP CFA !  ( f -- )
-  \ XXX FIXME don't check the l register, but the whole hl
   HEX
   E1 C,                 \ pop hl
-  7D C,                 \ ld a,l
+  78 04 + C,            \ ld a,h
+  BC 05 + C,            \ or l
   21 C, 5C91 ,          \ ld hl,23697
-  A0 07 + C,            \ and a
   CA C, ' GOVER 0E + ,  \ jp z,turn_off
                         \ ; turn on
-  CB C, C6 8 1 * + C,   \ set 1,(hl)
+  CB C, C6 8 0 * + C,   \ set 0,(hl) ; temporary
+  CB C, C6 8 1 * + C,   \ set 1,(hl) ; permanent
   C3 C, NEXT ,          \ jp next
                         \ turn_off:
-  CB C, 86 8 1 * + C,   \ res 1,(hl)
+  CB C, 86 8 0 * + C,   \ res 0,(hl) ; temporary
+  CB C, 86 8 1 * + C,   \ res 1,(hl) ; permanent
   C3 C, NEXT ,          \ jp next
   DUP ' GOVER OVER HERE SWAP - CMOVE
-  DP !  DECIMAL
-
--->
+  DP !  DECIMAL  -->
 
 ( INVERSE )
 
 HERE  ' INVERSE DUP CFA !  ( f -- )
-  \ XXX FIXME don't check the l register, but the whole hl
   HEX
   E1 C,                   \ pop hl
-  7D C,                   \ ld a,l
+  78 04 + C,              \ ld a,h
+  BC 05 + C,              \ or l
   21 C, 5C91 ,            \ ld hl,23697
-  A0 07 + C,              \ and a
   CA C, ' INVERSE 0E + ,  \ jp z,turn_off
                           \ ; turn on
-  CB C, C6 8 3 * + C,     \ set 3,(hl)
+  CB C, C6 8 2 * + C,     \ set 2,(hl) ; temporary
+  CB C, C6 8 3 * + C,     \ set 3,(hl) ; permanent
   C3 C, NEXT ,            \ jp next
                           \ turn_off:
-  CB C, 86 8 3 * + C,     \ res 3,(hl)
+  CB C, 86 8 2 * + C,     \ res 2,(hl) ; temporary
+  CB C, 86 8 3 * + C,     \ res 3,(hl) ; permanent
   C3 C, NEXT ,            \ jp next
   DUP ' INVERSE OVER HERE SWAP - CMOVE
   DP !  DECIMAL

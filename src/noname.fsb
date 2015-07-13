@@ -23,10 +23,10 @@
   \
   \ 2015-07-06: Bug found and fixed: the `SMUDGE` included to
   \ compensate the `SMUDGE` done later by `;` made it
-  \ impossible to call the latest defined word from the word
-  \ defined with `:NONAME`. The solution is to patch `;` and
-  \ make `;` to unpatch itself every time. `;SMUDGE` is written
-  \ for that.
+  \ impossible to find the latest defined word during the
+  \ definition started by `:NONAME`. The solution is to patch
+  \ `;` and make `;` to unpatch itself every time. `;SMUDGE` is
+  \ written for that.
 
   \ -----------------------------------------------------------
 
@@ -55,7 +55,7 @@
   \ Deactivate the `SMUDGE` in `;SMUDGE`:
   [ ' NOOP CFA ] LITERAL ' ;SMUDGE !
   \ Create a code field of a colon definition:
-  HERE !CSP  25350 ,
+  HERE !CSP  25350 ,  \ 25350 = address of do_colon 
   ]  ;
 
   \ vim: filetype=abersoftforthafera

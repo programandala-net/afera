@@ -409,7 +409,8 @@ groups_for_disk:
 # ##############################################################
 # Temporary for development
 
-#	tests/512bbuf_test.tap \
+# XXX FIXME The test files are not updated if they don't
+# exist.
 
 .PHONY: tests
 tests: $(test_files)
@@ -572,6 +573,14 @@ tests/rdrop_test.tap: tapes
 		tap/loaded.tap \
 		> tests/rdrop_test.tap
 
+tests/defer_test.tap: tapes
+	cat \
+		sys/abersoft_forth_afera_tools_inc.tap \
+		tap/defer.tap \
+		tap/noname.tap \
+		tap/loaded.tap \
+		> tests/defer_test.tap
+
 # ##############################################################
 # History
 
@@ -602,3 +611,5 @@ tests/rdrop_test.tap: tapes
 # 2015-06-06: Updated.
 #
 # 2015-07-05: Updated.
+#
+# 2015-07-06: `tests/defer_test.tap`.

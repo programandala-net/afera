@@ -28,6 +28,8 @@
   \ `RDROP`. `EXIT` is a colon definition, thus it removes its
   \ own nesting; but `RDROP` is a primitive, thus it does not
   \ adds a nesting level. The patch is removed.
+  \
+  \ 2015-07-12: Fix: `SMUDGE` was missing!
 
   \ -----------------------------------------------------------
 
@@ -46,6 +48,6 @@ CREATE RDROP  ( -- ) ( R: x -- )
   22 C, 5E68 ,  \ ld (RP),hl ; update the pointer
   C3 C, NEXT ,  \ jp NEXT
 
-  DECIMAL
+  SMUDGE DECIMAL
 
   \ vim: filetype=abersoftforthafera

@@ -19,14 +19,19 @@
   \ History
 
   \ 2015-03-28: Start.
+  \
   \ 2015-04-02: Fix.
+  \
   \ 2015-07-04: Typo. Simpler `ACTION-OF`.
+  \
+  \ 2015-07-07: Revised, tested, fixed, simplified (removed
+  \ `[IS]` and `<IS>`), documented.
 
   \ -----------------------------------------------------------
 
 -->
 
-( Deferred words -- common code )
+( Create and fetch deferred words )
 
 : (DEFER)  ( -- )
   \ Default behaviour of an uninitialized deferred word:
@@ -35,10 +40,14 @@
 
 : DEFER  ( "name" -- )
   \ Create a deferred word.
+  \ Note: using `:` and `;` is more compact and faster
+  \ than using `<BUILDS` and `DOES>` in this case.
   [COMPILE] : COMPILE (DEFER) [COMPILE] ;  ;
 
 : DEFER@  ( pfa -- cfa )
-  \ Return the code field address of a deferred word.
+  \ pfa = parameter field address of a deferred word
+  \ cfa = code field address the deferred word
+  \       is set to execute
   @  ;
 
 : DEFERS  ( "name" -- )
@@ -50,55 +59,79 @@
 : ACTION-OF  ( Interpretation: "name" -- cfa )
              ( Compilation:    "name" -- )
              ( Runtime:        -- cfa )
-  \ Return the code field address of a deferred word.
+  \ "name" = name of a deferred word
+  \ cfa = code field address the deferred word
+  \       is set to execute
   [COMPILE] '  STATE @ IF    COMPILE DEFER@ 
                        ELSE  DEFER@  THEN  ; IMMEDIATE
 
 -->
 
-( Deferred words -- version with PFA )
+( Set deferred words -- version with CFA )
 
-  \ XXX FIXME Not fully tested yet.
-  
-  \ This default version _looks_ like modern standard Forth,
-  \ but it _works_ differently since fig-Forth's `'` returns
-  \ the pfa (parameter field address), not the cfa (code field
-  \ address). Example:
- 
+  \ This version uses a cfa (code field address) to set the
+  \ deferred words. This version seems a better compromise than
+  \ the pfa version above, therefore it's loaded by default.
+  \
+  \ Note: Since fig-Forth's `'` returns a pfa (parameter field
+  \ address) `CFA` must be used to convert it the correspondent
+  \ cfa required by `IS` or `DEFER!`. `:NONAME` returns a cfa
+  \ (see the module <noname.fsb>), so it can be used directly
+  \ with `IS` and `DEFER!`.
+  \
+  \ Usage examples:
+
   \   DEFER MYWORD
-  \   ' NOOP IS MYWORD
-
-: DEFER!  ( pfa1 pfa2 -- )  SWAP CFA SWAP !  ;
-: <IS>  ( pfa "name" -- )  [COMPILE] ' DEFER!  ;
-: [IS]  ( pfa "name" -- )
-  \ XXX FIXME -- it fails
-  [COMPILE] ' [COMPILE] LITERAL COMPILE DEFER!  ; IMMEDIATE
-: IS  ( pfa "name" -- )
-  STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
-
-( Deferred words -- version with CFA )
-
-;S
-
-  \ XXX FIXME Not fully tested yet.
-
-  \ This alternative version _works_ more like modern standard
-  \ Forth, because cfa (code field address) is used, but it
-  \ _looks_ different because the word `CFA` has to be used,
-  \ since fig-Forth's `'` returns the pfa (parameter field
-  \ address).  Example:
- 
-  \   DEFER MYWORD
-  \   ' NOOP CFA IS MYWORD
+  \
+  \   ' WHATEVER-0 CFA IS MYWORD
+  \   MYWORD  \ execute WHATEVER-0
+  \
+  \   ' WHATEVER-1 CFA ' MYWORD DEFER!
+  \   MYWORD  \ execute WHATEVER-1
+  \
+  \   :NONAME WHATEVER-2 ;  IS MYWORD
+  \   MYWORD  \ execute WHATEVER-2
+  \
+  \   :NONAME WHATEVER-3 ;  ' MYWORD DEFER!
+  \   MYWORD  \ execute WHATEVER-3
 
 : DEFER!  ( cfa pfa -- )  !  ;
-: <IS>  ( cfa "name" -- )  [COMPILE] ' DEFER!  ;
-: [IS]  ( cfa "name" -- )
-  [COMPILE] ' [COMPILE] LITERAL [ ' DEFER! CFA ] LITERAL ,  ;
-  IMMEDIATE
+
 : IS  ( Interpretation: cfa "name" -- )
-      ( Compilation:    "name" -- )
-      ( Run-time:       -- cfa )
-  STATE @ IF  [COMPILE] [IS]  ELSE  <IS>  THEN  ; IMMEDIATE
+      ( Compilation: "name" -- )
+  [COMPILE] '  STATE @ IF  COMPILE DEFER!  ELSE  DEFER!  THEN
+  ; IMMEDIATE
+
+( Set deferred words -- version with PFA )
+
+  \ This version uses a pfa (parameter field address) to set
+  \ the deferred words. 
+  \
+  \ Note: Since `:NONAME` is written after ANS Forth and so it
+  \ returns a cfa (see the module <noname.fsb>), `2+` must be
+  \ used to convert it to the pfa required by `IS`.
+  \
+  \ Usage examples:
+ 
+  \   DEFER MYWORD
+  \
+  \   ' WHATEVER-0 IS MYWORD
+  \   MYWORD  \ execute WHATEVER-0
+  \
+  \   ' WHATEVER-1 ' MYWORD DEFER!
+  \   MYWORD  \ execute WHATEVER-1
+  \
+  \   :NONAME WHATEVER-2 ;  2+ IS MYWORD
+  \   MYWORD  \ execute WHATEVER-2
+  \
+  \   :NONAME WHATEVER-3 ;  2+ ' MYWORD DEFER!
+  \   MYWORD  \ execute WHATEVER-3
+
+: DEFER!  ( pfa1 pfa2 -- )  SWAP CFA SWAP !  ;
+
+: IS  ( Interpretation: cfa "name" -- )
+      ( Compilation: "name" -- )
+  [COMPILE] '  STATE @ IF  COMPILE DEFER!  ELSE  DEFER!  THEN
+  ; IMMEDIATE
 
   \ vim: filetype=abersoftforthafera

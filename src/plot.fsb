@@ -32,9 +32,9 @@
  
 .( Faster PLOT )
 
-HERE ' PLOT  ( pfa a )
-  DUP , \ the new cfa points to the code at pfa:
-  HEX
+HEX  HERE ' PLOT  ( a pfa )
+
+  DUP , \ new code field, pointing to the current pfa
 
   D9 C,           \ exx
   E1 C,           \ pop hl

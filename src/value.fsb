@@ -25,6 +25,10 @@
   \ because in fig-Forth `'` compiles its result.
   \
   \ 2015-04-30: Three alternative non-parsing versions.
+  \
+  \ 2015-07-07: Simplified: removed `[TO]` and `<TO>` from the
+  \ default parsing version. Updated and tested de version with
+  \ `DEFER`.
 
   \ -----------------------------------------------------------
 
@@ -33,28 +37,25 @@
 ( VALUE with parsing and state-smart TO )
 
 \ This implementation, with parsing and state-smart `TO`,
-\ was inspired by Gforth.
+\ conforms to ANS Forth.  ANS Forth explicitly requires that
+\ `TO` must parse.
 
-  \ 71 bytes of dictionary space.
+  \ 45 bytes of dictionary space are used.
 
-: VALUE  ( n "name"  -- )
-  CONSTANT  ;
+: VALUE  ( n "name"  -- )  CONSTANT  ;
 
-: <TO>  ( n "name" -- )
-  [COMPILE] ' !  ;
-
-: [TO]  ( n "name" -- )
-  [COMPILE] ' COMPILE !  ; IMMEDIATE
-
-: TO  ( n "name" -- )
-  STATE @ IF  [COMPILE] [TO]  ELSE  <TO>  THEN  ; IMMEDIATE
+: TO  ( Interpretation: n "name" -- )
+      ( Compilation: "name" -- )
+  [COMPILE] '  STATE @ IF  COMPILE !  ELSE  !  THEN
+  ; IMMEDIATE
 
 ( VALUE with non-parsing TO -- version with flag )
 
-\ This alternative implementation is adapted from lina:
-\ Copyright (c) 2000-2004 Albert van der Horst, The Netherlands
+\ This non-parsing alternative implementation is adapted from
+\ lina: Copyright (c) 2000-2004 Albert van der Horst, The
+\ Netherlands
 
-  \ 85 bytes of dictionary space
+  \ 85 bytes of dictionary space are used.
 
 0 VARIABLE TO-MESSAGE
 : FROM  ( -- )  0 TO-MESSAGE !  ;
@@ -64,10 +65,10 @@
 
 ( VALUE with non-parsing TO -- version with EXECUTE )
 
-\ This alternative implementation is a modified version
-\ of the lina implementation above.
+\ This non-parsing alternative implementation is a modified
+\ version of the lina implementation above.
 
-  \ 82 bytes of dictionary space
+  \ 82 bytes of dictionary space are used.
  
 0 VARIABLE (VALUE)
 : FROM  ( -- )  ' @ CFA (VALUE) !  ;  FROM
@@ -77,12 +78,14 @@
 
 ( VALUE with non-parsing TO -- version with DEFER )
 
-\ This non-parsing alternative is a modified version
-\ of the lina implementation above.
+\ This non-parsing alternative implementation is a modified
+\ version of the lina implementation above.
+
+  \ 84 bytes of dictionary space are used.
 
 DEFER (VALUE)
-: FROM  ( -- )  ' @ ' (VALUE) DEFER!  ;  FROM
-: TO    ( -- )  ' ! ' (VALUE) DEFER!  ;
+: FROM  ( -- )  ' @ CFA ' (VALUE) DEFER!  ;  FROM
+: TO    ( -- )  ' ! CFA ' (VALUE) DEFER!  ;
 : VALUE  ( "name" -- )
   <BUILDS ,  DOES>  (VALUE) FROM  ;
 
