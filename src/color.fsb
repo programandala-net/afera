@@ -53,7 +53,7 @@
   \          ___ ___ ___ ___ ___ ___ ___ ___ 
   \ MASK_P  |   |   |   |   |   |   |   |   |
   \         |   |   |   |   |   |   |   |   |
-  \ 23696   |___|___|___|___|___|___|___|___|
+  \ 23694   |___|___|___|___|___|___|___|___|
   \           7   6   5   4   3   2   1   0 
 
   \ 23695 = ATTR_T -- temporary colors
@@ -137,42 +137,94 @@
   \ Fix: `INVERSE`, `BRIGHT`, `FLASH` and `GOVER` checked the
   \ lower 8 bits of the input flag. Now they check all the 16
   \ bits.
+  \
+  \ Bug found and fixed:
+
+  \ ----
+  \ 2 ink 10 10 plot  \ plots but...
+  \ 10 10 point . 1  \ ...with black ink! why?
+  \
+  \ 3 ink cr 10 10 plot \ it works with `cr` between
+  \
+  \ 3 ink
+  \ 10 10 plot \ it works also in two commands
+  \ ----
+
+  \ The color change required by `plot` is not effective until
+  \ something is printed. The problem is ATTR T is not changed:
+  
+  \ ----
+  \ 6 ink 23695 c@ 100 100 plot \ black ink, black paper plot!
+  \ . 0  \ content of ATTR T
+  \ ----
+
+  \ This happens also with Abersoft Forth.
+
+  \ New versions of `INK` and `PAPER` are written. They change
+  \ the required bits of ATTR T and ATTR P directly, without
+  \ any ROM routine. Now they work as expected, and faster. The
+  \ only disadvantage is color 8 (contrast) and 9 (transparent)
+  \ are not supported. New words are required for that.
 
 -->
 
-( INK PAPER )
+( INK )
 
-HEX
+  \ XXX TODO -- Colors 8 (contrast) and 9 (transparent) are not
+  \ supported.
 
-  \ XXX TODO -- Idea for even faster code:
-  \ Just change the system variables.
-  \ Paper 9 and ink 9 could be managed apart.
-
-HERE  ' INK DUP CFA !  ( b -- )  \ 28%
+HEX  HERE
+  ' INK DUP CFA !     \ convert `INK` to a code word
+  \ ( b -- )
   \ b = color value
-  3E C, 10 C, D7 C,  \ ld a,16 / rst 0x10
-  E1 C, 7D C, D7 C,  \ pop hl / ld a,l / rst 0x10
-  CD C, 1CAD ,       \ call set-permanent-colors
-  C3 C, NEXT ,       \ jp next
+  D1 C,               \ pop de
+  3A C, 5C8F ,        \ ld a,(23695) ; ATTR P
+  E6 C, F8 C,         \ and %11111000 ; remove the current ink
+  50 07 + C,          \ ld d,a ; save the result
+  78 03 + C,          \ ld a,e ; new ink
+  E6 C, 07 C,         \ and %00000111 ; only the ink
+  B0 02 + C,          \ or d ; combine with the current attr
+  32 C, 5C8F ,        \ ld (23695),a ; update ATTR P
+  32 C, 5C8D ,        \ ld (23693),a ; update ATTR T
+  C3 C, NEXT ,        \ jp next
+
   DUP ' INK OVER HERE SWAP - CMOVE  DP !
 
-HERE  ' PAPER DUP CFA !  ( b -- )  \ 17%
+DECIMAL  -->
+
+( PAPER )
+
+  \ XXX TODO -- Colors 8 (contrast) and 9 (transparent) are not
+  \ supported.
+
+HEX  HERE
+  ' PAPER DUP CFA !     \ convert `PAPER` to a code word
+  \ ( b -- )
   \ b = color value
-  3E C, 11 C, D7 C,  \ ld a,17 / rst 0x10
-  E1 C, 7D C, D7 C,  \ pop hl / ld a,l / rst 0x10
-  CD C, 1CAD ,       \ call set-permanent-colors
-  C3 C, NEXT ,       \ jp next
+  D1 C,           \ pop de
+  3A C, 5C8F ,    \ ld a,(23695) ; ATTR P
+  E6 C, C7 C,     \ and %11000111 ; remove the current paper
+  50 07 + C,      \ ld d,a ; save the result
+  78 03 + C,      \ ld a,e ; new ink
+  E6 C, 38 C,     \ and %00111000 ; only the paper
+  B0 02 + C,      \ or d ; combine with the current attr
+  32 C, 5C8F ,    \ ld (23695),a ; update ATTR P
+  32 C, 5C8D ,    \ ld (23693),a ; update ATTR T
+  C3 C, NEXT ,    \ jp next
+
   DUP ' PAPER OVER HERE SWAP - CMOVE  DP !
 
 DECIMAL  -->
 
 ( BRIGHT )
 
-HERE  ' BRIGHT DUP CFA !  ( f -- )
+HERE
+  ( f -- )
+  ' BRIGHT DUP CFA !    \ convert `BRIGHT` to a code word
   HEX
   E1 C,                 \ pop hl
   78 04 + C,            \ ld a,h
-  BC 05 + C,            \ or l
+  B0 05 + C,            \ or l
   21 C, 5C8D ,          \ ld hl,23693
   CA C, ' BRIGHT 0E + , \ jp z,turn_off
                         \ ; turn on
@@ -182,17 +234,17 @@ HERE  ' BRIGHT DUP CFA !  ( f -- )
   CB C, 86 8 6 * + C,   \ res 6,(hl)
   C3 C, NEXT ,          \ jp next
   DUP ' BRIGHT OVER HERE SWAP - CMOVE
-  DP !  DECIMAL
-
--->
+  DP !  DECIMAL -->
 
 ( FLASH )
 
-HERE  ' FLASH DUP CFA !  ( f -- )
+HERE
+  ' FLASH DUP CFA !    \ convert `FLASH` to a code word
+  ( f -- )
   HEX
   E1 C,                 \ pop hl
   78 04 + C,            \ ld a,h
-  BC 05 + C,            \ or l
+  B0 05 + C,            \ or l
   21 C, 5C8D ,          \ ld hl,23693
   CA C, ' FLASH 0E + ,  \ jp z,turn_off
                         \ ; turn on
@@ -202,19 +254,18 @@ HERE  ' FLASH DUP CFA !  ( f -- )
   CB C, 86 8 7 * + C,   \ res 7,(hl)
   C3 C, NEXT ,          \ jp next
   DUP ' FLASH OVER HERE SWAP - CMOVE
-  DP !  DECIMAL
-
--->
+  DP !  DECIMAL -->
 
 ( GOVER )
 
+  \ Convert `GOVER` to a code word.
 HERE  ' GOVER DUP CFA !  ( f -- )
   HEX
   E1 C,                 \ pop hl
   78 04 + C,            \ ld a,h
-  BC 05 + C,            \ or l
+  B0 05 + C,            \ or l
   21 C, 5C91 ,          \ ld hl,23697
-  CA C, ' GOVER 0E + ,  \ jp z,turn_off
+  CA C, ' GOVER 10 + ,  \ jp z,turn_off
                         \ ; turn on
   CB C, C6 8 0 * + C,   \ set 0,(hl) ; temporary
   CB C, C6 8 1 * + C,   \ set 1,(hl) ; permanent
@@ -228,13 +279,14 @@ HERE  ' GOVER DUP CFA !  ( f -- )
 
 ( INVERSE )
 
+  \ Convert `INVERSE` to a code word.
 HERE  ' INVERSE DUP CFA !  ( f -- )
   HEX
   E1 C,                   \ pop hl
   78 04 + C,              \ ld a,h
-  BC 05 + C,              \ or l
+  B0 05 + C,              \ or l
   21 C, 5C91 ,            \ ld hl,23697
-  CA C, ' INVERSE 0E + ,  \ jp z,turn_off
+  CA C, ' INVERSE 10 + ,  \ jp z,turn_off
                           \ ; turn on
   CB C, C6 8 2 * + C,     \ set 2,(hl) ; temporary
   CB C, C6 8 3 * + C,     \ set 3,(hl) ; permanent
@@ -245,5 +297,35 @@ HERE  ' INVERSE DUP CFA !  ( f -- )
   C3 C, NEXT ,            \ jp next
   DUP ' INVERSE OVER HERE SWAP - CMOVE
   DP !  DECIMAL
+
+( INK PAPER )  \ XXX OLD -- not used anymore
+
+-->  \ skip this screen, just in case
+
+  \ This version of `INK` causes strange problems (see note
+  \ 2015-07-13 in the history). Both `INK` and `PAPER` were
+  \ rewritten with a different approach.
+
+HEX
+
+HERE  ' INK DUP CFA !
+  \ ( b -- )  \ 28%
+  \ b = color value
+  3E C, 10 C, D7 C,   \ ld a,16 / rst 0x10
+  E1 C, 7D C, D7 C,   \ pop hl / ld a,l / rst 0x10
+  CD C, 1CAD ,        \ call set-permanent-colors
+  C3 C, NEXT ,        \ jp next
+  DUP ' INK OVER HERE SWAP - CMOVE  DP !
+
+HERE  ' PAPER DUP CFA !
+  \ ( b -- )  \ 17%
+  \ b = color value
+  3E C, 11 C, D7 C,   \ ld a,17 / rst 0x10
+  E1 C, 7D C, D7 C,   \ pop hl / ld a,l / rst 0x10
+  CD C, 1CAD ,        \ call set-permanent-colors
+  C3 C, NEXT ,        \ jp next
+  DUP ' PAPER OVER HERE SWAP - CMOVE  DP !
+
+DECIMAL
 
   \ vim: filetype=abersoftforthafera

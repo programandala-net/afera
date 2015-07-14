@@ -22,7 +22,7 @@
   \ Description
 
   \ This file must be the last one to be loaded. It simply
-  \ stores 1 into the `LOADED?' variable, what causes the
+  \ stores 1 into the `LOADED' variable, what causes the
   \ loader to stop.
   \
   \ See <loader.fsb> for details.
@@ -31,10 +31,11 @@
   \ History
 
   \ 2015-05-08: Start.
+  \ 2015-07-14: Updated after the changes in <loader.fsb>.
 
   \ -----------------------------------------------------------
 
-1 LOADED? !
+1 LOADED !
 
   \ vim: filetype=abersoftforthafera
 

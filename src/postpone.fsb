@@ -1,10 +1,6 @@
-.( Loaded )
-\ loaded_execute.fsb
-
-\ Part of a
-\ tape source loader for ZX Spectrum Abersoft Forth
-
-\ http://programandala.net/en.program.tron_0xf.html
+.( POSTPONE )
+\ postpone.fsb
+\ `POSTPONE` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -19,24 +15,17 @@
   \ warranty.
 
   \ -----------------------------------------------------------
-  \ Description
-
-  \ This file must be the last one to be loaded. It stores the
-  \ cfa of the latest word into the `LOADED' variable, what
-  \ causes the loader to stop and to execute it.
-  \
-  \ See <loader.fsb> for details.
-
-  \ -----------------------------------------------------------
   \ History
 
-  \ 2015-05-08: Start.
-  \ 2015-07-14: Updated after the changes in <loader.fsb>.
+  \ 2015-07-14: Written.
 
   \ -----------------------------------------------------------
 
-LATEST PFA CFA LOADED !
-
+: POSTPONE  ( "name" -- )
+  -FIND 0= 0 ?ERROR  ( pfa b )  \ error if not found
+  64 AND 0=  \ non-immediate word?
+  IF  COMPILE COMPILE  THEN  \ if so, compile `compile`
+  CFA ,  \ compile the cfa
+  ; IMMEDIATE
+  
   \ vim: filetype=abersoftforthafera
-
-

@@ -52,6 +52,10 @@
   \ start.
   \
   \ 2015-07-05: Fix: Typo.
+  \
+  \ 2015-07-14: Changed the name and usage of `LOADED`, in
+  \ order to make it more flexible. Now any word can be
+  \ executed, not just the latesonee.
 
 ( Library modules loader )
 
@@ -59,13 +63,13 @@
 
 FORTH DEFINITIONS
 
-0 VARIABLE LOADED?
+0 VARIABLE LOADED
   \ Flag: Have all sources been loaded?
   \ It's set in the last source file.
   \ Possible values:
   \ 0  = keep on loading sources
-  \ -1 = stop the loader and execute the latest word defined
-  \ other  = stop the loader
+  \ 1 = stop the loader
+  \ cfa  = stop the loader and execute the cfa
 
 : LOADER  ( -- )
 
@@ -76,8 +80,8 @@ FORTH DEFINITIONS
   \ XXX TMP benchmark -- reset the system frames counter
   \ 0 23672 ! 0 23674 C!
 
-  0 LOADED? !
-  BEGIN  LOADED? @ 0=  WHILE
+  0 LOADED !
+  BEGIN  LOADED @ 0=  WHILE
     255 23692 C!  ( avoid the "scroll?" prompt)
     EMPTY-BUFFERS INIT-DISC LOADT 1 LOAD
   REPEAT
@@ -85,7 +89,10 @@ FORTH DEFINITIONS
   \ XXX TMP benchmark -- result
   \ 23672 @ 23674 C@ D. ." FRAMES" CR
 
-  LOADED? @ -1 = IF  RP! LATEST PFA CFA EXECUTE  THEN  ;
+  \ LOADED @ -1 = IF  RP! LATEST PFA CFA EXECUTE  THEN  ;
+  LOADED @ 1 - IF
+    RP! LOADED @ EXECUTE QUIT
+  THEN  ;
 
 LOADER
 

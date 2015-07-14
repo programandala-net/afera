@@ -137,8 +137,8 @@ DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
   \ The word `MON` does nothing when the address 0x5CB0
   \ contains a value other than 0. It seems an undocumented way
   \ to deactivate the exit to BASIC.  0x5CB0 is an unused
-  \ system variable in ZX Spectrum, except the +3 model, where
-  \ it's NMIADD.
+  \ system variable in ZX Spectrum, except the +2A and +3
+  \ models, where it's NMIADD.
 
   \ Make `MON` to return to BASIC, without checking NMIADD.
 763D ' MON CFA !
@@ -182,9 +182,11 @@ DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
   \ command line, and words written after it are not
   \ recognized.
   \
-  \ `INK` has a bug that causes `PLOT` to use 0 instead the
-  \ proper attribute in most cases. The alternative definition
-  \ provided in <color.fsb> works fine.
+  \ In certain cases, `PLOT` uses black ink and black paper
+  \ instead the color set by `INK` and `PAPER`.  See
+  \ <color.fsb> for more details. The alternative definitions
+  \ provided in <color.fsb> and <plot.fsb> work fine, though
+  \ the cause of the original bug is not fully clear yet.
 
 DECIMAL -->
 
