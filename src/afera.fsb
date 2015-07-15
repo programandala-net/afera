@@ -159,6 +159,16 @@ DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
 ' NOOP CFA DUP 6F97 ! DUP 6F99 ! 6F9B !
 
   \ ............................................
+  \ Fix the `GOVER` and `INVERSE` bug
+
+  \ The words `GOVER` and `INVERSE` use `!` twice in order to
+  \ update the system variable P FLAG (at 0x5C91), but this
+  \ variable ocuppies one byte, therefore `!` could corrupt the
+  \ next system variable, MEMBOT.  `C!` must be used instead.
+
+' C! CFA DUP DUP DUP 7E5B ! 7E71 !  7E95 ! 7EAB !
+
+  \ ............................................
   \ Cosmetic patches
 
   \ No `CLS` in `INDEX`.
@@ -751,11 +761,14 @@ EXTEND  CLS0 GREETING
   \ 2015-06-02: Simpler method to create the patch of `R/W`,
   \ with `]` and `[`.
   \
-  \ 2015-06-19: Fix: `0 MESSAGE` bug.
+  \ 2015-06-19: Fix of Abersoft Forth's `0 MESSAGE` bug.
   \
   \ 2015-07-06: Improvement: `COLORS0` is factored to
   \ `(COLORS0)` in order to make it configurable by the user.
   \
+  \ 2015-07-14: Fix of Abersoft Forth's bug in `INVERSE` and
+  \ `GOVER`.
+
   \ -----------------------------------------------------------
 
   \ vim: filetype=abersoftforthafera

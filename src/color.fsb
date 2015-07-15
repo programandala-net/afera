@@ -151,20 +151,27 @@
   \ ----
 
   \ The color change required by `plot` is not effective until
-  \ something is printed. The problem is ATTR T is not changed:
+  \ something is printed. The problem is ATTR_T is not changed:
   
   \ ----
   \ 6 ink 23695 c@ 100 100 plot \ black ink, black paper plot!
-  \ . 0  \ content of ATTR T
+  \ . 0  \ content of ATTR_T
   \ ----
 
   \ This happens also with Abersoft Forth.
 
   \ New versions of `INK` and `PAPER` are written. They change
-  \ the required bits of ATTR T and ATTR P directly, without
+  \ the required bits of ATTR_T and ATTR_P directly, without
   \ any ROM routine. Now they work as expected, and faster. The
   \ only disadvantage is color 8 (contrast) and 9 (transparent)
   \ are not supported. New words are required for that.
+  \
+  \ 2015-07-14: Bug found and fixed...: The new `INK` and
+  \ `PAPER` took the content of ATTR_T, modified it and used
+  \ the result to update both ATTR_T and ATTR_P. This overwrote
+  \ the effect of `FLASH` and `BRIGHT`, that only updated
+  \ ATTR_P.  `FLASH` and `BRIGHT` have been modified to update
+  \ both variables.
 
 -->
 
@@ -178,14 +185,14 @@ HEX  HERE
   \ ( b -- )
   \ b = color value
   D1 C,               \ pop de
-  3A C, 5C8F ,        \ ld a,(23695) ; ATTR P
+  3A C, 5C8F ,        \ ld a,(23695) ; ATTR_T
   E6 C, F8 C,         \ and %11111000 ; remove the current ink
   50 07 + C,          \ ld d,a ; save the result
   78 03 + C,          \ ld a,e ; new ink
   E6 C, 07 C,         \ and %00000111 ; only the ink
   B0 02 + C,          \ or d ; combine with the current attr
-  32 C, 5C8F ,        \ ld (23695),a ; update ATTR P
-  32 C, 5C8D ,        \ ld (23693),a ; update ATTR T
+  32 C, 5C8F ,        \ ld (23695),a ; update ATTR_T
+  32 C, 5C8D ,        \ ld (23693),a ; update ATTR_P
   C3 C, NEXT ,        \ jp next
 
   DUP ' INK OVER HERE SWAP - CMOVE  DP !
@@ -202,14 +209,14 @@ HEX  HERE
   \ ( b -- )
   \ b = color value
   D1 C,           \ pop de
-  3A C, 5C8F ,    \ ld a,(23695) ; ATTR P
+  3A C, 5C8F ,    \ ld a,(23695) ; ATTR_T
   E6 C, C7 C,     \ and %11000111 ; remove the current paper
   50 07 + C,      \ ld d,a ; save the result
   78 03 + C,      \ ld a,e ; new ink
   E6 C, 38 C,     \ and %00111000 ; only the paper
   B0 02 + C,      \ or d ; combine with the current attr
-  32 C, 5C8F ,    \ ld (23695),a ; update ATTR P
-  32 C, 5C8D ,    \ ld (23693),a ; update ATTR T
+  32 C, 5C8F ,    \ ld (23695),a ; update ATTR_T
+  32 C, 5C8D ,    \ ld (23693),a ; update ATTR_P
   C3 C, NEXT ,    \ jp next
 
   DUP ' PAPER OVER HERE SWAP - CMOVE  DP !
@@ -219,42 +226,42 @@ DECIMAL  -->
 ( BRIGHT )
 
 HERE
-  ( f -- )
+  \ ( f -- )
   ' BRIGHT DUP CFA !    \ convert `BRIGHT` to a code word
   HEX
   E1 C,                 \ pop hl
   78 04 + C,            \ ld a,h
   B0 05 + C,            \ or l
-  21 C, 5C8D ,          \ ld hl,23693
-  CA C, ' BRIGHT 0E + , \ jp z,turn_off
+  CA C, ' BRIGHT 11 + , \ jp z,turn_off
                         \ ; turn on
-  CB C, C6 8 6 * + C,   \ set 6,(hl)
+  FD C, CB C, 53 C, C6 08 6 * + C, \ set 6,(iy+0x53) \ ATTR_P
+  FD C, CB C, 55 C, C6 08 6 * + C, \ set 6,(iy+0x55) \ ATTR_T
   C3 C, NEXT ,          \ jp next
                         \ turn_off:
-  CB C, 86 8 6 * + C,   \ res 6,(hl)
+  FD C, CB C, 53 C, 86 08 6 * + C, \ res 6,(iy+0x53) \ ATTR_P
+  FD C, CB C, 55 C, 86 08 6 * + C, \ res 6,(iy+0x55) \ ATTR_T
   C3 C, NEXT ,          \ jp next
-  DUP ' BRIGHT OVER HERE SWAP - CMOVE
-  DP !  DECIMAL -->
+  DUP ' BRIGHT OVER HERE SWAP - CMOVE  DP !  DECIMAL -->
 
 ( FLASH )
 
 HERE
   ' FLASH DUP CFA !    \ convert `FLASH` to a code word
-  ( f -- )
+  \ ( f -- )
   HEX
   E1 C,                 \ pop hl
   78 04 + C,            \ ld a,h
   B0 05 + C,            \ or l
-  21 C, 5C8D ,          \ ld hl,23693
-  CA C, ' FLASH 0E + ,  \ jp z,turn_off
+  CA C, ' FLASH 11 + ,  \ jp z,turn_off
                         \ ; turn on
-  CB C, C6 8 7 * + C,   \ set 7,(hl)
+  FD C, CB C, 53 C, C6 08 7 * + C, \ set 7,(iy+0x53) \ ATTR_P
+  FD C, CB C, 55 C, C6 08 7 * + C, \ set 7,(iy+0x55) \ ATTR_T
   C3 C, NEXT ,          \ jp next
                         \ turn_off:
-  CB C, 86 8 7 * + C,   \ res 7,(hl)
+  FD C, CB C, 53 C, 86 08 7 * + C, \ res 7,(iy+0x53) \ ATTR_P
+  FD C, CB C, 55 C, 86 08 7 * + C, \ res 7,(iy+0x55) \ ATTR_T
   C3 C, NEXT ,          \ jp next
-  DUP ' FLASH OVER HERE SWAP - CMOVE
-  DP !  DECIMAL -->
+  DUP ' FLASH OVER HERE SWAP - CMOVE  DP !  DECIMAL -->
 
 ( GOVER )
 
@@ -264,7 +271,7 @@ HERE  ' GOVER DUP CFA !  ( f -- )
   E1 C,                 \ pop hl
   78 04 + C,            \ ld a,h
   B0 05 + C,            \ or l
-  21 C, 5C91 ,          \ ld hl,23697
+  21 C, 5C91 ,          \ ld hl,23697 ; P_FLAG
   CA C, ' GOVER 10 + ,  \ jp z,turn_off
                         \ ; turn on
   CB C, C6 8 0 * + C,   \ set 0,(hl) ; temporary
@@ -285,7 +292,7 @@ HERE  ' INVERSE DUP CFA !  ( f -- )
   E1 C,                   \ pop hl
   78 04 + C,              \ ld a,h
   B0 05 + C,              \ or l
-  21 C, 5C91 ,            \ ld hl,23697
+  21 C, 5C91 ,            \ ld hl,23697 ; P_FLAG
   CA C, ' INVERSE 10 + ,  \ jp z,turn_off
                           \ ; turn on
   CB C, C6 8 2 * + C,     \ set 2,(hl) ; temporary
