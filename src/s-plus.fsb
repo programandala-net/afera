@@ -16,23 +16,25 @@
   \ warranty.
 
   \ -----------------------------------------------------------
-  \ Requirements
-
-NEEDS MOVE              move
-NEEDS LENGTHS           lengths
-NEEDS ALLOCATE-STRING   csb
-NEEDS PICK              pick
-  
-  \ -----------------------------------------------------------
   \ History
  
   \ 2015-05-18: Moved from the module <strings.fsb>.
 
+  \ -----------------------------------------------------------
+  \ Requirements
+
+NEEDS MOVE              move
+NEEDS ALLOCATE-STRING   csb
+NEEDS PICK              pick
+  
+[DEFINED] LENGTHS ?-->
+
+: LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
+  2OVER NIP OVER  ;
+
 -->
 
 ( SMOVE S+ )
-
-  \ XXX TODO move to its own file.
 
 : SMOVE  ( ca1 len ca2 -- )  SWAP MOVE  ;
 

@@ -60,8 +60,7 @@ NEEDS FALSE   flags
   \
   \ 2015-06-22: Fix: `S,` didn't compile the count byte.
   \
-  \ 2015-07-16: `S=` and `LENGTHS` are moved to their own
-  \ files.
+  \ 2015-07-16: `S=` is moved to its own file.
 
 2 3 THRU
 

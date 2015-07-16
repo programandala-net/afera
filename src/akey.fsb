@@ -33,13 +33,19 @@
   \ 2015-04-09: Code extracted from the main file of the
   \ library. Moved to a keyboard module.
   \ 2015-05-03: Code moved to its own file.
+  \ 2015-07-16: Rewritten with `INKEY?`.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+NEEDS INKEY? inkeyq
 
   \ -----------------------------------------------------------
 
 : AKEY  ( -- c )
   \ Wait for a key to be pressed and return its code,
   \ whatever it is, without showing the cursor.
-  BEGIN  INKEY DUP 255 =  WHILE  DROP  REPEAT  ;
+  BEGIN  INKEY?  UNTIL  ;
 
   \ vim: filetype=abersoftforthafera
 

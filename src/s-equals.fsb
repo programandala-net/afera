@@ -16,16 +16,23 @@
   \ warranty.
 
   \ -----------------------------------------------------------
-  \ Requirements
-
-NEEDS LENGTHS lengths
-
-  \ -----------------------------------------------------------
   \ History
 
   \ 2015-07-16: Moved from the strings module.
 
   \ -----------------------------------------------------------
+  \ Requirements
+
+[DEFINED] LENGTHS ?-->
+
+: LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
+  2OVER NIP OVER  ;
+
+-->
+
+  \ -----------------------------------------------------------
+
+( S= )
 
 : S=  ( ca1 len1 ca2 len2 -- f )
   LENGTHS -  \ different lenghts?
