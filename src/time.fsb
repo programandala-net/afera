@@ -16,10 +16,12 @@
   \ -----------------------------------------------------------
   \ History
 
-  \ 2015-04-02: Start, with the code of `MS`, moved from the
+  \ 2015-07-02: Start, with the code of `MS`, moved from the
   \ main file of the library.
   \
   \ 2015-04-03: New: `TIME@`, `TIME!` and `TIME0`.
+  \
+  \ 2015-07-16: `MS` moved to its own file.
 
 -->
 
@@ -27,12 +29,7 @@
 
 FORTH DEFINITIONS  DECIMAL
 
-23672 CONSTANT SYS-FRAMES
-
-: MS  ( n -- )
-  \ Wait n ms (miliseconds), with 20 ms precision.
-  20 / SYS-FRAMES @ +
-  BEGIN  DUP SYS-FRAMES @ U<  UNTIL DROP  ;
+[DEFINED] SYS-FRAMES ?\ 23672 CONSTANT SYS-FRAMES
 
 : TIME@  ( -- d )
   \ System frames counter (incremented every 20 ms).

@@ -358,6 +358,7 @@ groups_for_disk:
 		src/dot-vocs.fsb \
 		src/dump.fsb \
 		src/decode.fsb \
+		src/ms.fsb \
 		src/time.fsb \
 		> src.grouped_for_disk/tools.fsb ; \
 	cat \
@@ -367,7 +368,9 @@ groups_for_disk:
 		src/uppers.fsb \
 		src/lowerc.fsb \
 		src/lowers.fsb \
+		src/lengths.fsb \
 		src/s-plus.fsb \
+		src/s-equals.fsb \
 		src/move.fsb \
 		> src.grouped_for_disk/strings.fsb ; \
 	cat \
@@ -613,3 +616,5 @@ tests/defer_test.tap: tapes
 # 2015-07-05: Updated.
 #
 # 2015-07-06: `tests/defer_test.tap`.
+#
+# 2015-07-16: Updated.

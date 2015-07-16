@@ -1,0 +1,86 @@
+.( MS )
+\ ms.fsb
+\ `MS` for ZX Spectrum Abersoft Forth.
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-30: Code written in the main file of the library.
+  \
+  \ 2015-04-02: Code moved to a time extensions module.
+  \
+  \ 2015-07-16: Code moved to its own file.
+
+FORTH DEFINITIONS  DECIMAL
+
+[DEFINED] SYS-FRAMES ?\ 23672 CONSTANT SYS-FRAMES
+
+: MS  ( n -- )
+  \ Wait n ms (miliseconds), with 20 ms precision.
+  20 / SYS-FRAMES @ +
+  BEGIN  DUP SYS-FRAMES @ U<  UNTIL DROP  ;
+
+;S
+
+( XXX TODO )
+
+
+  \ XXX TODO code from DZX-Forth
+
+  \ speed:
+    \ dw 4   ; 1..8191 MHz
+
+    \ pop de
+  \ paren_ms_.1:
+    \ ld a,e
+    \ or d
+    \ jp z,next
+    \ ld hl,(speed)
+    \ add hl,hl
+    \ add hl,hl
+    \ add hl,hl
+  \ paren_ms_.2:
+    \ ex (sp),hl        ; 19T
+    \ ex (sp),hl        ; 19T
+    \ ex (sp),hl        ; 19T
+    \ ex (sp),hl        ; 19T
+    \ push hl           ; 11T
+    \ pop hl            ; 10T
+    \ dec  hl           ;  6T
+    \ ld a,0            ;  7T
+    \ ld a,l            ;  4T
+    \ or h              ;  4T
+    \ jp nz,paren_ms_.2 ; 10T
+    \ dec  de
+    \ jp paren_ms_.1
+
+
+  \ XXX TODO
+  \ code from vForth
+
+   \ POP DE|
+   \ BEGIN,
+   \  LDI A'| 171 N,
+   \  BEGIN,
+   \   NOP
+   \   DEC A'|
+   \  -UNTIL,
+   \  DECX DE|
+   \  LD A'| D|
+   \ ORA E|
+   \ -UNTIL,
+
+  \ vim: filetype=abersoftforthafera
+

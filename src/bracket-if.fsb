@@ -20,7 +20,7 @@
   \ Requirements
 
   NEEDS S"          strings
-  NEEDS S=          strings
+  NEEDS S=          s-equals
   NEEDS PARSE-NAME  strings
 
   \ -----------------------------------------------------------

@@ -20,11 +20,10 @@
 
 NEEDS MOVE    move
 NEEDS FALSE   flags
-NEEDS PICK    pick
 
   \ -----------------------------------------------------------
   \ History
-  
+
   \ 2015-03: `CHAR`, `[CHAR]`, `PARSE-TEXT`, `PARSE-NAME`,
   \ `SLIT`, `S,`, `SLITERAL`, `.(`, `(S)`, `S"`, `S'`.
   \
@@ -41,7 +40,7 @@ NEEDS PICK    pick
   \ 2015-03-31: New: `/STRING`.
   \
   \ 2015-04-03: Change: `CHAR` and `[CHAR]` are moved to the
-  \ main file of the library. 
+  \ main file of the library.
   \
   \ 2015-04-14: New: `CMOVE>`, `MOVE`.
   \
@@ -60,8 +59,11 @@ NEEDS PICK    pick
   \ 2015-05-26: `STR=` is renamed as `S=`.
   \
   \ 2015-06-22: Fix: `S,` didn't compile the count byte.
+  \
+  \ 2015-07-16: `S=` and `LENGTHS` are moved to their own
+  \ files.
 
-2 4 THRU 
+2 3 THRU
 
 ( PARSE-TEXT PARSE-NAME S, SLITERAL PLACE +PLACE /STRING )
 
@@ -76,7 +78,7 @@ NEEDS PICK    pick
 : +PLACE  ( ca1 len1 ca2 )
   2DUP C@ + OVER C!  DUP C@ 1+ + SWAP MOVE  ;
 
-: /STRING  ( ca1 len1 n -- ca2 len2 ) 
+: /STRING  ( ca1 len1 n -- ca2 len2 )
   DUP >R - SWAP R> + SWAP  ;
 
 ( S" S' )
@@ -95,18 +97,5 @@ NEEDS PICK    pick
 
 : S'  ( Compilation: "ccc<'>" -- ) ( Run-time:  -- ca len )
   [CHAR] ' (S)  ; IMMEDIATE
-
-( LENGTHS S= )
-
-: LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
-  2 PICK OVER  ;
-
-  \ XXX TODO move to its own file (check requirement of [if]):
-
-: S=  ( ca1 len1 ca2 len2 -- f )
-  LENGTHS -  \ different lenghts?
-  IF    2DROP 2DROP FALSE EXIT
-  ELSE  DROP [ CONTEXT @ EDITOR ] -TEXT [ CONTEXT ! ] 0= 0=
-  THEN  ;
 
   \ vim: filetype=abersoftforthafera

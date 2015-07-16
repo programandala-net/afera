@@ -19,7 +19,7 @@
   \ Requirements
 
 NEEDS MOVE              move
-NEEDS LENGTHS           strings
+NEEDS LENGTHS           lengths
 NEEDS ALLOCATE-STRING   csb
 NEEDS PICK              pick
   
