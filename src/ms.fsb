@@ -21,9 +21,49 @@
   \
   \ 2015-04-02: Code moved to a time extensions module.
   \
-  \ 2015-07-16: Code moved to its own file.
+  \ 2015-07-16: Code moved to its own file. The temporary
+  \ version, that depends on the system frames counter and has
+  \ 20 ms precision, is substituted with code adapted from
+  \ DZX-Forth.
 
-FORTH DEFINITIONS  DECIMAL
+FORTH DEFINITIONS  -->
+
+( MS )
+
+  \ [Code adapted from DZX-Forth.]
+
+CREATE MS  ( u -- )  HEX
+  D1 C,         \ pop de
+  HERE          \ ms1:
+  78 03 + C,  B0 02 + C,
+                \ ld a,e
+                \ or d
+  CA C, NEXT ,  \ jp z,next
+  21 C, 0004 ,  \ ld hl,4 ; MHz
+  29 C,  29 C,  29 C,
+                \ add hl,hl
+                \ add hl,hl
+                \ add hl,hl
+  HERE          \ ms2:
+  E3 C,  E3 C,  E3 C,  E3 C,
+                \ ex (sp),hl        ; 19T
+                \ ex (sp),hl        ; 19T
+                \ ex (sp),hl        ; 19T
+                \ ex (sp),hl        ; 19T
+  E5 C,  E1 C,  2B C,
+                \ push hl           ; 11T
+                \ pop hl            ; 10T
+                \ dec hl            ;  6T
+  3E C, 00 C,  78 05 + C,  B0 04 + C,
+                \ ld a,0            ;  7T
+                \ ld a,l            ;  4T
+                \ or h              ;  4T
+  C2 C, ,       \ jp nz,ms2         ; 10T
+  1B C,         \ dec de
+  C3 C, ,       \ jp ms1
+  SMUDGE DECIMAL
+
+( XXX OLD -- first, temporary version )
 
 [DEFINED] SYS-FRAMES ?\ 23672 CONSTANT SYS-FRAMES
 
@@ -32,43 +72,7 @@ FORTH DEFINITIONS  DECIMAL
   20 / SYS-FRAMES @ +
   BEGIN  DUP SYS-FRAMES @ U<  UNTIL DROP  ;
 
-;S
-
-( XXX TODO )
-
-
-  \ XXX TODO code from DZX-Forth
-
-  \ speed:
-    \ dw 4   ; 1..8191 MHz
-
-    \ pop de
-  \ paren_ms_.1:
-    \ ld a,e
-    \ or d
-    \ jp z,next
-    \ ld hl,(speed)
-    \ add hl,hl
-    \ add hl,hl
-    \ add hl,hl
-  \ paren_ms_.2:
-    \ ex (sp),hl        ; 19T
-    \ ex (sp),hl        ; 19T
-    \ ex (sp),hl        ; 19T
-    \ ex (sp),hl        ; 19T
-    \ push hl           ; 11T
-    \ pop hl            ; 10T
-    \ dec  hl           ;  6T
-    \ ld a,0            ;  7T
-    \ ld a,l            ;  4T
-    \ or h              ;  4T
-    \ jp nz,paren_ms_.2 ; 10T
-    \ dec  de
-    \ jp paren_ms_.1
-
-
-  \ XXX TODO
-  \ code from vForth
+( XXX TODO -- alternative code from vForth )
 
    \ POP DE|
    \ BEGIN,
