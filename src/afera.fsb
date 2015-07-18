@@ -115,21 +115,13 @@ HI LO - 1+ CONSTANT /DISC
   \ must be fixed in order to move the disk buffers (what does
   \ the module <lowersys.fsb>).
 
-  \ XXX OLD method
-  \ ' NOOP CFA ' COLD 02 + !  ' FIRST CFA ' COLD 04 + !
-  \ ' NOOP CFA ' COLD 0A + !  ' FIRST CFA ' COLD 0C + !
-
-: ',  ( "name" -- )  [COMPILE] ' CFA ,  ;  HERE
-
   \ Compile the patched version of `COLD`.
-', EMPTY-BUFFERS ', FIRST ', USE ', !  ', FIRST ', PREV ', !
-', DR0 ', LIT 5E52 , ', LIT 5E66 , ', @ ', LIT 6 , ', +
-', LIT 10 , ', CMOVE ', LIT 5E4C , ', @ ', LIT 6CF8 , ', !
-', ABORT
+HERE  ] EMPTY-BUFFERS FIRST USE ! FIRST PREV ! DR0
+        5E52 5E66 @ 6 + 10 CMOVE 5E4C @ 6CF8 ! ABORT [
   \ XXX Space freed: 4 bytes at 0x6E06
 
   \ Patch `COLD` and free the used space.
-DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
+DUP ' COLD OVER HERE SWAP - CMOVE  DP !
 
   \ ............................................
   \ Safer `MON`
@@ -167,10 +159,6 @@ DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
   \ next system variable, MEMBOT.  `C!` must be used instead.
 
 ' C! CFA DUP DUP DUP 7E5B ! 7E71 !  7E95 ! 7EAB !
-
--->
-
-( Bug fixes and patches)
 
   \ ............................................
   \ Fix the hardcoded addresses of the RAM-disk
@@ -283,7 +271,7 @@ CREATE TUCK  ( x1 x2 -- x2 x1 x2 )
 
   \ The original word `.CPU` prints "48K SPECTRUM ".  It's
   \ changed to the more proper "ZX Spectrum". Two bytes are
-  \ saved, and the are used to add `NOOP` at the end; it will
+  \ saved, and they are used to add `NOOP` at the end; it will
   \ be substituted by `.CPUK` later, by the module <48kq.fsb>,
   \ in order to show the memory of the specific model.
 
@@ -303,8 +291,7 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 
   \ As the message shows, the current user version is "C".
   \ Store it into its standard fig-Forth address.
-
-67 10 +ORIGIN C!
+43 0A +ORIGIN C!  \ 0x43 = ASCII "C"
 
   \ ............................................
   \ New system colors: black background, green foreground.
@@ -815,6 +802,16 @@ EXTEND  CLS0 GREETING
   \ `INIT-DISC` and `(TAPE)`. This problem was found during the
   \ development of Tron 0xF
   \ (http://programandala.net/en.program.tron_0xf.html).
+  \
+  \ 2015-07-18: Simpler method for patching `COLD`, with `]`
+  \ and `[`.
+  \
+  \ 2015-07-18: Fix: the user version was updated with decimal
+  \ numbers while the base was hexadecimal. This corrupted the
+  \ first byte of the init value of the user pointer variable,
+  \ at `HEX 10 +ORIGIN`, though there was no side effect
+  \ because Abersoft does not use it (the original fig-Forth
+  \ implementation does).
 
   \ -----------------------------------------------------------
 

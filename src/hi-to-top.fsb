@@ -1,4 +1,4 @@
-.( Move the 11-KiB RAM-disk to top )
+.( The 11-KiB RAM-disk will be moved up to top of memory)
 
 \ hi-to-top.fsb
 \ Move the RAM-disk of ZX Spectrum Abersoft Forth to top

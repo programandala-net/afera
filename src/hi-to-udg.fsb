@@ -1,4 +1,4 @@
-.( Move the 11-KiB RAM-disk to UDG )
+.( The 11-KiB RAM-disk will be moved up below the UDG)
 
 \ hi-to-udg.fsb
 \ Move the RAM-disk of ZX Spectrum Abersoft Forth to UDG
