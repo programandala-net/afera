@@ -54,6 +54,11 @@
   \ terminal input buffer, the return stack and the disk block
   \ buffers) have to be moved below address 0xC000.
 
+  \ This module is useful for the ZX Spectrum 48 too, in
+  \ combination with the module <hi-to.fsb>, in order to get 1
+  \ KiB of additional memory for the Forth dictionary. See
+  \ <hi-to.fsb> for more details.
+
   \ Important note:
   \
   \ With the new memory map, a stack overflow could corrupt the
@@ -67,6 +72,8 @@
   \ 2015-05-06: Start.
   \ 2015-05-07: Data stack, return stack and TIB are moved.
   \ 2015-05-08: Block buffers are moved. `FREE` is patched.
+  \ 2015-07-17: Description completed with a mention to
+  \ <hi-to.fsb>.
 
   \ -----------------------------------------------------------
   \ To-do
@@ -170,9 +177,7 @@ HERE DUP 5E0A ! 5E56 !  52 ALLOT
 
 DECIMAL  -->
 
-( Move the return stack -- old first method )
-
--->
+( Move the return stack -- old first method ) --> \ XXX OLD
 
   \ XXX FIXME 2015-05-15
   \

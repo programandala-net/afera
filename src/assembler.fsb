@@ -45,7 +45,8 @@
   \ `DER` --> `DEC`.
 
   \ The set of conditional calls and returns has been completed
-  \ (the original included only `CALLC` and `RETC`).
+  \ (the original included only the generic `CALLC` and
+  \ `RETC`).
 
   \ Comments have been added.
 
@@ -97,7 +98,7 @@ IX-OP VARIABLE XY  : %X IX-OP XY ! ; : %Y IY-OP XY ! ;
 
 : XY, XY @ C, ; : XL XY, L ; : XH XY, H ;
 : IX IX-OP C, HL ; : IY IY-OP C, HL ;
-: ?PAGE  ( n -- ) DUP 80 + FF SWAP U<
+: ?PAGE  ( n -- n ) DUP 80 + FF SWAP U<
   IF ." Branch too long" ABORT THEN ;
 
 -->

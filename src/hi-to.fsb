@@ -80,6 +80,11 @@
   \ 2015-05-15: Start. First working version..
   \
   \ 2015-05-17: `NEEDS` and `?NEEDS` used.
+  \
+  \ 2015-07-18: Fixed the hardcoded addresses of the RAM-disc
+  \ in `(TAPE)` and the tape headers. This problem was found
+  \ during the development of Tron 0xF
+  \ (http://programandala.net/en.program.tron_0xf.html).
 
 -->
 
@@ -97,8 +102,12 @@ NEW-HI 1+ CONSTANT ABOVE-HI
 ABOVE-HI /DISC - CONSTANT NEW-LO
 NEW-HI HI - CONSTANT FREED
 
-  \ Update `HI` and `LO`.
-: HI>TOP  ( -- )  LO FREED + ' LO !  NEW-HI ' HI !  ;
+: HI>TOP  ( -- )
+  \ Update `HI` and `LO`:
+  LO FREED + ' LO !  NEW-HI ' HI !
+  \ Patch `(TAPE)` and the tape headers
+  \ with the new value of `LO`:
+  LO [ ' (TAPE) 6 + ] LITERAL !  LO 75F3 !  LO 7604 !  ;
 
   \ The origin and destination zones overlap, so `CMOVE>`
   \ is the preferred method if available.
@@ -106,7 +115,9 @@ NEW-HI HI - CONSTANT FREED
 1 [DEFINED] CMOVE> ?\ 1+
   +LOAD
 
-DISC>TOP  FORGET NEW-HI DECIMAL
+DISC>TOP
+
+FORGET NEW-HI DECIMAL
 
 ( Do it with CMOVE> )
 

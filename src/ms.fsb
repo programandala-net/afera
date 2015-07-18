@@ -33,6 +33,9 @@ FORTH DEFINITIONS  -->
   \ [Code adapted from DZX-Forth.]
 
 CREATE MS  ( u -- )  HEX
+
+  \ Wait at least _u_ ms (milleseconds).
+
   D1 C,         \ pop de
   HERE          \ ms1:
   78 03 + C,  B0 02 + C,
@@ -67,8 +70,8 @@ CREATE MS  ( u -- )  HEX
 
 [DEFINED] SYS-FRAMES ?\ 23672 CONSTANT SYS-FRAMES
 
-: MS  ( n -- )
-  \ Wait n ms (miliseconds), with 20 ms precision.
+: MS  ( u -- )
+  \ Wait at least _u_ ms (milliseconds), with 20 ms precision.
   20 / SYS-FRAMES @ +
   BEGIN  DUP SYS-FRAMES @ U<  UNTIL DROP  ;
 

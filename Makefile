@@ -584,6 +584,22 @@ tests/defer_test.tap: tapes
 		tap/loaded.tap \
 		> tests/defer_test.tap
 
+tests/hi-to_test.tap: tapes
+	cat \
+		sys/abersoft_forth.tap \
+		tap/loader.tap \
+		tap/afera.tap \
+		tap/cswap.tap \
+		tap/dump.tap \
+		tap/dot-rs.tap \
+		tap/dot-s.tap \
+		tap/lowersys.tap \
+		tap/hi-to-top.tap \
+		tap/hi-to.tap \
+		tap/time.tap \
+		tap/loaded.tap \
+		> tests/hi-to_test.tap
+
 # ##############################################################
 # History
 
@@ -618,3 +634,6 @@ tests/defer_test.tap: tapes
 # 2015-07-06: `tests/defer_test.tap`.
 #
 # 2015-07-16: Updated.
+#
+# 2015-07-17: Added 'tests/hi-to_test.tap' recipe for
+# debugging the module <hi-to.fsb>.

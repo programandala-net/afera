@@ -168,12 +168,55 @@ DUP ' COLD OVER HERE SWAP - CMOVE  DP !  FORGET ',
 
 ' C! CFA DUP DUP DUP 7E5B ! 7E71 !  7E95 ! 7EAB !
 
+-->
+
+( Bug fixes and patches)
+
+  \ ............................................
+  \ Fix the hardcoded addresses of the RAM-disk
+
+  \ Abersoft Forth uses the address returned by `LO` (the start
+  \ of the Forth RAM-disk, 0xD000) hardcoded as a literal
+  \ instead of calling `LO` (for words written in Forth) or
+  \ fetching the value from the pfa of `LO` (for words written
+  \ in Z80).
+  \
+  \ This is a problem for the module <hi-to.fsb>, that moves
+  \ the RAM-disk and changes the values of `LO` and `HI`.
+  \
+  \ A partial fix is provided here, just in case any other
+  \ future module needs to manipulate the RAM-disk addresses.
+
+  \ In `INIT-DISC`, change the literal 0xD000 to `LO`:
+' INIT-DISC ' NOOP CFA OVER ! ' LO CFA SWAP 2+ !
+
+  \ Also the primitive word `(TAPE)` contais the hardcoded
+  \ address of the RAM-disk. It could be patched the following
+  \ way, converting `ld hl,0xD000` to `ld hl,(lo_pfa)`:
+
+  \ ' (TAPE) 5 + 2A OVER C! ' LO SWAP 1+ !
+
+  \ But there's a problem: the module <tape.fsb> patches the
+  \ address of that same Z80 instruction, `ld hl,0xD000` in
+  \ order to load from or save to tape other files than Forth
+  \ RAM-disks, therefore also the Z80 opcode would have to be
+  \ modified. It's easier to keep the original opcode and patch
+  \ only the value.
+
+  \ Also the tape headers (load header at 0x75E6, save header
+  \ at 0x75F7) must be patched, but that can be done only when
+  \ the new value of `LO` is known.
+
+  \ See the modules <hi-to.fsb> and <tape.fsb> for more
+  \ details.
+
   \ ............................................
   \ Cosmetic patches
 
   \ No `CLS` in `INDEX`.
   \ no `DECIMAL` in `LIST`
   \ Smaller margin in `LIST`.
+
 ' NOOP CFA ' INDEX !   ' NOOP CFA ' LIST !  2 ' LIST 23 + !
 
   \ ............................................
@@ -203,7 +246,7 @@ DECIMAL -->
 ( Data stack and conditional compilation)
 
 HEX
-  
+
   \ ............................................
   \ Data stack
 
@@ -324,7 +367,7 @@ B/SCR B/BUF * CONSTANT /SCR
 
 : DISC-BLOCK  ( n -- a )
 
-  \ Calculate the address of disk block n in the Forth RAM-
+  \ Calculate the address of disk block _n_ in the Forth RAM-
   \ disk.  Give error 6 when the requested disk block is out of
   \ range.
   \
@@ -339,9 +382,8 @@ B/SCR B/BUF * CONSTANT /SCR
   \ n = number of sequential disk block
   \ a = address in the RAM-disk (when paged in)
 
-  OFFSET @ -
-  B/BUF * DUP /SCR U< 6 ?ERROR
-  LO + /SCR - DUP HI > 6 ?ERROR  ;
+  OFFSET @ -  B/BUF * DUP /SCR U< 6 ?ERROR
+              LO + /SCR - DUP HI > 6 ?ERROR  ;
 
 
 : (R/W)  ( a1 a2 f -- )
@@ -768,6 +810,11 @@ EXTEND  CLS0 GREETING
   \
   \ 2015-07-14: Fix of Abersoft Forth's bug in `INVERSE` and
   \ `GOVER`.
+  \
+  \ 2015-07-18: Fixed the hardcoded address of the RAM-disk in
+  \ `INIT-DISC` and `(TAPE)`. This problem was found during the
+  \ development of Tron 0xF
+  \ (http://programandala.net/en.program.tron_0xf.html).
 
   \ -----------------------------------------------------------
 
