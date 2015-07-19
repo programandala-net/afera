@@ -326,10 +326,11 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 
 ( Make the first screen usable )
 
-  \ Abersoft Forth doesn't allow to compile sources from the
-  \ first screen (number 0) of its RAM-disk, by convention
-  \ reserved to comments. But that is a waste of memory.  This
-  \ patch solves that problem.
+  \ As usual in Forth, Abersoft Forth doesn't allow to compile
+  \ sources from the first screen (number 0), by convention
+  \ reserved to comments. But that is an important waste of
+  \ memory with a 11-screen RAM-disk.  This patch solves that
+  \ problem.
   \
   \ After the patch, screen numbers will be 1..11 instead of
   \ 0..10. Or 1..16 after compiling the <16kramdisks.fsb>
@@ -399,7 +400,8 @@ HERE  ] >R DISC-BLOCK R> (R/W) ;S [
   \
   \ Warning: `CMOVE` and `B/SCR BLK +!` must be on the same
   \ line, otherwise there's a chance they could be in different
-  \ blocks of the screen, what would cause trouble.
+  \ blocks of the screen (in fig-Forth, each screen consists of
+  \ 8 128-byte blocks), what would cause trouble.
 
 ' R/W OVER SWAP OVER HERE SWAP - CMOVE B/SCR BLK +!  DP !
 

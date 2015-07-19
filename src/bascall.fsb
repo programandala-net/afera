@@ -1,0 +1,136 @@
+.( BASCALL )
+
+\ bascall.fsb
+\ A BASIC-call word for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop.
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-16: Start. Copy of the Spectrum Forth-83 code,
+  \ where the word is called `BCAL`. First changes.
+  \
+  \ 2015-07-19: Fully adapted. First working version. Improved
+  \ (it works with or without whole screen mode).
+
+-->
+
+( Return point from BASIC )
+
+  \ Patch the warm entry point to this routine:
+HEX  HERE 6 +ORIGIN !
+
+  \ If not back from BASIC, execute the ordinary warm entry.
+  \ The flag is hardcoded, and set by `BASCALL`.
+HERE 1+ \ back_from_basic?: equ $+1
+3E C, 00 C, \ ld a,0
+A0 07 + C, \ and a ; Back from BASIC?
+CA C, 6D93 , \ jp z,0x6D93 ; If not, jump to warm start.
+
+  \ Reset the "back from BASIC" flag.
+    \ xor a
+    \ ld (back_from_basic?),a
+A8 07 + C,  32 C, DUP ,
+
+ED C, 7B C, 5C3D ,  \ ld sp,(0x5C3D) ; Load ERR_SP
+D1 C, \ pop de ; Remove error return address, discarded.
+E1 C, \ pop hl ; Get old value of ERR_SP.
+22 C, 5C3D ,  \ ld(0x5C3D),hl ; Restore old value of ERR_SP.
+C1 C,  \ pop bc ; Restore the Forth instruction pointer.
+
+  \ Restore the previous value of DF_SZ,
+  \ so we can use all 24 screen lines if the
+  \ whole screen mode (provided by the module
+  \ <plusscreen.fsb>) was active before calling BASIC.
+HERE 3 + \ df_sz_backup: equ $+3
+FD C, 36 C, 31 C, 00 C, \ ld (iy+0x31),0
+
+C3 C, NEXT ,  \ jp next
+
+DECIMAL -->
+
+( BASCALL )
+
+CREATE BASCALL ( n --- )  HEX
+
+  \ ( Compiling: a1 a2 -- )
+  \ a1 = back_from_basic?
+  \ a2 = df_sz_backup
+  \ Both addresses belong to the return point from BASIC
+  \ routine, defined in the previous screen.
+
+  \ Store the BASIC line number in NEWPPC, so BASIC will
+  \ execute this line next.
+    \ pop hl
+    \ ld (0x5C42),hl
+  E1 C,  22 C, 5C42 ,
+
+  \ Set NS_PPC to 0, so BASIC will use first statement in line.
+    \ xor a
+    \ ld (0x5C44),a
+  A8 07 + C,  32 C, 5C44 ,
+
+  \ Set the "back from BASIC" flag true
+    \ inc a
+    \ ld (back_from_basic?),a
+  3C C,  32 C, SWAP ,
+
+  \ Save the Forth instruction pointer.
+  C5 C,  \ push bc
+
+  \ Save old value of ERR_SP.
+    \ ld hl,(0x5C3D)
+    \ push hl
+  2A C, 5C3D ,  E5 C,
+
+  \ Push warm entry point on stack,
+  \ so errors in BASIC will enter it.
+    \ ld hl,origin+4
+    \ push hl
+  21 C, 4 +ORIGIN ,  E5 C,
+
+  \ Save current stack pointer into ERR_SP.
+  ED C, 73 C, 5C3D ,  \ ld (0x5C3D),sp
+
+  \ BASIC needs DF_SZ to be 2, so we can't be on lowest 2
+  \ lines, what could happen if the whole screen mode provided
+  \ by the module <plusscreen.fsb> is active. If so, change the
+  \ current line to 3 (from the bottom).
+
+    \ ld a,(S_POSN) ; screen line number (from the bottom).
+    \ cp 3 ; below line 3?
+    \ jr nc,save_df_sz ; if not below 3, jump
+  3A C, 5C89 ,  FE C, 03 C,  30 C, 05 C,
+    \ ld a,3
+    \ ld (S_POSN),a
+  3E C, 03 C,  32 C, 5C89 ,
+
+  \ save_df_sz:
+  \ Save the current value of DF_SZ.
+  \ It will be restored after returning from BASIC.
+  \ This way `BASCALL` works with or without the whole screen
+  \ mode.
+    \ ld a,(DF_SZ)
+    \ ld (df_sz_backup),a
+  3A C, 5C6B ,  32 C, ,
+  \ Set DF_SZ to 2 as is required in BASIC.
+  FD C, 36 C, 31 C, 02 C,  \ ld (iy+31),2
+
+  \ Jump to STMT_RET in ROM, will execute next BASIC statement.
+  C3 C, 1B76 ,  \ jp 0x1B76
+
+SMUDGE DECIMAL
+
+  \ vim: filetype=abersoftforthafera
