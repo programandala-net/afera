@@ -16,15 +16,18 @@
   \ warranty.
 
   \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-06: First version.
+  \
+  \ 2015-05-18: Added `NEEDS`.
+
+  \ -----------------------------------------------------------
   \ Requirements
 
 NEEDS UPPERC upperc
 
   \ -----------------------------------------------------------
-  \ History
-  
-  \ 2015-05-06: First version.
-  \ 2015-05-18: `NEEDS` used.
 
 : UPPERS   ( ca len -- )
   \ Convert a string to uppercase.

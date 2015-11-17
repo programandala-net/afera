@@ -17,7 +17,7 @@
 
   \ -----------------------------------------------------------
   \ History
- 
+
   \ 2015-05-18: Moved from the module <strings.fsb>.
 
   \ -----------------------------------------------------------
@@ -26,11 +26,13 @@
 NEEDS MOVE              move
 NEEDS ALLOCATE-STRING   csb
 NEEDS PICK              pick
-  
+
 [DEFINED] LENGTHS ?-->
 
 : LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
   2OVER NIP OVER  ;
+
+  \ -----------------------------------------------------------
 
 -->
 

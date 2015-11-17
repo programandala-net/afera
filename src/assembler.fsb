@@ -4,7 +4,7 @@
 \ Assembler for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
-\ Copyright (C) 1988? Coos Haak
+\ Copyright (C) 1988 Coos Haak
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -27,16 +27,15 @@
   \ fig-Forth, some changes were done during the conversion:
 
   \ Also the pair registers BC, DE and HL can be used.
-  \ Example: both `1 B LDP#` and `1 BC LDP#` are valid and
-  \ produce the same machine code.
+  \ Example: both `1 B LDP#` and `1 BC LDP#` are valid.
 
   \ `(HL)` can be used instead of `M`.
 
   \ Special mnemonic `0OUTBC` is provided.
 
   \ The condition flag operator `NOT` is removed; the condition
-  \ flag `v` is removed. The condition flags are completed,
-  \ including their opposite versions.
+  \ flag `v` (synonym of `pe`)  is removed. The condition flags
+  \ are completed, including their opposite versions.
 
   \ Changed names:
   \ `INC` --> `INCP`;
@@ -73,6 +72,18 @@
   \ tick suffix, in order to make the assembler case
   \ insensitive, because a library module can be used to make
   \ the system case insensitive.
+  \
+  \ 2015-07-21: Fix: The hex number DE, used to define a
+  \ opcode, was mistaken as the DE register. '0DE' is used
+  \ instead.
+  \
+  \ 2015-09-23: Added `CALC` and `END-CALC` for the ROM
+  \ calculator, after the implementation in Solo Forth
+  \ (http://programandala.net/en.program.solo_forth.html).
+  \ Added stack comments to the control structures.
+  \
+  \ 2015-10-26: Modified the header after the format of all
+  \ other modules.
 
   \ -----------------------------------------------------------
 
@@ -169,7 +180,7 @@ IX-OP VARIABLE XY  : %X IX-OP XY ! ; : %Y IY-OP XY ! ;
 88 M2 ADC 90 M2 SUB 98 M2 SBC B8 M2 CP C1 M3 POP C2 M5 JPNZ
 C3 M5 JP C5 M3 PUSH C6 M4 ADD# C7 M2 RST C9 M1 RET CA M5 JPZ
 CD M5 CALL CE M4 ADC# D2 M5 JPNC D3 M4 OUT 41 M3 OUTBC
-D6 M4 SUB# D9 M1 EXX DA M5 JPC DB M4 IN 40 M3 INBC DE M4 SBC#
+D6 M4 SUB# D9 M1 EXX DA M5 JPC DB M4 IN 40 M3 INBC 0DE M4 SBC#
 E2 M5 JPPO E3 M1 EXSP E6 M4 AND# E9 M1 JPHL EA M5 JPPE
 EB M1 EXDE EE M4 XOR# F2 M5 JPP F3 M1 DI  F6 M4 OR# F9 M1 LDSP
 FA M5 JPM FB M1 EI FE M4 CP# 00 M6 RLC 08 M6 RRC 10 M6 RL
@@ -192,15 +203,14 @@ C0 M7 SET B0ED M8 LDIR B8ED M8 LDDR 44ED M8 NEG 57ED M8 LDAI
 
   \ Macros
 
-: CLR  0 SWAP LDP# ;
-: MOV  2DUP LD 1+ SWAP 1+ SWAP LD ;
+: CLR  0 SWAP LDP# ;  : MOV  2DUP LD 1+ SWAP 1+ SWAP LD ;
 
   \ ZX Spectrum specific
 
 CF M4 HOOK \ RST 8
 D7 M1 PRT  \ RST 0x16
-
--->
+EF M1 CALC  38 M1 END-CALC  -->
+  \ CALC = RST 0x28 (ROM calculator)
 
 ( Index register opcodes)
 
@@ -249,21 +259,46 @@ E2 CONSTANT pe' EA CONSTANT po' F2 CONSTANT m'  FA CONSTANT p'
 
   \ Control structures created with relative jumps
 
-: THEN 0A ?PAIRS HERE 1- OVER - ?PAGE SWAP C! ;
-: IF , HERE 1- 0A ;
-: ELSE 0A ?PAIRS 18 IF ROT SWAP THEN 0A ;
+: THEN  0A ?PAIRS HERE 1- OVER - ?PAGE SWAP C! ;
+  \ then  ( orig cs-id -- )
+
+: IF  , HERE 1- 0A ;
+  \ if  ( op -- orig cs-id )
+
+: ELSE  0A ?PAIRS 18 IF ROT SWAP THEN 0A ;
+  \ else ( orig cs-id -- cs-id )
+  \ Note 0x18 is the opcode of `jr`.
+
 : UNTIL , 0B ?PAIRS 1- HERE 1- SWAP OVER - ?PAGE SWAP C! ;
-: BEGIN HERE 0B ;  : AGAIN 18 UNTIL ;
-: DSZ 10 UNTIL ;   : REPEAT 2SWAP AGAIN 2- THEN ;
+  \ until  ( dest cs-id op -- )
+
+: BEGIN HERE 0B ;
+  \ begin  (  -- dest cs-id )
+
+: AGAIN 18 UNTIL ;
+  \ again  (  dest cs-id -- )
+  \ Note 0x18 is the opcode of `jr`.
+
+: DSZ 10 UNTIL ;  : REPEAT 2SWAP AGAIN 2- THEN ;
+  \ dsz  (  dest cs-id -- )
+  \ repeat  (  dest cs-id1 orig cs-id2 )
 : WHILE IF 2+ ;
+  \ while  (  op -- orig cs-id )
 
   \ Control structures created with absolute jumps
 
-: then' 08 ?PAIRS HERE SWAP ! ;  : if' C, HERE 0 , 08 ;
-: else' 08 ?PAIRS C3 if' ROT SWAP then' 08 ;
-: begin' HERE 09 ;  : until' C, 09 ?PAIRS , ;
-: while' if' 2+ ;    : again' C3 until' ;
-: repeat' 2SWAP again' 2- then' ;
+: if' C, HERE 0 , 08 ;  : then'  08 ?PAIRS HERE SWAP ! ;
+  \ if'  (  op -- orig cs-id )
+  \ then'  (  orig cs-id -- )
+: else'  08 ?PAIRS C3 if' ROT SWAP then' 08 ;
+  \ else'  (  cs-id -- cs-id )
+: begin'  HERE 09 ;  : until' C, 09 ?PAIRS , ;
+  \ begin' (  -- dest cs-id )
+: while'  if' 2+ ;    : again' C3 until' ;
+  \ while' (  op -- orig cs-id )
+  \ until' (  -- cs-id op )
+: repeat'  2SWAP again' 2- then' ;
+  \ repeat'  (  dest cs-id1 orig cs-id2 )
 
   \ Last opcodes
 
@@ -273,9 +308,7 @@ E2 CONSTANT pe' EA CONSTANT po' F2 CONSTANT m'  FA CONSTANT p'
 
 A0 M2 AND  B0 M2 OR  A8 M2 XOR
 
-: SUBP A AND SBCP ;  : TST DUP A LD 1+ OR ;
-
--->
+: SUBP A AND SBCP ;  : TST DUP A LD 1+ OR ;  -->
 
 ( Defining words)
 

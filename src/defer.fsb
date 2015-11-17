@@ -26,6 +26,8 @@
   \
   \ 2015-07-07: Revised, tested, fixed, simplified (removed
   \ `[IS]` and `<IS>`), documented.
+  \
+  \ 2015-10-26: Improved and fixed some comments.
 
   \ -----------------------------------------------------------
 
@@ -62,7 +64,7 @@
   \ "name" = name of a deferred word
   \ cfa = code field address the deferred word
   \       is set to execute
-  [COMPILE] '  STATE @ IF    COMPILE DEFER@ 
+  [COMPILE] '  STATE @ IF    COMPILE DEFER@
                        ELSE  DEFER@  THEN  ; IMMEDIATE
 
 -->
@@ -71,13 +73,14 @@
 
   \ This version uses a cfa (code field address) to set the
   \ deferred words. This version seems a better compromise than
-  \ the pfa version above, therefore it's loaded by default.
+  \ the pfa version (see next screen), therefore it's loaded by
+  \ default.
   \
   \ Note: Since fig-Forth's `'` returns a pfa (parameter field
-  \ address) `CFA` must be used to convert it the correspondent
-  \ cfa required by `IS` or `DEFER!`. `:NONAME` returns a cfa
-  \ (see the module <noname.fsb>), so it can be used directly
-  \ with `IS` and `DEFER!`.
+  \ address) `CFA` must be used to convert it to the
+  \ correspondent cfa required by `IS` or `DEFER!`. `:NONAME`
+  \ returns a cfa (see the module <noname.fsb>), so it can be
+  \ used directly with `IS` and `DEFER!`.
   \
   \ Usage examples:
 
@@ -105,14 +108,14 @@
 ( Set deferred words -- version with PFA )
 
   \ This version uses a pfa (parameter field address) to set
-  \ the deferred words. 
+  \ the deferred words.
   \
   \ Note: Since `:NONAME` is written after ANS Forth and so it
   \ returns a cfa (see the module <noname.fsb>), `2+` must be
   \ used to convert it to the pfa required by `IS`.
   \
   \ Usage examples:
- 
+
   \   DEFER MYWORD
   \
   \   ' WHATEVER-0 IS MYWORD

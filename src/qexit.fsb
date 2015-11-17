@@ -21,6 +21,8 @@
   \ 2015-03-29: Written, after Gforth.
   \ 2015-05-11: Extracted from the main file of the library.
 
+  \ -----------------------------------------------------------
+
 : ?EXIT  ( f -- )
   \ Exit the current word if the given flag is not zero.
   [COMPILE] IF  COMPILE EXIT  [COMPILE] THEN  ; IMMEDIATE

@@ -1,10 +1,9 @@
 .( [IF] [ELSE] [THEN] )
 
-\ bracket-if.fsb 
+\ bracket-if.fsb
 \ Conditional compilation for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
-\ Copyright (C) 2000-2004 Albert van der Horst
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -16,12 +15,6 @@
   \ preserved.  This file is offered as-is, without any
   \ warranty.
 
-  \ -----------------------------------------------------------
-  \ Requirements
-
-  NEEDS S"          strings
-  NEEDS S=          s-equals
-  NEEDS PARSE-NAME  strings
 
   \ -----------------------------------------------------------
   \ History
@@ -34,24 +27,31 @@
   \
   \ 2015-04-27: New: `?-->` and `?;S`, as a simple alternative
   \ to the unfinished `[IF]`.
-  \
+
   \ 2015-05-02: Change: `[DEFINED]`, `[UNDEFINED]`, `?-->` and
   \ `?;S` are moved to the main file of the library.
   \
-  \ 2015-05-15: New version, adapted from lina.
+  \ 2015-05-15: New version, adapted from Albert van der
+  \ Horst's lina Forth.
   \
   \ 2015-05-17: `NEEDS` used.
   \
   \ 2015-06-04: `STR=` updated to `S=`.
+  \
+  \ 2015-10-30: Updated license.
+  \
+  \ 2015-11-18: Updated license.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS S"          strings
+  NEEDS S=          s-equals
+  NEEDS PARSE-NAME  strings
 
 -->
 
 ( [IF] [ELSE] [THEN] )
-
-  \ Adapted from lina:
-  \   Copyright (c) 2000-2004 Albert van der Horst,
-  \   The Netherlands
-  \ The lina code was adapted from the ANS Forth documentation.
 
 : [ELSE]  ( "..." -- )
 
@@ -70,4 +70,3 @@
 : [THEN]  ( -- )  ; IMMEDIATE
 
   \ vim: filetype=abersoftforthafera
-

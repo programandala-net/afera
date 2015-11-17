@@ -34,8 +34,10 @@
   \
   \ 2015-05-08: Description.
 
+  \ -----------------------------------------------------------
+
 : UDG!  ( b0..b7 c -- )
-  \ Store the given 8 bytes into the c UDG char
+  \ Store the given 8 bytes into the UDG char c.
   \ b0 = first (top) scan
   \ b7 = last (bottom) scan
   \ c = 144..164

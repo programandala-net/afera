@@ -17,11 +17,13 @@
 
   \ -----------------------------------------------------------
   \ History of this code/file
-  
-  \ 2015-03-31: Code written 
+
+  \ 2015-03-31: Code written.
   \ 2015-04-14: Code extracted from the main file of the library
   \ to <rstack.fsb>.
   \ 2015-05-03: Code moved to its own file <qrstack.fsb>.
+
+  \ -----------------------------------------------------------
 
 : ?RSTACK  ( -- )
   \ Issue an error message

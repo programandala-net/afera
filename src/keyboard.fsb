@@ -28,6 +28,8 @@
   \
   \ 2015-03-23: Fix: The 0x0A bit mask was used instead of
   \ 0x10.
+  \
+  \ 2015-10-16: Fixed comment.
 
   \ -----------------------------------------------------------
 
@@ -109,15 +111,15 @@ DECIMAL  -->
   \ Method 1: more compact but slower
 
   \ Every key identifier occupies 3 bytes in the table (total
-  \ size is 80 bytes)
+  \ size is 120 bytes)
 
-\ 3 CONSTANT /K  \ bytes per key definition in the keys table
+  \ 3 CONSTANT /K  \ bytes per key definition in the keys table
 
   \ Store a key definition into the keys table:
-\ : K,  ( bitmask port -- ) , C,  ;
+  \ : K,  ( bitmask port -- ) , C,  ;
 
   \ Fech a key definition from an element of the keys table:
- \ : K@  ( a -- bitmask port ) DUP C@ SWAP 1+ @ ;
+  \ : K@  ( a -- bitmask port ) DUP C@ SWAP 1+ @ ;
 
   \ ............................................
   \ Method 2: bigger but faster

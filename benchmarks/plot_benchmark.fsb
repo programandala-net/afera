@@ -4,15 +4,17 @@
 
 ( tests )
 
+NEEDS TIME@ time
+
 : SECONDS.  ( -- )  TIME@ D.  ;
 
 : TEST  ( -- )
   TIME0
-  256 0 DO  176 0 DO  J I PLOT  LOOP  LOOP  SECONDS.  ; 
+  256 0 DO  176 0 DO  J I PLOT  LOOP  LOOP  SECONDS.  ;
 
 : TESTQ  ( -- )
   TIME0
-  256 0 DO  176 0 DO  J I QPLOT  LOOP  LOOP  SECONDS.  ; 
+  256 0 DO  176 0 DO  J I QPLOT  LOOP  LOOP  SECONDS.  ;
 
 ( Results )
 
@@ -24,5 +26,5 @@
   \           Forth        Forth-83
   \           --------     --------
   \ PLOT      1019         856  (84%)
-  
-  \ vim: filetype=abersoftforth
+
+  \ vim: filetype=abersoftforthafera

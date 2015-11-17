@@ -16,7 +16,7 @@
 
   \ -----------------------------------------------------------
   \ Description
- 
+
   \ This file patches `INK`, `PAPER`, `BRIGHT`, `FLASH`,
   \ `INVERSE` and `GOVER` with faster code.
   \
@@ -34,11 +34,11 @@
   \ Marks et al.; and from the ZX Spectrum ROM disassembly.)
 
   \ System variables:
-  
+
   \ 23693 = ATTR_P -- permanent colors
 
   \         {fl}{br}{   paper   }{  ink    }
-  \          ___ ___ ___ ___ ___ ___ ___ ___ 
+  \          ___ ___ ___ ___ ___ ___ ___ ___
   \ ATTR_P  |   |   |   |   |   |   |   |   |
   \         |   |   |   |   |   |   |   |   |
   \ 23693   |___|___|___|___|___|___|___|___|
@@ -50,16 +50,16 @@
   \ ATTR_P but from what is already on the screen.
 
   \         {fl}{br}{   paper   }{  ink    }
-  \          ___ ___ ___ ___ ___ ___ ___ ___ 
+  \          ___ ___ ___ ___ ___ ___ ___ ___
   \ MASK_P  |   |   |   |   |   |   |   |   |
   \         |   |   |   |   |   |   |   |   |
   \ 23694   |___|___|___|___|___|___|___|___|
-  \           7   6   5   4   3   2   1   0 
+  \           7   6   5   4   3   2   1   0
 
   \ 23695 = ATTR_T -- temporary colors
 
   \         {fl}{br}{   paper   }{  ink    }
-  \          ___ ___ ___ ___ ___ ___ ___ ___ 
+  \          ___ ___ ___ ___ ___ ___ ___ ___
   \ ATTR_T  |   |   |   |   |   |   |   |   |
   \         |   |   |   |   |   |   |   |   |
   \ 23695   |___|___|___|___|___|___|___|___|
@@ -70,8 +70,8 @@
   \ shows that the corresponding attribute is taken not from
   \ ATTR_T but from what is already on the screen.
 
-  \         {fl}{br}{   paper   }{  ink    } 
-  \          ___ ___ ___ ___ ___ ___ ___ ___ 
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
   \ MASK_T  |   |   |   |   |   |   |   |   |
   \         |   |   |   |   |   |   |   |   |
   \ 23696   |___|___|___|___|___|___|___|___|
@@ -81,7 +81,7 @@
   \ flags; odd bits are the permanent flags.
 
   \         {paper9 }{ ink9 }{ inv1 }{ over1}
-  \          ___ ___ ___ ___ ___ ___ ___ ___ 
+  \          ___ ___ ___ ___ ___ ___ ___ ___
   \ P_FLAG  |   |   |   |   |   |   |   |   |
   \         | p | t | p | t | p | t | p | t |
   \ 23697   |___|___|___|___|___|___|___|___|
@@ -152,7 +152,7 @@
 
   \ The color change required by `plot` is not effective until
   \ something is printed. The problem is ATTR_T is not changed:
-  
+
   \ ----
   \ 6 ink 23695 c@ 100 100 plot \ black ink, black paper plot!
   \ . 0  \ content of ATTR_T
@@ -172,6 +172,8 @@
   \ the effect of `FLASH` and `BRIGHT`, that only updated
   \ ATTR_P.  `FLASH` and `BRIGHT` have been modified to update
   \ both variables.
+
+  \ -----------------------------------------------------------
 
 -->
 
@@ -309,9 +311,13 @@ HERE  ' INVERSE DUP CFA !  ( f -- )
 
 -->  \ skip this screen, just in case
 
+  \ -----------------------------------------------------------
+
   \ This version of `INK` causes strange problems (see note
   \ 2015-07-13 in the history). Both `INK` and `PAPER` were
   \ rewritten with a different approach.
+
+  \ -----------------------------------------------------------
 
 HEX
 

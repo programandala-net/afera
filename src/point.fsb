@@ -53,6 +53,8 @@
   \ 2015-07-05: Fix: the y coordinate was not converted at the
   \ start.
 
+  \ -----------------------------------------------------------
+
 -->
 
 ( Faster POINT -- part 1 )
@@ -73,7 +75,7 @@ HERE  \ save the current dictionary pointer
   CD C, 22AA 6 + ,    \ call PIXELADD ; +6 to skip BASIC error
   \ ; HL = screen address
   \ ; A = pixel position in HL
-  
+
   -->
 
 ( Faster POINT -- part 2 )

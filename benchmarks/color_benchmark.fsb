@@ -1,6 +1,10 @@
 \ test the speed of color words
 
+-->
+
 ( test)
+
+NEEDS DEFER defer  NEEDS TIME@ time
 
 DEFER TESTED
 
@@ -47,7 +51,7 @@ DEFER TESTED
   \ BRIGHT         426       1000  234%
   \ INVERSE        426       1301  305%
   \ FLASH          426       1000  234%
-  
+
   \ * With `EMIT`.
 
-  \ vim: filetype=abersoftforth
+  \ vim: filetype=abersoftforthafera

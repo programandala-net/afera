@@ -18,12 +18,12 @@
   \ -----------------------------------------------------------
   \ Description
 
-  \ Three more modern names for fig-Forth words, without using
-  \ any memory.
+  \ This module substitutes the names of three fig-Forth words
+  \ with their modern versions. No memory is used.
 
   \ -----------------------------------------------------------
   \ History
-  
+
   \ 2015-03: `BYE`.
   \
   \ 2015-03-29: Extracted from the main file of the library.

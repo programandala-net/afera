@@ -25,12 +25,16 @@
   \ version, that depends on the system frames counter and has
   \ 20 ms precision, is substituted with code adapted from
   \ DZX-Forth.
+  \
+  \ 2015-10-26: Improved some comments.
+
+  \ -----------------------------------------------------------
 
 FORTH DEFINITIONS  -->
 
 ( MS )
 
-  \ [Code adapted from DZX-Forth.]
+  \ Note: Code adapted from DZX-Forth.
 
 CREATE MS  ( u -- )  HEX
 
@@ -66,7 +70,7 @@ CREATE MS  ( u -- )  HEX
   C3 C, ,       \ jp ms1
   SMUDGE DECIMAL
 
-( XXX OLD -- first, temporary version )
+( MS ) \ XXX OLD -- first, temporary version
 
 [DEFINED] SYS-FRAMES ?\ 23672 CONSTANT SYS-FRAMES
 
@@ -75,7 +79,9 @@ CREATE MS  ( u -- )  HEX
   20 / SYS-FRAMES @ +
   BEGIN  DUP SYS-FRAMES @ U<  UNTIL DROP  ;
 
-( XXX TODO -- alternative code from vForth )
+( MS ) \ XXX TODO -- alternative version
+
+  \ Note: Code from Matteo Vitturi's vForth, not adapted yet.
 
    \ POP DE|
    \ BEGIN,

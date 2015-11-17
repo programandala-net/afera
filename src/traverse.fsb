@@ -14,9 +14,20 @@
   \ warranty.
 
   \ -----------------------------------------------------------
+  \ Description
+
+  \ This module patches `TRAVERSE`, originally written in
+  \ Forth, with much faster Z80 code. But in practice, because
+  \ of the usage of this word, the speed gain is unimportant.
+
+  \ -----------------------------------------------------------
   \ History
-  
+
   \ 2015-05-06: First version.
+  \
+  \ 2015-10-26: Added description.
+
+  \ -----------------------------------------------------------
 
 -->
 

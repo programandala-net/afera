@@ -13,9 +13,10 @@
 
 \ Adapted and deeply modified from:
 
-\ Original code by Robert Dudley Ackerman, published in:
-\   FORTH DIMENSIONS IV,#2 p28 (July/August 1982)
-\ Modified by EHR for Z80 CP/M fig-Forth 1.1g
+\ Z80 CP/M fig-Forth 1.1g (adaptative version by EHR).
+\ Original code by Robert Dudley Ackerman, published in
+\ Forth Dimensions IV,#2 p28 (1982-07);
+\ modified by Dennis L. Wilson.
 
   \ Copying and distribution of this file, with or without
   \ modification, are permitted in any medium without royalty
@@ -60,6 +61,8 @@
   \
   \ 2015-05-17: `NEEDS` used. Improved with run-time and
   \ shorter instructions.
+
+  \ -----------------------------------------------------------
 
 -->
 

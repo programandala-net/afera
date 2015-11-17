@@ -84,6 +84,8 @@
   \
   \ 2015-05-20: The `CAT` code, still under development, is
   \ moved to its own file.
+  \
+  \ 2015-08-28: Typo.
 
   \ -----------------------------------------------------------
 
@@ -132,14 +134,14 @@ CODE (<FILE)  ( -- ior )
 
 ( Load a file -- part 2 )
 
-    \ The start address and lenght specified
+    \ The start address and length specified
     \ in the command are used by default instead
     \ of those stored in the file header.
     FILE-ADDRESS DE LDP
     FILE-LENGTH BC LDP
 
-    BC TST  \ is the lenght zero?
-    \ If so, use the lenght of the file header instead:
+    BC TST  \ is the length zero?
+    \ If so, use the length of the file header instead:
     Z IF  HD0B BC LDP  THEN
 
     \ Load the file data

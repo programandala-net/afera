@@ -30,6 +30,8 @@
   \ 2015-05-09: The unlinking done by `-TRANSIENT` was fixed
   \ and adapted to fig-Forth with the help of Lennart Benschop.
 
+  \ -----------------------------------------------------------
+
 -->
 
 ( TRANSIENT -- variables )

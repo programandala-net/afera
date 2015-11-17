@@ -18,18 +18,15 @@
   \ warranty.
 
   \ -----------------------------------------------------------
-  \ Acknowledgments
-
-  \ This file includes code from:
-  \   Lennart Benschop's Spectrum Forth-83 (1988)
-  \   Phil Burk's pForth V19 (1998)
-
-  \ -----------------------------------------------------------
   \ History
 
   \ 2015-04-14: Code written as part of the strings module.
   \
   \ 2015-05-15: Code moved to an independent file.
+  \
+  \ 2015-10-26: Updated some comments.
+
+  \ -----------------------------------------------------------
 
 -->
 
@@ -39,7 +36,8 @@ HEX
 
 CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
 
-  \ Note: Adapted from Lennart Benschop's Spectrum Forth-83.
+  \ Note: Code adapted from Lennart Benschop's Spectrum
+  \ Forth-83.
 
   \ exx / pop bc / pop de / pop hl
   D9 C,  C1 C,  D1 C,  E1 C,
@@ -64,7 +62,7 @@ CREATE CMOVE>  ( ca1 ca2 u -- )  \ Forth-94
 
 : MOVE  ( a1 a2 u -- )  \ Forth-94
 
- \ Note: Copied from Phil Burk's pForth (V19).
+ \ Note: Code copied from Phil Burk's pForth (V19).
 
   >R 2DUP - 0< IF  R> CMOVE>  ELSE  R> CMOVE  THEN  ;
 

@@ -2,6 +2,7 @@
 \ `2/` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop
 \ Copyright (C) 1985 Edmund Ramm
 
 \ This file is part of
@@ -17,50 +18,47 @@
   \ -----------------------------------------------------------
   \ History
  
-  \ 2015-04-16: Code written in the main file of the library.
+  \ 2015-04-16: Code written in the main file of the library,
+  \ adapted from code written by Edmund Ramm (1985-05-07) for
+  \ the Z80 fig-Forth implementation written by Dennis L.
+  \ Wilson (1980-09-07).
   \
   \ 2015-04-23: Code fixed. Negative numbers didn't work
   \ because a wrong relative jump.
   \
   \ 2015-05-05: Extracted from the main file of the library.
+  \
+  \ 2015-08-12: New version, from Lennart Benschop's Spectrum
+  \ Forth-83 (1988).
 
 -->
 
 .( 2/ )
 
-  \ Code adapted from the `2/` written on 1985-05-07 by Edmund
-  \ Ramm for the Z80 fig-Forth implementation written by Dennis
-  \ L. Wilson (1980-09-07).
+  \ Code adapted from Lennart Benschop's Spectrum Forth-83
+  \ (1988).
 
 CREATE 2/  ( n1 -- n2 )
-
-  \ 2 /
-
   HEX
   E1 C,           \ pop hl
-  CB C, 7C C,     \ bit 7,h ; negative?
-  18 C, 01 C,     \ jr z,twosl1 ; no
-  23 C,           \ inc hl ; yes, add 1
-  \ twosl1:
   CB C, 2C C,     \ sra h
   CB C, 1D C,     \ rr l ; asr hl
   C3 C, PUSHHL ,  \ jp PUSHHL
   SMUDGE  DECIMAL
 
-;S
+  \ XXX OLD -- previous version, adapted adapted from code
+  \ written by Edmund Ramm (1985).
 
-.( Spectrum Forth-83 2/ )
-
-  \ This is the code used by Lennart Benschop in his Spectrum
-  \ Forth-83 (1988).
-
-  \ XXX TODO try and compare
-
-CODE 2/  ( n1 --- n2)
-   H POP
-   H SRA  \ Signed division by 2, so arithmetic shift
-    L RR
-  H PUSH
-    JPIX ;C
+  \ CREATE 2/  ( n1 -- n2 )
+  \   HEX
+  \   E1 C,           \ pop hl
+  \   CB C, 7C C,     \ bit 7,h ; negative?
+  \   18 C, 01 C,     \ jr z,twosl1 ; no
+  \   23 C,           \ inc hl ; yes, add 1
+  \   \ twosl1:
+  \   CB C, 2C C,     \ sra h
+  \   CB C, 1D C,     \ rr l ; asr hl
+  \   C3 C, PUSHHL ,  \ jp PUSHHL
+  \   SMUDGE  DECIMAL
 
   \ vim: filetype=abersoftforthafera

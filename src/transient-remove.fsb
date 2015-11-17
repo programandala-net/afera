@@ -8,7 +8,7 @@
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
-  
+
   \ Copying and distribution of this file, with or without
   \ modification, are permitted in any medium without royalty
   \ provided the copyright notice and this notice are
@@ -20,6 +20,8 @@
 
   \ 2015-05-17: Start.
   \ 2015-05-18: `NEEDS`.
+
+  \ -----------------------------------------------------------
 
 NEEDS TRANSIENT[ transient
 

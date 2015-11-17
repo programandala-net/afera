@@ -1,5 +1,7 @@
-\ sqrt.fsb
-\ 'SQRT` for ZX Spectrum Abersoft Forth
+( /LOADT )
+
+\ slash-load-t.fsb
+\ `/LOADT` tape extension for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
@@ -16,29 +18,22 @@
   \ -----------------------------------------------------------
   \ History
 
-  \ 2015-05-13: Code copied from DZX-Forth
-  \ (http://programandala.net/en.program.dzx-forth.html).
+  \ 2015-03-28: First working version, in the module
+  \ <tape.fsb>.
+  \
+  \ 2015-05-19: Moved to its own file.
+  \
+  \ 2015-10-26: Fixed comment. Renamed file.
 
   \ -----------------------------------------------------------
 
--->
+NEEDS <TAPE  tape
+NEEDS S"     strings
 
-.( SQRT )
-
-: SQRT ( +n -- root rem )
-  \ 16-bit fast integer square root.
-  \ Return root and remainder, or 0 -1 if n is negative
-  \ From: Forth Dimensions 14/5
-  DUP 0<
-  IF  DROP 0 -1  ELSE
-    0 SWAP 16384 ( 2^14 )
-    BEGIN
-      >R  DUP  2 PICK  -  R -  DUP 0<
-      IF    DROP SWAP 2/
-      ELSE  NIP  SWAP 2/  R +  THEN
-      SWAP  R> 2/
-      2/  DUP 0=
-    UNTIL  DROP
-  THEN  ;
+: /LOADT  ( n -- )
+  \ Load the Forth RAM-disk from tape, at address of screen n.
+  \ Warning: the file will be loaded, no matter its length.
+  \ n = first screen
+  EMPTY-BUFFERS DISC-SCR 0 S" DISC" <TAPE  ;
 
   \ vim: filetype=abersoftforthafera

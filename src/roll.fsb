@@ -1,5 +1,5 @@
 .( ROLL )
- 
+
 \ roll.fsb
 \ `ROLL` for ZX Spectrum Abersoft Forth
 
@@ -23,21 +23,27 @@
   \ A faster version with `CMOVE` is unfinished.
   \
   \ 2015-05-02: Code moved to this file.
- 
-  \ XXX OLD -- unfinished version
-  \ : ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
-  \ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 -
-  \ CMOVE DROP  ;
+  \
+  \ 2015-10-26: Reorganized the screens. Added `NEEDS`.
 
-  \ Note: in DZX-Forth
-  \ (http://programandala.net/en.program.dzx-forth.html)
-  \ there's a version in Z80.
+  \ -----------------------------------------------------------
+
+NEEDS RECURSE recurse
 
 : ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
   DUP 1 <
   IF    DROP
   ELSE  SWAP >R 1 - RECURSE R> SWAP
   THEN  ;  ;S
+
+  \ XXX TODO -- In DZX-Forth
+  \ (http://programandala.net/en.program.dzx-forth.html)
+  \ there's a version written in Z80.
+
+  \ XXX OLD -- unfinished version
+  \ : ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
+  \ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 -
+  \ CMOVE DROP  ;
 
 ( Spectrum Forth-83 ROLL )
 
@@ -74,5 +80,5 @@ CODE ROLL ( u ---)
     EXSP    \ Put top back.
      EXX      \ Back to normal registers
     JPIX ;C
-  
+
   \ vim: filetype=abersoftforthafera

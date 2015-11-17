@@ -81,10 +81,14 @@
   \
   \ 2015-05-17: `NEEDS` and `?NEEDS` used.
   \
-  \ 2015-07-18: Fixed the hardcoded addresses of the RAM-disc
+  \ 2015-07-18: Fixed the hardcoded addresses of the RAM-disk
   \ in `(TAPE)` and the tape headers. This problem was found
   \ during the development of Tron 0xF
   \ (http://programandala.net/en.program.tron_0xf.html).
+  \
+  \ 2015-10-26: Typo.
+
+  \ -----------------------------------------------------------
 
 -->
 

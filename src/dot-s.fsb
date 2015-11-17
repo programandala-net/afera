@@ -4,6 +4,7 @@
 \ `.S` for ZX Spectrum Abersoft Forth
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1990-2013 Matteo Vitturi
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -20,6 +21,9 @@
   \ 2015-03-30: First version.
   \ 2015-04-14: Second version, from Matteo Vitturi's vForth.
   \ 2015-04-19: Combined version.
+  \ 2015-10-26: Updated header.
+
+  \ -----------------------------------------------------------
 
 : .S   ( -- )
 

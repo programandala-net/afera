@@ -29,6 +29,14 @@
   \ 2015-07-07: Simplified: removed `[TO]` and `<TO>` from the
   \ default parsing version. Updated and tested de version with
   \ `DEFER`.
+  \
+  \ 2015-09-08: Fixed stack comments.
+  \
+  \ 2015-10-27: Updated license info.
+  \
+  \ 2015-10-28: Modified comment.
+  \
+  \ 2015-11-18: Updated header and license info.
 
   \ -----------------------------------------------------------
 
@@ -51,16 +59,15 @@
 
 ( VALUE with non-parsing TO -- version with flag )
 
-\ This non-parsing alternative implementation is adapted from
-\ lina: Copyright (c) 2000-2004 Albert van der Horst, The
-\ Netherlands
+\ This non-parsing alternative implementation is taken from
+\ Albert van der Horst's lina Forth.
 
   \ 85 bytes of dictionary space are used.
 
 0 VARIABLE TO-MESSAGE
 : FROM  ( -- )  0 TO-MESSAGE !  ;
 : TO    ( -- )  1 TO-MESSAGE !  ;
-: VALUE  ( "name" -- )
+: VALUE  ( n "name" -- )
   <BUILDS ,  DOES>  TO-MESSAGE @ IF  !  ELSE  @  THEN  FROM  ;
 
 ( VALUE with non-parsing TO -- version with EXECUTE )
@@ -69,11 +76,11 @@
 \ version of the lina implementation above.
 
   \ 82 bytes of dictionary space are used.
- 
+
 0 VARIABLE (VALUE)
 : FROM  ( -- )  ' @ CFA (VALUE) !  ;  FROM
 : TO    ( -- )  ' ! CFA (VALUE) !  ;
-: VALUE  ( "name" -- )
+: VALUE  ( n "name" -- )
   <BUILDS ,  DOES>   (VALUE) @ EXECUTE  FROM  ;
 
 ( VALUE with non-parsing TO -- version with DEFER )
@@ -86,7 +93,7 @@
 DEFER (VALUE)
 : FROM  ( -- )  ' @ CFA ' (VALUE) DEFER!  ;  FROM
 : TO    ( -- )  ' ! CFA ' (VALUE) DEFER!  ;
-: VALUE  ( "name" -- )
+: VALUE  ( n "name" -- )
   <BUILDS ,  DOES>  (VALUE) FROM  ;
 
   \ vim: filetype=abersoftforthafera

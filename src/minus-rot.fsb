@@ -17,12 +17,14 @@
 
   \ -----------------------------------------------------------
   \ History
-  
+
   \ 2015-03-29: Code written in the main file of the library.
   \ 2015-04-25: Code rewritten in Z80.
   \ 2015-05-02: Code moved to this file.
   \ 2015-05-13: Faster and smaller code, copied from DZX-Forth
   \ (http://programandala.net/en.program.dzx-forth.html).
+
+  \ -----------------------------------------------------------
 
 CREATE -ROT  ( x1 x2 x3 -- x3 x1 x2 )
 

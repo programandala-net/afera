@@ -1,8 +1,7 @@
 \ graphics.fsb
 \ Graphic extensions for ZX Spectrum Abersoft Forth
 
-\ Copyright (C) 1985,1986,1987,2015
-\ Marcos Cruz (programandala.net)
+\ Copyright (C) 1985-1987,2015 Marcos Cruz (programandala.net)
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -22,6 +21,10 @@
   \
   \ 2015-04-22: `UDG!` is moved to its own file
   \ <udg-store.fsb>.
+  \
+  \ 2015-10-26: Updated header.
+
+  \ -----------------------------------------------------------
 
 -->
 

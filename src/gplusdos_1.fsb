@@ -191,8 +191,6 @@ CHAR d DEVICE C! \ "d" or "D"
 
 ( Drive)
 
-  \ XXX TODO -- Check if this works with `CAT` when available.
-
   \ XXX TODO -- Make this compatible with `DRIVE`, the variable
   \ used by the tape and disk common words.
 

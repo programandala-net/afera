@@ -65,7 +65,7 @@
   \ dictionary below the stack, before `?STACK` can notice,
   \ easier than with the original fig-Forth memory map.  The
   \ same can happen when a stack is empty.
- 
+
   \ -----------------------------------------------------------
   \ History
 
@@ -85,10 +85,12 @@
   \ `RUNT` or `LOADT 1 LOAD`, a strange "OT? MSG # 0" error
   \ always happens at the end, but with no `WHERE` parameters
   \ on the stack...
-  \ 
+  \
   \ The reason of this problem is still unknown.  The contents
   \ of the buffers are exactly the same at the end of the
   \ proccess, and the pointers have been properly adapted.
+
+  \ -----------------------------------------------------------
 
 -->
 

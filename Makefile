@@ -1,8 +1,16 @@
 # Makefile
 
+# Copyright (C) 2015 Marcos Cruz (programandala.net)
+
 # This file is part of Afera
 # (Abersoft Forth Extensions, Resources and Addons)
 # http://programandala.net/en.program.afera.html
+
+# Copying and distribution of this file, with or without
+# modification, are permitted in any medium without royalty
+# provided the copyright notice and this notice are
+# preserved.  This file is offered as-is, without any
+# warranty.
 
 # ##############################################################
 # History
@@ -12,14 +20,23 @@
 # ##############################################################
 # Requirements
 
-# XXX TODO
-
-# fsb
-# 	<~/comp/vim/fsb/>
+# fsb or fsb2
+#   <http://programandala.net/en.program.fsb.html>
+#   <http://programandala.net/en.program.fsb2.html>
 # basename
 #   <http://www.gnu.org/software/coreutils/>
 # mkmgt
-#   <~/forth/mkmgt/>
+#   <http://programandala.net/en.program.mkmgt.html>
+
+# Note: Dependig on fsb2 or fsb are used, the following
+# commands must be replaced in this file:
+#
+# For fsb2:
+#  fsb2-abersoft src/afera.fsb
+#  fsb2-abersoft11k $<
+# For fsb:
+#  fsb-abersoft src/afera.fsb
+#  fsb-abersoft11k $<
 
 ################################################################
 # Config
@@ -43,18 +60,18 @@ all: \
 
 clean:
 	rm -f tap/*.tap
-	rm -f afera.mgt
+	rm -f tests/afera.mgt
 
 # The main file of the library has to be converted
 # to a 11263-byte RAM-disk file,
 # required by the unfixed Abersoft Forth.
 tap/afera.tap: src/afera.fsb
-	fsb2abersoft src/afera.fsb
+	fsb2-abersoft src/afera.fsb
 	mv src/afera.tap tap/
 
 # The other modules can be 11264-byte RAM-disk files.
 tap/%.tap: src/%.fsb
-	fsb2abersoft11k $<
+	fsb2-abersoft11k $<
 	mv src/$*.tap tap/
 
 # ##############################################################
@@ -127,6 +144,7 @@ sys/abersoft_forth_gplusdos.bas.tap: sys/abersoft_forth_gplusdos.bas
 		sys/abersoft_forth_gplusdos.bas  \
 		sys/abersoft_forth_gplusdos.bas.tap
 
+# XXX
 # On Debian i486, with make 3.86, sh fails with error
 # "@make not found"; removing the "@" sign works.
 # On Raspbian with make 4.0 it works without modification.
@@ -139,7 +157,7 @@ tapes:
 
 # XXX TODO
 
-# tests/gplusdos_test.tap: tapes afera.mgt
+# tests/gplusdos_test.tap: tapes test/afera.mgt
 # 	cat \
 # 		tap/loader.tap \
 # 		tap/afera.tap \
@@ -159,7 +177,7 @@ tapes:
 # 		tap/loaded.tap \
 # 		> tests/abersoft_forth_afera_gplusdos_install.tap
 
-# tests/gplusdos_128k_test.tap: tapes afera.mgt
+# tests/gplusdos_128k_test.tap: tapes tests/afera.mgt
 # 	cat \
 # 		tap/loader.tap \
 # 		tap/afera.tap \
@@ -188,8 +206,8 @@ tapes:
 # extensions after the G+DOS version of Abersoft Forth has
 # been created and saved to the disk by the user.
 
-afera.mgt: tapes sys/abersoft_forth_gplusdos.bas.tap
-	mkmgt --quiet afera.mgt \
+tests/afera.mgt: tapes sys/abersoft_forth_gplusdos.bas.tap
+	mkmgt --quiet tests/afera.mgt \
 		sys/gplusdos-sys-2a.tap \
 		sys/abersoft_forth_gplusdos.bas.tap \
 		sys/abersoft_forth.bin.tap \
@@ -273,29 +291,34 @@ backup:
 		_drafts/* \
 		_ex/*
 
-# ##############################################################
-# Tarballs
+################################################################
+# ZIP archive for distribution
 
-# XXX TODO
-
-tarball:
-	tar -czf afera_$$(date +%Y%m%d%H%M).tgz \
-		Makefile \
-		src/ \
-		sys/ \
-		tap/ \
-		tests/ \
-		benchmarks/
+.PHONY: zip
+zip:
+	rm -f afera.zip && \
+	cd .. && \
+	zip -9 afera/afera.zip \
+		afera/Makefile \
+		afera/ACKNOWLEDGMENTS.adoc \
+		afera/LICENSE.txt \
+		afera/README.adoc \
+		afera/TO-DO.adoc \
+		afera/src/*.fsb \
+		afera/sys/* \
+		afera/tap/*.tap \
+		afera/tests/* \
+		afera/benchmarks/*
+	cd -
 
 # ##############################################################
 # Files grouped for disk
 
 # XXX TODO This is experimental. Not used yet.
-# 
-# The goal is to create an MGT disk with less files. The
-# files of the library are small, and an MGT disk can have
-# only 80 files. As as result, soon the disk is full of
-# files, but mostly empty.
+#
+# The goal is to create an MGT disk with less files, because
+# the files of the library are small, and a G+DOS disk can
+# hold only 80 files.
 #
 # The approach is to pack the files into wordsets, but
 # something has to be done about the source headers, maybe
@@ -309,6 +332,9 @@ tarball:
 #
 # An alternative is actual disk support.  Then files could
 # be of any length.
+#
+# Another alternative is to use Beta DOS instead of G+DOS,
+# and reserve more tracks for the disk directory.
 
 groups_for_disk:
 	cat \
@@ -382,8 +408,8 @@ groups_for_disk:
 		src/gplusdos_vars.fsb \
 		> src.grouped_for_disk/gplusdos.fsb ; \
 	cat \
-		src/slash-loadt.fsb \
-		src/slash-savet.fsb \
+		src/slash-load-t.fsb \
+		src/slash-save-t.fsb \
 		src/tape.fsb \
 		> src.grouped_for_disk/tape.fsb ; \
 	cat \
@@ -454,7 +480,7 @@ tests/bank_test.tap: tapes
 		tap/loaded.tap \
 		> tests/bank_test.tap
 
-tests/gplusdos_test.tap: tapes afera.mgt
+tests/gplusdos_test.tap: tapes tests/afera.mgt
 	cat \
 		tap/loader.tap \
 		tap/afera.tap \
@@ -485,7 +511,7 @@ tests/gplusdos_test.tap: tapes afera.mgt
 		tap/loaded.tap \
 		> tests/gplusdos_test.tap
 
-tests/gplusdos_128k_test.tap: tapes afera.mgt
+tests/gplusdos_128k_test.tap: tapes tests/afera.mgt
 	cat \
 		tap/loader.tap \
 		tap/afera.tap \
@@ -637,3 +663,11 @@ tests/hi-to_test.tap: tapes
 #
 # 2015-07-17: Added 'tests/hi-to_test.tap' recipe for
 # debugging the module <hi-to.fsb>.
+#
+# 2015-09-04: Added the zip recipe.
+#
+# 2015-10-23: Updated the names of fsb converters.
+#
+# 2015-10-26: Updated two names of modules. fsb2 is used by default instead of fsb.
+#
+# 2015-10-30: Updated the zip recipe with the licenses.

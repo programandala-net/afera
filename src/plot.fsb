@@ -28,8 +28,10 @@
   \ 2015-05-06: New method: the original definition is
   \ overwritten with the new code. No space used.
 
+  \ -----------------------------------------------------------
+
 -->
- 
+
 .( Faster PLOT )
 
 HEX  HERE ' PLOT  ( a pfa )

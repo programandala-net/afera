@@ -37,6 +37,8 @@
   \ <hi-to.fsb>.  See <hi-to.fsb> for full details, including a
   \ memory map.
 
+  \ -----------------------------------------------------------
+
 HEX
 FFFF CONSTANT NEW-HI
 DECIMAL

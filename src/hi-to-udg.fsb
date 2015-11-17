@@ -31,6 +31,8 @@
   \ This module must be loaded right before <hi-to.fsb>.  See
   \ <hi-to.fsb> for full details, including a memory map.
 
+  \ -----------------------------------------------------------
+
 UDG 1- CONSTANT NEW-HI
 
   \ vim: filetype=abersoftforthafera

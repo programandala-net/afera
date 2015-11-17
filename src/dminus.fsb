@@ -28,6 +28,8 @@
   \
   \ 2015-06-06: New version compiled directly with opcodes,
   \ without the assembler.
+  \
+  \ 2015-10-26: Fixed the layout.
   
   \ -----------------------------------------------------------
 
@@ -36,21 +38,20 @@
 ( D- ) \ version compiled with opcodes
 
 CREATE D-  ( d1 d2 -- d3 )
-  HEX
-  D9 C,             \ exx
-  C1 C,             \ pop bc
-  D1 C,             \ pop de
-  E1 C,             \ pop hl
-  E3 C,             \ ex (sp),hl
-  A0 07 + C,        \ and a
-  ED C, 52 C,       \ sbc hl,de
-  E3 C,             \ ex (sp),hl
-  A0 07 + C,        \ and a
-  ED C, 42 C,       \ sbc hl,bc
-  E5 C,             \ push hl
-  D9 C,             \ exx
-  C3 C, NEXT ,      \ jp NEXT
-  SMUDGE DECIMAL
+HEX   D9 C,             \ exx
+      C1 C,             \ pop bc
+      D1 C,             \ pop de
+      E1 C,             \ pop hl
+      E3 C,             \ ex (sp),hl
+      A0 07 + C,        \ and a
+      ED C, 52 C,       \ sbc hl,de
+      E3 C,             \ ex (sp),hl
+      A0 07 + C,        \ and a
+      ED C, 42 C,       \ sbc hl,bc
+      E5 C,             \ push hl
+      D9 C,             \ exx
+      C3 C, NEXT ,      \ jp NEXT
+      SMUDGE DECIMAL
 
 ( D- ) \ assembler version
 

@@ -20,13 +20,13 @@
   \ 2015-05-15: Written after the code of `.S`.
 
 [DEFINED] RDEPTH
-  ?\  : RDEPTH  ( -- u )  RP@ R0 @ - -2 /  ;
+?\  : RDEPTH  ( -- u )  RP@ R0 @ - -2 /  ;
 
 : .RS   ( -- )
 
   RDEPTH 2- DUP
   S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
-  
+
   IF  RP@ 2- R0 @ 2- DO I @ . -2 +LOOP  THEN  ;
 
   \ vim: filetype=abersoftforthafera

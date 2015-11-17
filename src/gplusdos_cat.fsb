@@ -36,6 +36,10 @@
   \ History
 
   \ 2015-05-20: Extracted from <gplusdos_2.fsb>. Finished.
+  \
+  \ 2015-08-27: Typo.
+
+  \ -----------------------------------------------------------
 
 -->
 
@@ -72,7 +76,7 @@ CODE (CAT)  ( n -- )
 
 : CAT  ( ca len -- )  FILENAME>UFIA  4 (CAT)  ;
 
-  \ SCAT  ( ca len -- )
+  \ ACAT  ( ca len -- )
   \
   \ A variant of `CAT` that shows an abbreviated catalogue.
 

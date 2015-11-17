@@ -5,9 +5,6 @@
 
 \ Copyright (C) 2015 Marcos Cruz (programandala.net)
 
-\ The high level alternative versions were adapted from lina:
-\ Copyright (C) 2000-2004 Albert van der Horst
-
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
 \ http://programandala.net/en.program.afera.html
@@ -28,6 +25,8 @@
   \ stack words.
   \
   \ 2015-05-10: Code moved to this file and rewritten in Z80.
+  \
+  \ 2015-10-26: Updated some comments.
 
   \ -----------------------------------------------------------
 
@@ -55,7 +54,7 @@ CREATE 2R  ( -- d ) ( R: d -- d )
 
   SMUDGE DECIMAL -->
 
-  \ High level version:
+  \ XXX OLD -- High level version
   \ : 2R  ( -- d ) ( R: d -- d )  RP @ 2@  ;
 
 ( 2>R )
@@ -78,7 +77,7 @@ CREATE 2>R  ( d -- ) ( R: -- d )
 
   SMUDGE DECIMAL -->
 
-  \ High level version:
+  \ XXX OLD -- High level version
   \ : 2>R  ( d -- ) ( R: -- d )
   \   COMPILE SWAP COMPILE >R COMPILE >R  ; IMMEDIATE
 
@@ -102,7 +101,7 @@ CREATE 2R>  ( -- d ) ( R: d -- )
 
   SMUDGE DECIMAL
 
-  \ High level version:
+  \ XXX OLD -- High level version
   \ : 2R>  ( -- d ) ( R: d -- )
   \  COMPILE R>  COMPILE R> COMPILE SWAP  ; IMMEDIATE
 
