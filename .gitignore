@@ -1,5 +1,4 @@
 _meta/
-*.tap
 *.zip
 *.grouped_for_disk/
 _ex/

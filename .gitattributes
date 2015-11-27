@@ -1,3 +1,4 @@
 *.fsb linguist-language=Forth
 *.tap binary
 *.mgt binary
+*.rom binary
