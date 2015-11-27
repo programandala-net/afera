@@ -1,0 +1,73 @@
+.( Renamings)
+
+\ renamings.fsb
+\ Renaming of some words of ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This module substitutes the names of three fig-Forth words
+  \ with their modern versions. No memory is used.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: `BYE`.
+  \
+  \ 2015-03-29: Extracted from the main file of the library.
+  \ New: `WORDS`, `?DUP`.
+  \
+  \ 2015-06-13: Fix: the start bit was missing in the first
+  \ letter of the new names!
+
+  \ -----------------------------------------------------------
+
+( MON>BYE )
+
+: MON>BYE  ( -- )
+  \ Rename `MON` to `BYE`:
+  [ -FIND MON ] 0= ?EXIT
+  ' MON NFA 1+  [CHAR] B 128 + OVER C!
+                [CHAR] Y OVER 1+ C!
+                [CHAR] E 128 + SWAP 2+ C!
+  ;  MON>BYE  FORGET MON>BYE
+
+-->
+
+( VLIST>WORDS )
+
+: VLIST>WORDS  ( -- )
+  \ Rename `VLIST` to `WORDS`:
+  [ -FIND MON ] 0= ?EXIT
+  [ -FIND VLIST ] 0= ?EXIT
+  ' VLIST NFA 1+  [CHAR] W 128 + OVER C!
+                  [CHAR] O OVER 1+ C!
+                  [CHAR] R OVER 2+ C!
+                  [CHAR] D OVER 3 + C!
+                  [CHAR] S 128 + SWAP 4 + C!
+  ;  VLIST>WORDS  FORGET VLIST>WORDS
+
+-->
+
+( -DUP>?DUP )
+
+: -DUP>?DUP  ( -- )
+  \ Rename `-DUP` to `?DUP`:
+  [ -FIND -DUP ] 0= ?EXIT
+  ' -DUP NFA 1+  [CHAR] ? 128 + SWAP C!
+  ;  -DUP>?DUP  FORGET -DUP>?DUP
+
+  \ vim: filetype=abersoftforthafera
+

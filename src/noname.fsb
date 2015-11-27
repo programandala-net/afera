@@ -1,0 +1,61 @@
+.( :NONAME )
+\ noname.fsb
+\ `:NONAME` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-15: First draft.
+  \
+  \ 2015-05-04: First working version.
+  \
+  \ 2015-07-06: Bug found and fixed: the `SMUDGE` included to
+  \ compensate the `SMUDGE` done later by `;` made it
+  \ impossible to find the latest defined word during the
+  \ definition started by `:NONAME`. The solution is to patch
+  \ `;` and make `;` to unpatch itself every time. `;SMUDGE` is
+  \ written for that.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( Patch ; )
+
+: ;SMUDGE  ( -- )
+  \ Called by `;` to do `SMUDGE`.
+  [ HERE ]  \ Save the address of `SMUDGE`.
+  SMUDGE \ When patched by `:NONAME`, this is `NOOP`.
+  \ Unpatch a possible patch done by `:NONAME`,
+  \ using the saved address where `SMUDGE` was compiled:
+  [ ' SMUDGE CFA ] LITERAL LITERAL !  ;
+
+  \ Substitute the `SMUDGE` in `;` with `;SMUDGE`:
+
+' ;SMUDGE CFA 25378 !
+
+-->
+
+( :NONAME )
+
+: :NONAME  ( -- cfa )
+  ?EXEC  CURRENT @ CONTEXT !
+  \ Deactivate the `SMUDGE` in `;SMUDGE`:
+  [ ' NOOP CFA ] LITERAL ' ;SMUDGE !
+  \ Create a code field of a colon definition:
+  HERE !CSP  25350 ,  \ 25350 = address of do_colon 
+  ]  ;
+
+  \ vim: filetype=abersoftforthafera

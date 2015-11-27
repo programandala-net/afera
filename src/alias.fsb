@@ -1,0 +1,49 @@
+.( ALIAS)
+
+\ alias.fsb
+\ `ALIAS` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-15: Code extracted from the main file of the
+  \ library.
+
+  \ -----------------------------------------------------------
+
+: ALIAS  ( pfa "name" -- )
+  \ Create the word "name" as an alias of the *code* word
+  \ whose pfa is given.
+  \ NOTE: This works only for code words.
+  \ XXX TODO make it work with any kind of word.
+  \ XXX OLD -- first version:
+  \ [COMPILE] : [COMPILE] ;  LATEST PFA CFA !  ;
+  \ XXX second version,
+  \ the alias needs less space in the dictionary:
+  CREATE SMUDGE  LATEST PFA CFA !  ;
+
+  \ XXX TODO Improved alternative:
+  \ : ALIAS  ( pfa "name" -- )
+  \   \ Create the word "name" as an alias of the *code* word
+  \   \ whose pfa is given.
+  \   DUP DUP CFA @ =  \ code word?
+  \   IF    [COMPILE] : [COMPILE] ;  LATEST PFA CFA !
+  \   \ XXX FIXME :
+  \   ELSE  CREATE SMUDGE (;CODE)
+  \         195 C, CFA ,  \ jp cfa
+  \         [COMPILE] ;
+  \   THEN ;
+
+  \ vim: filetype=abersoftforthafera

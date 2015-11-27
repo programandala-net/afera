@@ -1,0 +1,64 @@
+\ 2slash.fsb
+\ `2/` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop
+\ Copyright (C) 1985 Edmund Ramm
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+ 
+  \ 2015-04-16: Code written in the main file of the library,
+  \ adapted from code written by Edmund Ramm (1985-05-07) for
+  \ the Z80 fig-Forth implementation written by Dennis L.
+  \ Wilson (1980-09-07).
+  \
+  \ 2015-04-23: Code fixed. Negative numbers didn't work
+  \ because a wrong relative jump.
+  \
+  \ 2015-05-05: Extracted from the main file of the library.
+  \
+  \ 2015-08-12: New version, from Lennart Benschop's Spectrum
+  \ Forth-83 (1988).
+
+-->
+
+.( 2/ )
+
+  \ Code adapted from Lennart Benschop's Spectrum Forth-83
+  \ (1988).
+
+CREATE 2/  ( n1 -- n2 )
+  HEX
+  E1 C,           \ pop hl
+  CB C, 2C C,     \ sra h
+  CB C, 1D C,     \ rr l ; asr hl
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE  DECIMAL
+
+  \ XXX OLD -- previous version, adapted adapted from code
+  \ written by Edmund Ramm (1985).
+
+  \ CREATE 2/  ( n1 -- n2 )
+  \   HEX
+  \   E1 C,           \ pop hl
+  \   CB C, 7C C,     \ bit 7,h ; negative?
+  \   18 C, 01 C,     \ jr z,twosl1 ; no
+  \   23 C,           \ inc hl ; yes, add 1
+  \   \ twosl1:
+  \   CB C, 2C C,     \ sra h
+  \   CB C, 1D C,     \ rr l ; asr hl
+  \   C3 C, PUSHHL ,  \ jp PUSHHL
+  \   SMUDGE  DECIMAL
+
+  \ vim: filetype=abersoftforthafera

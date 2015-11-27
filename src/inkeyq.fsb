@@ -1,0 +1,37 @@
+.( INKEY? )
+
+\ inkeyq.fsb
+\ `INKEY?` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-31: Code written in the main file of the library.
+  \
+  \ 2015-04-09: Code extracted from the main file of the
+  \ library. Moved to a keyboard module.
+  \
+  \ 2015-05-03: Code moved to its own file.
+
+  \ -----------------------------------------------------------
+
+: INKEY?  ( -- c true | false )
+  \ If a key is pressed, return its code and a true flag;
+  \ otherwise return a false flag.
+  INKEY DUP 255 <> DUP 0= IF  NIP  THEN  ;
+  \ INKEY DUP 255 <> DUP ?EXIT NIP  ;
+
+  \ vim: filetype=abersoftforthafera
+

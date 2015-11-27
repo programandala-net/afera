@@ -1,0 +1,99 @@
+.( VALUE )
+
+\ value.fsb
+\ `VALUE` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-15: Code extracted from the main file of the
+  \ library.
+  \
+  \ 2015-04-21: Fix: `[TO]` does not need to compile `LITERAL`,
+  \ because in fig-Forth `'` compiles its result.
+  \
+  \ 2015-04-30: Three alternative non-parsing versions.
+  \
+  \ 2015-07-07: Simplified: removed `[TO]` and `<TO>` from the
+  \ default parsing version. Updated and tested de version with
+  \ `DEFER`.
+  \
+  \ 2015-09-08: Fixed stack comments.
+  \
+  \ 2015-10-27: Updated license info.
+  \
+  \ 2015-10-28: Modified comment.
+  \
+  \ 2015-11-18: Updated header and license info.
+
+  \ -----------------------------------------------------------
+
+2 LOAD
+
+( VALUE with parsing and state-smart TO )
+
+\ This implementation, with parsing and state-smart `TO`,
+\ conforms to ANS Forth.  ANS Forth explicitly requires that
+\ `TO` must parse.
+
+  \ 45 bytes of dictionary space are used.
+
+: VALUE  ( n "name"  -- )  CONSTANT  ;
+
+: TO  ( Interpretation: n "name" -- )
+      ( Compilation: "name" -- )
+  [COMPILE] '  STATE @ IF  COMPILE !  ELSE  !  THEN
+  ; IMMEDIATE
+
+( VALUE with non-parsing TO -- version with flag )
+
+\ This non-parsing alternative implementation is taken from
+\ Albert van der Horst's lina Forth.
+
+  \ 85 bytes of dictionary space are used.
+
+0 VARIABLE TO-MESSAGE
+: FROM  ( -- )  0 TO-MESSAGE !  ;
+: TO    ( -- )  1 TO-MESSAGE !  ;
+: VALUE  ( n "name" -- )
+  <BUILDS ,  DOES>  TO-MESSAGE @ IF  !  ELSE  @  THEN  FROM  ;
+
+( VALUE with non-parsing TO -- version with EXECUTE )
+
+\ This non-parsing alternative implementation is a modified
+\ version of the lina implementation above.
+
+  \ 82 bytes of dictionary space are used.
+
+0 VARIABLE (VALUE)
+: FROM  ( -- )  ' @ CFA (VALUE) !  ;  FROM
+: TO    ( -- )  ' ! CFA (VALUE) !  ;
+: VALUE  ( n "name" -- )
+  <BUILDS ,  DOES>   (VALUE) @ EXECUTE  FROM  ;
+
+( VALUE with non-parsing TO -- version with DEFER )
+
+\ This non-parsing alternative implementation is a modified
+\ version of the lina implementation above.
+
+  \ 84 bytes of dictionary space are used.
+
+DEFER (VALUE)
+: FROM  ( -- )  ' @ CFA ' (VALUE) DEFER!  ;  FROM
+: TO    ( -- )  ' ! CFA ' (VALUE) DEFER!  ;
+: VALUE  ( n "name" -- )
+  <BUILDS ,  DOES>  (VALUE) FROM  ;
+
+  \ vim: filetype=abersoftforthafera

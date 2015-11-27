@@ -1,0 +1,97 @@
+.( G+DOS support -- +D memory)
+
+\ gplusdos_mem.fsb
+\ G+DOS support for ZX Spectrum Abersoft Forth (+D memory)
+
+\ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This module provides words to use the memory of the +D
+  \ interface: ROM 0x0000..0x1FFFF; RAM 0x2000..0x3FFFF.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS CODE assembler
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-19: Start.
+
+  \ -----------------------------------------------------------
+
+2 5 THRU
+
+( DOSC@ )
+
+CODE DOSC@  ( a -- b )
+  \ Fetch the content of +D memory address.
+  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH
+  PATCH HOOK
+  HL POP
+  (HL) A LD 0 H LD#  A L LD
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  PUSHHL JP
+  END-CODE
+
+( DOS@ )
+
+CODE DOS@  ( a -- n )
+  \ Fetch the content of +D memory address.
+  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH
+  PATCH HOOK
+  HL POP (HL) E LD  HL INCP  (HL) D LD
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  DE PUSH
+  NEXT JP
+  END-CODE
+
+( DOSC! )
+
+CODE DOSC!  ( b a -- )
+  \ Store b into the +D memory address a.
+  HL POP  DE POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  DE PUSH HL PUSH
+  PATCH HOOK
+  HL POP  DE POP  E (HL) LD
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+( DOS! )
+
+CODE DOS!  ( n a -- )
+  \ Store n into the +D memory address a.
+  HL POP  DE POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  DE PUSH  HL PUSH
+  PATCH HOOK
+  HL POP  DE POP  E (HL) LD  HL INCP  D (HL) LD
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+  \ vim: filetype=abersoftforthafera
+

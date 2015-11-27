@@ -1,0 +1,44 @@
+.( S= )
+
+\ s-equals.fsb
+\ `S=` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-07-16: Code moved from the <strings.fsb> module.
+  \ 2015-08-28: Typo.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+[DEFINED] LENGTHS ?-->
+
+: LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
+  2OVER NIP OVER  ;
+
+  \ -----------------------------------------------------------
+
+-->
+  
+( S= )
+
+: S=  ( ca1 len1 ca2 len2 -- f )
+  LENGTHS -  \ different lengths?
+  IF    2DROP 2DROP FALSE EXIT
+  ELSE  DROP [ CONTEXT @ EDITOR ] -TEXT [ CONTEXT ! ] 0= 0=
+  THEN  ;
+
+  \ vim: filetype=abersoftforthafera

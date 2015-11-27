@@ -1,0 +1,101 @@
+--> \ loader.fsb
+
+\ Part of a
+\ tape source loader for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This module defines an executes a tape source loader. It is
+  \ intended to make it easy to load sources of any length, in
+  \ other words, TAP files that contain any number of Forth
+  \ RAM-disk files with sources to be compiled in certain
+  \ order.
+  \
+  \ The loader gets every RAM-disk file from tape and loads its
+  \ screen 1.  The process repeats until the `LOADED?` variable
+  \ is not zero. The modules <loaded.fsb> or
+  \ <loaded_execute.fsb> can be used to stop the process.
+  \
+  \ In some cases <loaded.fsb> or <loaded_execute.fsb> can not
+  \ be used. For example, when the RAM-disk is used as storage
+  \ for binary data loaded from tape at the end of the sources.
+  \ Then the application itself must stop the loader at the end
+  \ of the compilation process: Setting `LOADED?` to 1 (stop)
+  \ or -1 (stop and execute the latest word defined) is enough;
+  \ an alternative method is to clear the return stack with
+  \ `RP!` and then execute the boot word.
+
+  \ Note: This file is the first one to be loaded, even before
+  \ the <afera.fsb>. That's why it can not use any word defined
+  \ by the Afera library, or use the first screen for code.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-08: Start, based on the loader of Tron 0xF
+  \ (http://programandala.net/en.program.tron_0xf.html).
+  \
+  \ 2015-05-17: Fix: `LOADER` didn't reset `LOADED?` at the
+  \ start.
+  \
+  \ 2015-07-05: Fix: Typo.
+  \
+  \ 2015-07-14: Changed the name and usage of `LOADED`, in
+  \ order to make it more flexible. Now any word can be
+  \ executed, not just the latesonee.
+
+  \ -----------------------------------------------------------
+
+( Library modules loader )
+
+." Loader "
+
+FORTH DEFINITIONS
+
+0 VARIABLE LOADED
+  \ Flag: Have all sources been loaded?
+  \ It's set in the last source file.
+  \ Possible values:
+  \ 0  = keep on loading sources
+  \ 1 = stop the loader
+  \ cfa  = stop the loader and execute the cfa
+
+: LOADER  ( -- )
+
+  \ Get and compile every RAM-disk from tape, until `LOADED?`
+  \ is on, and then, depending of its value, execute the latest
+  \ word defined.
+
+  \ XXX TMP benchmark -- reset the system frames counter
+  \ 0 23672 ! 0 23674 C!
+
+  0 LOADED !
+  BEGIN  LOADED @ 0=  WHILE
+    255 23692 C!  ( avoid the "scroll?" prompt)
+    EMPTY-BUFFERS INIT-DISC LOADT 1 LOAD
+  REPEAT
+
+  \ XXX TMP benchmark -- result
+  \ 23672 @ 23674 C@ D. ." FRAMES" CR
+
+  \ LOADED @ -1 = IF  RP! LATEST PFA CFA EXECUTE  THEN  ;
+  LOADED @ 1 - IF
+    RP! LOADED @ EXECUTE QUIT
+  THEN  ;
+
+LOADER
+
+  \ vim: filetype=abersoftforthafera

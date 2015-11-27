@@ -1,0 +1,34 @@
+.( SGN )
+
+\ sgn.fsb
+\ `SGN` for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: Written.
+  \
+  \ 2015-05-11: Extracted from the main file of the library.
+  \ Modified to use `2*` if defined.
+  \
+  \ 2015-05-17: Updated: `2*` is part of the main file of the
+  \ library.
+
+  \ -----------------------------------------------------------
+
+: SGN  ( n1 -- -1|0|1 )  DUP IF  0<  2*  1+  THEN  ;
+
+  \ vim: filetype=abersoftforthafera
+

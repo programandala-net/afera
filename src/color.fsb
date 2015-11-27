@@ -1,0 +1,344 @@
+.( Faster color words )
+\ color.fsb
+\ Faster color words for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This file patches `INK`, `PAPER`, `BRIGHT`, `FLASH`,
+  \ `INVERSE` and `GOVER` with faster code.
+  \
+  \ The original `INK` and `PAPER` are especially slow.
+  \ Beside, it seems the original `INK` has a bug that causes
+  \ `PLOT` to use 0 instead the proper attribute in most cases.
+  \
+  \ Note: The percentages show the execution time, compared to
+  \ the original word.
+
+  \ -----------------------------------------------------------
+  \ Documentation
+
+  \ (From the ZX Spectrum +3 manual transcribed by Russell
+  \ Marks et al.; and from the ZX Spectrum ROM disassembly.)
+
+  \ System variables:
+
+  \ 23693 = ATTR_P -- permanent colors
+
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ ATTR_P  |   |   |   |   |   |   |   |   |
+  \         |   |   |   |   |   |   |   |   |
+  \ 23693   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ 23694 = MASK_P -- permanent mask
+  \ MASK_P is used for transparent colours. Any bit that is 1
+  \ shows that the corresponding attribute is taken not from
+  \ ATTR_P but from what is already on the screen.
+
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ MASK_P  |   |   |   |   |   |   |   |   |
+  \         |   |   |   |   |   |   |   |   |
+  \ 23694   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ 23695 = ATTR_T -- temporary colors
+
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ ATTR_T  |   |   |   |   |   |   |   |   |
+  \         |   |   |   |   |   |   |   |   |
+  \ 23695   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ 23696 = MASK_T -- temporary mask
+  \ MASK_T is used for transparent colours. Any bit that is 1
+  \ shows that the corresponding attribute is taken not from
+  \ ATTR_T but from what is already on the screen.
+
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ MASK_T  |   |   |   |   |   |   |   |   |
+  \         |   |   |   |   |   |   |   |   |
+  \ 23696   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ P_FLAG holds the print flags.  Even bits are the temporary
+  \ flags; odd bits are the permanent flags.
+
+  \         {paper9 }{ ink9 }{ inv1 }{ over1}
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ P_FLAG  |   |   |   |   |   |   |   |   |
+  \         | p | t | p | t | p | t | p | t |
+  \ 23697   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-18: First version. Faster `INK` and `PAPER`.
+  \
+  \ 2015-05-05:
+  \
+  \ Much faster `INK` and `PAPER`, by calling the ROM routine
+  \ at 0x1CAD (idea from Matteo Vitturi's v.Forth) and writting
+  \ the whole definition in Z80.
+  \
+  \ `BRIGHT`, `FLASH`, `INVERSE` and `GOVER` are rewritten in
+  \ Z80, after their original high level definitions.
+  \
+  \ All words patch their original definitions, so no memory is
+  \ used.  The method used is the following:
+  \
+  \ 1) save `HERE`; 2) modify the cfa of the word to point to
+  \ its pfa; 3) compile the Z80 code in the dictionary; 4) move
+  \ the code to the patched word; 5) restore the original value
+  \ of `DP`.
+  \
+  \ It would be simpler to set `DP` to the pfa of the word to
+  \ patch, but it doesn't work because `WORD` does `HERE 34
+  \ BLANKS`, what corrupts the space ahead, the next word in
+  \ the dictionary.
+  \
+  \ 2015-07-13: Bug found and fixed:
+  \
+  \ `1 INVERSE` is deactivated by `INK` or `PAPER` when nothing
+  \ is printed between them. Examples:
+
+  \   1 INVERSE 2 INK  ." No inverse mode!"
+  \   1 INVERSE 2 PAPER  ." No inverse mode!"
+
+  \ This does not happen in Abersoft Forth. The Afera's
+  \ `INVERSE` does exactly the same than its Abersoft Forth
+  \ version, simply much faster. When the new definition of
+  \ `INVERSE` is omitted nothing changes. The problem is in the
+  \ improved definitions of `INK` and `PAPER`: they call the
+  \ ROM address 0x1CAD to set the permanent colors, what
+  \ includes the print flags (system variable 23697). Then the
+  \ bits that mark the temporary status of `inverse` and
+  \ `gover`, not changed by these words, overwrite the bits
+  \ that mark their permanent status. The solution was to
+  \ (re)set both bits.
+  \
+  \ Fix: `INVERSE`, `BRIGHT`, `FLASH` and `GOVER` checked the
+  \ lower 8 bits of the input flag. Now they check all the 16
+  \ bits.
+  \
+  \ Bug found and fixed:
+
+  \ ----
+  \ 2 ink 10 10 plot  \ plots but...
+  \ 10 10 point . 1  \ ...with black ink! why?
+  \
+  \ 3 ink cr 10 10 plot \ it works with `cr` between
+  \
+  \ 3 ink
+  \ 10 10 plot \ it works also in two commands
+  \ ----
+
+  \ The color change required by `plot` is not effective until
+  \ something is printed. The problem is ATTR_T is not changed:
+
+  \ ----
+  \ 6 ink 23695 c@ 100 100 plot \ black ink, black paper plot!
+  \ . 0  \ content of ATTR_T
+  \ ----
+
+  \ This happens also with Abersoft Forth.
+
+  \ New versions of `INK` and `PAPER` are written. They change
+  \ the required bits of ATTR_T and ATTR_P directly, without
+  \ any ROM routine. Now they work as expected, and faster. The
+  \ only disadvantage is color 8 (contrast) and 9 (transparent)
+  \ are not supported. New words are required for that.
+  \
+  \ 2015-07-14: Bug found and fixed...: The new `INK` and
+  \ `PAPER` took the content of ATTR_T, modified it and used
+  \ the result to update both ATTR_T and ATTR_P. This overwrote
+  \ the effect of `FLASH` and `BRIGHT`, that only updated
+  \ ATTR_P.  `FLASH` and `BRIGHT` have been modified to update
+  \ both variables.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( INK )
+
+  \ XXX TODO -- Colors 8 (contrast) and 9 (transparent) are not
+  \ supported.
+
+HEX  HERE
+  ' INK DUP CFA !     \ convert `INK` to a code word
+  \ ( b -- )
+  \ b = color value
+  D1 C,               \ pop de
+  3A C, 5C8F ,        \ ld a,(23695) ; ATTR_T
+  E6 C, F8 C,         \ and %11111000 ; remove the current ink
+  50 07 + C,          \ ld d,a ; save the result
+  78 03 + C,          \ ld a,e ; new ink
+  E6 C, 07 C,         \ and %00000111 ; only the ink
+  B0 02 + C,          \ or d ; combine with the current attr
+  32 C, 5C8F ,        \ ld (23695),a ; update ATTR_T
+  32 C, 5C8D ,        \ ld (23693),a ; update ATTR_P
+  C3 C, NEXT ,        \ jp next
+
+  DUP ' INK OVER HERE SWAP - CMOVE  DP !
+
+DECIMAL  -->
+
+( PAPER )
+
+  \ XXX TODO -- Colors 8 (contrast) and 9 (transparent) are not
+  \ supported.
+
+HEX  HERE
+  ' PAPER DUP CFA !     \ convert `PAPER` to a code word
+  \ ( b -- )
+  \ b = color value
+  D1 C,           \ pop de
+  3A C, 5C8F ,    \ ld a,(23695) ; ATTR_T
+  E6 C, C7 C,     \ and %11000111 ; remove the current paper
+  50 07 + C,      \ ld d,a ; save the result
+  78 03 + C,      \ ld a,e ; new ink
+  E6 C, 38 C,     \ and %00111000 ; only the paper
+  B0 02 + C,      \ or d ; combine with the current attr
+  32 C, 5C8F ,    \ ld (23695),a ; update ATTR_T
+  32 C, 5C8D ,    \ ld (23693),a ; update ATTR_P
+  C3 C, NEXT ,    \ jp next
+
+  DUP ' PAPER OVER HERE SWAP - CMOVE  DP !
+
+DECIMAL  -->
+
+( BRIGHT )
+
+HERE
+  \ ( f -- )
+  ' BRIGHT DUP CFA !    \ convert `BRIGHT` to a code word
+  HEX
+  E1 C,                 \ pop hl
+  78 04 + C,            \ ld a,h
+  B0 05 + C,            \ or l
+  CA C, ' BRIGHT 11 + , \ jp z,turn_off
+                        \ ; turn on
+  FD C, CB C, 53 C, C6 08 6 * + C, \ set 6,(iy+0x53) \ ATTR_P
+  FD C, CB C, 55 C, C6 08 6 * + C, \ set 6,(iy+0x55) \ ATTR_T
+  C3 C, NEXT ,          \ jp next
+                        \ turn_off:
+  FD C, CB C, 53 C, 86 08 6 * + C, \ res 6,(iy+0x53) \ ATTR_P
+  FD C, CB C, 55 C, 86 08 6 * + C, \ res 6,(iy+0x55) \ ATTR_T
+  C3 C, NEXT ,          \ jp next
+  DUP ' BRIGHT OVER HERE SWAP - CMOVE  DP !  DECIMAL -->
+
+( FLASH )
+
+HERE
+  ' FLASH DUP CFA !    \ convert `FLASH` to a code word
+  \ ( f -- )
+  HEX
+  E1 C,                 \ pop hl
+  78 04 + C,            \ ld a,h
+  B0 05 + C,            \ or l
+  CA C, ' FLASH 11 + ,  \ jp z,turn_off
+                        \ ; turn on
+  FD C, CB C, 53 C, C6 08 7 * + C, \ set 7,(iy+0x53) \ ATTR_P
+  FD C, CB C, 55 C, C6 08 7 * + C, \ set 7,(iy+0x55) \ ATTR_T
+  C3 C, NEXT ,          \ jp next
+                        \ turn_off:
+  FD C, CB C, 53 C, 86 08 7 * + C, \ res 7,(iy+0x53) \ ATTR_P
+  FD C, CB C, 55 C, 86 08 7 * + C, \ res 7,(iy+0x55) \ ATTR_T
+  C3 C, NEXT ,          \ jp next
+  DUP ' FLASH OVER HERE SWAP - CMOVE  DP !  DECIMAL -->
+
+( GOVER )
+
+  \ Convert `GOVER` to a code word.
+HERE  ' GOVER DUP CFA !  ( f -- )
+  HEX
+  E1 C,                 \ pop hl
+  78 04 + C,            \ ld a,h
+  B0 05 + C,            \ or l
+  21 C, 5C91 ,          \ ld hl,23697 ; P_FLAG
+  CA C, ' GOVER 10 + ,  \ jp z,turn_off
+                        \ ; turn on
+  CB C, C6 8 0 * + C,   \ set 0,(hl) ; temporary
+  CB C, C6 8 1 * + C,   \ set 1,(hl) ; permanent
+  C3 C, NEXT ,          \ jp next
+                        \ turn_off:
+  CB C, 86 8 0 * + C,   \ res 0,(hl) ; temporary
+  CB C, 86 8 1 * + C,   \ res 1,(hl) ; permanent
+  C3 C, NEXT ,          \ jp next
+  DUP ' GOVER OVER HERE SWAP - CMOVE
+  DP !  DECIMAL  -->
+
+( INVERSE )
+
+  \ Convert `INVERSE` to a code word.
+HERE  ' INVERSE DUP CFA !  ( f -- )
+  HEX
+  E1 C,                   \ pop hl
+  78 04 + C,              \ ld a,h
+  B0 05 + C,              \ or l
+  21 C, 5C91 ,            \ ld hl,23697 ; P_FLAG
+  CA C, ' INVERSE 10 + ,  \ jp z,turn_off
+                          \ ; turn on
+  CB C, C6 8 2 * + C,     \ set 2,(hl) ; temporary
+  CB C, C6 8 3 * + C,     \ set 3,(hl) ; permanent
+  C3 C, NEXT ,            \ jp next
+                          \ turn_off:
+  CB C, 86 8 2 * + C,     \ res 2,(hl) ; temporary
+  CB C, 86 8 3 * + C,     \ res 3,(hl) ; permanent
+  C3 C, NEXT ,            \ jp next
+  DUP ' INVERSE OVER HERE SWAP - CMOVE
+  DP !  DECIMAL
+
+( INK PAPER )  \ XXX OLD -- not used anymore
+
+-->  \ skip this screen, just in case
+
+  \ -----------------------------------------------------------
+
+  \ This version of `INK` causes strange problems (see note
+  \ 2015-07-13 in the history). Both `INK` and `PAPER` were
+  \ rewritten with a different approach.
+
+  \ -----------------------------------------------------------
+
+HEX
+
+HERE  ' INK DUP CFA !
+  \ ( b -- )  \ 28%
+  \ b = color value
+  3E C, 10 C, D7 C,   \ ld a,16 / rst 0x10
+  E1 C, 7D C, D7 C,   \ pop hl / ld a,l / rst 0x10
+  CD C, 1CAD ,        \ call set-permanent-colors
+  C3 C, NEXT ,        \ jp next
+  DUP ' INK OVER HERE SWAP - CMOVE  DP !
+
+HERE  ' PAPER DUP CFA !
+  \ ( b -- )  \ 17%
+  \ b = color value
+  3E C, 11 C, D7 C,   \ ld a,17 / rst 0x10
+  E1 C, 7D C, D7 C,   \ pop hl / ld a,l / rst 0x10
+  CD C, 1CAD ,        \ call set-permanent-colors
+  C3 C, NEXT ,        \ jp next
+  DUP ' PAPER OVER HERE SWAP - CMOVE  DP !
+
+DECIMAL
+
+  \ vim: filetype=abersoftforthafera

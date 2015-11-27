@@ -1,0 +1,31 @@
+.( POSTPONE )
+\ postpone.fsb
+\ `POSTPONE` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-07-14: Written.
+
+  \ -----------------------------------------------------------
+
+: POSTPONE  ( "name" -- )
+  -FIND 0= 0 ?ERROR  ( pfa b )  \ error if not found
+  64 AND 0=  \ non-immediate word?
+  IF  COMPILE COMPILE  THEN  \ if so, compile `compile`
+  CFA ,  \ compile the cfa
+  ; IMMEDIATE
+  
+  \ vim: filetype=abersoftforthafera

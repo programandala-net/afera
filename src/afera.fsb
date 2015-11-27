@@ -1,0 +1,820 @@
+\ afera.fsb
+\ Main file of the Afera library for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This is the main file of the Afera library.
+  \
+  \ It defines words required by other modules or that are
+  \ considered essential;
+  \
+  \ it patches the system with faster code that doesn't use
+  \ additional memory;
+  \
+  \ it fixes most of the known bugs of the system.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ See at the end of the file.
+
+  \ -----------------------------------------------------------
+  \ Error messages
+
+  \ Abersoft Forth error messages are 0..24. Afera implements
+  \ the following new messages:
+  \
+  \ 25 Unsupported tape operation.
+  \ 26 Unsupported disk operation.
+  \ 27 Source file needed.
+
+  \ -----------------------------------------------------------
+  \ fsb directives
+
+  \ The following #vim directive, processed by fsb, translate
+  \ every "\*" into the copyright symbol code of the ZX
+  \ Spectrum character set (0x7F):
+
+  \ #vim %substitute@\\\*@\=nr2char(127)@g
+
+( CHAR [CHAR] , line comments)
+
+." Afera" CR  FORTH DEFINITIONS  HEX
+
+: CHAR  ( "name" -- c )  BL WORD HERE 1+ C@  ;
+: [CHAR]  ( "name" -- c )  CHAR [COMPILE] LITERAL  ; IMMEDIATE
+
+: \  ( "ccc<newline>" -- )
+  IN @ C/L MOD C/L SWAP - IN +! ; IMMEDIATE
+
+: .(  ( "ccc<paren>" -- )
+  [CHAR] ) TEXT PAD COUNT TYPE  ; IMMEDIATE
+
+-->
+
+( Bug fixes and patches)
+
+  \ ............................................
+  \ Fix the "11263" bug
+
+  \ The length of the RAM-disk must be 11264 (0x2C00), `HI LO -
+  \ 1+`, not 11263 (0x2BFF), `HI LO -`.
+
+  \ Length of the RAM-disk:
+HI LO - 1+ CONSTANT /DISC
+
+  \ Patch the load tape header (no need to patch also the save
+  \ header, because the load header is copied to the save
+  \ header during the tape operations) and `INIT-DISC`:
+/DISC DUP 75E6 0B + !   ' INIT-DISC 06 + !
+
+  \ ............................................
+  \ Fix the `2OVER` bug
+
+  \ `2OVER` must do `R> R>` at the end, not `>R >R`
+  \
+  \ As Don Thomasson's _Advanced Spectrum Forth_ (1984) says
+  \ (page 131), early versions of Abersoft Forth contained an
+  \ error in the word `2OVER`, that hangs the system. So just
+  \ in case:
+
+' R> CFA ' 2OVER 0A + 2DUP ! 2+ !
+
+  \ ............................................
+  \ Fix the `EXIT` bug
+
+  \ `EXIT` must do `R> DROP`, not `>R DROP`
+  \
+  \ Even Don Thomasson's _Advanced Spectrum Forth_ (1984) shows
+  \ the wrong definition of `EXIT` (page 131)... and with the
+  \ following notice: "This word needs to be used with extreme
+  \ care." Indeed, because it crashes the system. The fix is
+  \ easy:
+
+' R> CFA ' EXIT !
+
+  \ ............................................
+  \ Fix the `COLD` bug
+
+  \ The word `COLD` has a subtle bug: it inits `PREV` and `USE`
+  \ not with `FIRST`, the constant that holds the start address
+  \ of the first disk buffer, but with its default value! This
+  \ must be fixed in order to move the disk buffers (what does
+  \ the module <lowersys.fsb>).
+
+  \ Compile the patched version of `COLD`.
+HERE  ] EMPTY-BUFFERS FIRST USE ! FIRST PREV ! DR0
+        5E52 5E66 @ 6 + 10 CMOVE 5E4C @ 6CF8 ! ABORT [
+  \ XXX Space freed: 4 bytes at 0x6E06
+
+  \ Patch `COLD` and free the used space.
+DUP ' COLD OVER HERE SWAP - CMOVE  DP !
+
+  \ ............................................
+  \ Safer `MON`
+
+  \ The word `MON` does nothing when the address 0x5CB0
+  \ contains a value other than 0. It seems an undocumented way
+  \ to deactivate the exit to BASIC.  0x5CB0 is an unused
+  \ system variable in ZX Spectrum, except the +2A and +3
+  \ models, where it's NMIADD.
+
+  \ Make `MON` to return to BASIC, without checking NMIADD.
+763D ' MON CFA !
+
+  \ ............................................
+  \ Fix the `0 MESSAGE` bug
+
+  \ The word `MESSAGE` does not print error message number 0
+  \ when `WARNING` is 1, in other words, when error messages
+  \ are the text of a line relative to screen 4.  This
+  \ condition is in other fig-Forth implementations, but in
+  \ Abersoft Forth it can be regarded as a bug, because error
+  \ number 0 is used by the system ("Word not found"), and
+  \ therefore its text is not printed when `WARNING` is 1.
+  \
+  \ The following patch removes the buggy condition:
+
+' NOOP CFA DUP 6F97 ! DUP 6F99 ! 6F9B !
+
+  \ ............................................
+  \ Fix the `GOVER` and `INVERSE` bug
+
+  \ The words `GOVER` and `INVERSE` use `!` twice in order to
+  \ update the system variable P FLAG (at 0x5C91), but this
+  \ variable ocuppies one byte, therefore `!` could corrupt the
+  \ next system variable, MEMBOT.  `C!` must be used instead.
+
+' C! CFA DUP DUP DUP 7E5B ! 7E71 !  7E95 ! 7EAB !
+
+  \ ............................................
+  \ Fix the hardcoded addresses of the RAM-disk
+
+  \ Abersoft Forth uses the address returned by `LO` (the start
+  \ of the Forth RAM-disk, 0xD000) hardcoded as a literal
+  \ instead of calling `LO` (for words written in Forth) or
+  \ fetching the value from the pfa of `LO` (for words written
+  \ in Z80).
+  \
+  \ This is a problem for the module <hi-to.fsb>, that moves
+  \ the RAM-disk and changes the values of `LO` and `HI`.
+  \
+  \ A partial fix is provided here, just in case any other
+  \ future module needs to manipulate the RAM-disk addresses.
+
+  \ In `INIT-DISC`, change the literal 0xD000 to `LO`:
+' INIT-DISC ' NOOP CFA OVER ! ' LO CFA SWAP 2+ !
+
+  \ Also the primitive word `(TAPE)` contais the hardcoded
+  \ address of the RAM-disk. It could be patched the following
+  \ way, converting `ld hl,0xD000` to `ld hl,(lo_pfa)`:
+
+  \ ' (TAPE) 5 + 2A OVER C! ' LO SWAP 1+ !
+
+  \ But there's a problem: the module <tape.fsb> patches the
+  \ address of that same Z80 instruction, `ld hl,0xD000` in
+  \ order to load from or save to tape other files than Forth
+  \ RAM-disks, therefore also the Z80 opcode would have to be
+  \ modified. It's easier to keep the original opcode and patch
+  \ only the value.
+
+  \ Also the tape headers (load header at 0x75E6, save header
+  \ at 0x75F7) must be patched, but that can be done only when
+  \ the new value of `LO` is known.
+
+  \ See the modules <hi-to.fsb> and <tape.fsb> for more
+  \ details.
+
+  \ ............................................
+  \ Cosmetic patches
+
+  \ No `CLS` in `INDEX`.
+  \ no `DECIMAL` in `LIST`
+  \ Smaller margin in `LIST`.
+
+' NOOP CFA ' INDEX !   ' NOOP CFA ' LIST !  2 ' LIST 23 + !
+
+  \ ............................................
+  \ Bugs not fixed yet
+
+  \ `MESSAGE` does not work with odd negative numbers: it
+  \ prints the contents of an unknown memory zone. The problem
+  \ is the calculation done by `(LINE)`. In fact `*/MOD`, `MOD`
+  \ and `/MOD`, with certain negative values, return different
+  \ results in Abersoft Forth and other Forth systems that have
+  \ been tested (some of them are fig-Forth).  The problem
+  \ seems to be in Abersoft Forth's `U/MOD`, written in
+  \ assembler.
+  \
+  \ Sometimes the delete key causes invisible corruption of the
+  \ command line, and words written after it are not
+  \ recognized.
+  \
+  \ In certain cases, `PLOT` uses black ink and black paper
+  \ instead the color set by `INK` and `PAPER`.  See
+  \ <color.fsb> for more details. The alternative definitions
+  \ provided in <color.fsb> and <plot.fsb> work fine, though
+  \ the cause of the original bug is not fully clear yet.
+
+DECIMAL -->
+
+( Data stack and conditional compilation)
+
+HEX
+
+  \ ............................................
+  \ Data stack
+
+                            \ pop hl / pop de / jp PUSHHL
+CREATE NIP  ( x1 x2 -- x2 )  E1 C, D1 C, C3 C, PUSHHL ,  SMUDGE
+
+CREATE TUCK  ( x1 x2 -- x2 x1 x2 )
+  \ SWAP OVER
+  \ pop hl / pop de / push hl / jp PUSHDE
+  E1 C, D1 C, E5 C, C3 C, PUSHDE ,  SMUDGE
+
+: DEPTH  ( -- n )  SP@ S0 @ - -2 /  ;
+
+  \ ............................................
+  \ Conditional compilation
+
+: [DEFINED]  ( "name" -- f )
+  -FIND DUP IF  NIP NIP  THEN  ; IMMEDIATE
+
+: [UNDEFINED]  ( "name" -- f )
+  [COMPILE] [DEFINED] 0=  ; IMMEDIATE
+
+  \ The following words provide a simple alternative to
+  \ `[IF]`, `[ELSE]` and `[THEN]` (provided in a module).
+
+: ?--> ( f -- )  IF  [COMPILE] -->  THEN  ; IMMEDIATE
+: ?\  ( f "ccc<newline>" -- )  IF  [COMPILE] \
+  THEN  ; IMMEDIATE  DECIMAL -->
+
+( .CPU GREETING )
+
+  \ ............................................
+  \ Modified computer name
+
+  \ The original word `.CPU` prints "48K SPECTRUM ".  It's
+  \ changed to the more proper "ZX Spectrum". Two bytes are
+  \ saved, and they are used to add `NOOP` at the end; it will
+  \ be substituted by `.CPUK` later, by the module <48kq.fsb>,
+  \ in order to show the memory of the specific model.
+
+HEX HERE  0B C, 5A C, 58 C, BL C, 53 C, 70 C, 65 C, 63 C, 74 C,
+          72 C, 75 C, 6D C, ' NOOP CFA ,
+DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
+
+  \ ............................................
+  \ New messages shown after a cold start.
+
+: .SYS         ( -- )  ." Spectrum fig-Forth"  ;
+: .SYS-AUTHOR  ( -- )  ." v1.1A \* 1983 Abersoft" CR
+                       ." v1.1C+Afera \* 2015 Marcos Cruz" CR
+                       ." (programandala.net)"  ;
+
+: GREETING  ( -- )  .SYS CR .SYS-AUTHOR CR  ;
+
+  \ As the message shows, the current user version is "C".
+  \ Store it into its standard fig-Forth address.
+43 0A +ORIGIN C!  \ 0x43 = ASCII "C"
+
+  \ ............................................
+  \ New system colors: black background, green foreground.
+
+: (COLORS0)  ( -- )
+  0 PAPER 4 INK 0 BRIGHT 0 FLASH 0 INVERSE 0 BORDER  ;
+
+  \ By storing a cfa of other word than `(COLORS0)` in the pfa
+  \ of `COLORS0`, the user can change the default system
+  \ colors.
+
+: COLORS0  ( -- )  (COLORS0)  ;  : CLS0  ( -- )  COLORS0 CLS  ;
+
+  \ ............................................
+  \ Patch `ABORT`
+
+  \ `ABORT` is patched for three reasons:
+  \
+  \ Execute `CLS0` instead of `CLS`; execute `GREETING` instead
+  \ of printing its own messages; and have a `NOOP` before
+  \ `QUIT`, to be patched by `TURNKEY`.
+  \
+  \ The original code was longer (57 bytes) than the original
+  \ one (18 bytes), because of the old messages.
+
+' CLS0 CFA 6D60 ! ' GREETING CFA 6D62 ! ' FORTH CFA 6D64 !
+' DEFINITIONS CFA 6D66 ! ' NOOP CFA 6D68 !  ' QUIT  CFA 6D6A !
+    \ XXX Space freed: 39 bytes at 0x6D6C
+
+  \ Address of the user boot word compiled in `ABORT`.
+6D68 CONSTANT BOOT  DECIMAL -->
+
+( Make the first screen usable )
+
+  \ As usual in Forth, Abersoft Forth doesn't allow to compile
+  \ sources from the first screen (number 0), by convention
+  \ reserved to comments. But that is an important waste of
+  \ memory with a 11-screen RAM-disk.  This patch solves that
+  \ problem.
+  \
+  \ After the patch, screen numbers will be 1..11 instead of
+  \ 0..10. Or 1..16 after compiling the <16kramdisks.fsb>
+  \ module.
+
+  \ The only word that has to be patched is `R/W`, the
+  \ fig-Forth standard disk read/write linkage, a system
+  \ dependent word. Its definition in Abersoft Forth is the
+  \ following:
+
+  \ : R/W  ( a n f -- )
+  \   \ a = source or destination block buffer
+  \   \ n = sequential block number on disk
+  \   \ f = 0 for disk write, 1 for read
+  \   >R  B/BUF * LO +
+  \   DUP HI > LIT 6 ?ERROR  \ out of upper bound?
+  \   R>  \ disk read?
+  \   IF  SWAP  THEN  B/BUF CMOVE  ;
+
+  \ Bytes per screen (1024).
+B/SCR B/BUF * CONSTANT /SCR
+
+: DISC-BLOCK  ( n -- a )
+
+  \ Calculate the address of disk block _n_ in the Forth RAM-
+  \ disk.  Give error 6 when the requested disk block is out of
+  \ range.
+  \
+  \ This word works with the default 11-KiB RAM disk and also
+  \ with the 16-KiB paged RAM-disks that can be used with the
+  \ 128K model (installed by the module <16kramdisks.fsb>).
+  \
+  \ The disk block number is adjusted with `OFFSET`, because
+  \ the result address is the same, no matter what the current
+  \ drive is.
+
+  \ n = number of sequential disk block
+  \ a = address in the RAM-disk (when paged in)
+
+  OFFSET @ -  B/BUF * DUP /SCR U< 6 ?ERROR
+              LO + /SCR - DUP HI > 6 ?ERROR  ;
+
+
+: (R/W)  ( a1 a2 f -- )
+
+  \ Read to or write from the new RAM-disk.
+
+  \ a1 = buffer address
+  \ a2 = address in the RAM-disk
+  \ f =  0 for writing; 1 for reading
+
+  \ This word is created with `;S` and `NOOP` at the end in
+  \ order to make it easier for the module <16kramdisks.fsb> to
+  \ convert it into the 128K version, that needs four more
+  \ commands.
+
+  IF  SWAP  THEN  B/BUF CMOVE [COMPILE] ;S NOOP NOOP NOOP ;
+
+  \ Compile the new code of `R/W`.
+
+HERE  ] >R DISC-BLOCK R> (R/W) ;S [
+
+  \ Patch `R/W` with the new code.  Also update `BLK` to
+  \ prevent the current screen to be loaded twice, because of
+  \ the patch.  Finally, free the dictionary space used by the
+  \ patch.
+  \
+  \ Warning: `CMOVE` and `B/SCR BLK +!` must be on the same
+  \ line, otherwise there's a chance they could be in different
+  \ blocks of the screen (in fig-Forth, each screen consists of
+  \ 8 128-byte blocks), what would cause trouble.
+
+' R/W OVER SWAP OVER HERE SWAP - CMOVE B/SCR BLK +!  DP !
+
+  \ Change the error 9 caused by `0 LOAD` ("Trying to load from
+  \ screen 0") to error 6 ("Out of RAM-disk range"), what seems
+  \ more logical now, because there's no screen 0 anymore.
+
+6 ' LOAD 8 + !  DECIMAL -->
+
+( Operators)
+
+: BOUNDS  ( a1 len1 -- a2 a1 )  OVER + SWAP  ;  HEX
+
+                        \ pop hl / dec hl / jp PUSHHL
+CREATE 1- ( n1 -- n2 )  E1 C, 2B C,  C3 C, PUSHHL , SMUDGE
+
+                        \ pop hl / dec hl / dec hl / jp PUSHHL
+CREATE 2- ( n1 -- n2 )  E1 C, 2B C, 2B C, C3 C, PUSHHL , SMUDGE
+
+  \ Patch CFA to use the Z80 code of `2-`,
+  \ faster than the original colon definition `2 -`:
+' 2- ' CFA CFA !
+
+                         \ pop hl / add hl,hl / jp PUSHHL
+CREATE 2*  ( n1 -- n2 )  E1 C, 29 C, C3 C, PUSHHL ,  SMUDGE
+
+CREATE 0<>  ( n1 -- n2 )   \ 0= 0=
+  \ ld hl,0 / pop de / ld a,d / or e
+  21 C, 0 ,  D1 C,  78 02 + C,  B0 03 + C,
+  \ jp z,pushhl / inc l / jp pushhl
+  CA C, PUSHHL ,  2C C,  C3 C, PUSHHL , SMUDGE
+
+  \ In Abersoft Forth `1+` and `2+` are colon words.  The
+  \ following code patches the original definitions with 50%
+  \ faster Z80 code, without using dictionary space: The pfa of
+  \ the original words is 12 bytes long, enough for the new
+  \ code.
+  \
+  \ The new code can not be compiled directly into the
+  \ destination address, by pointing `DP` to the target pfa,
+  \ because `WORD` uses `HERE` as buffer (and first it does
+  \ `HERE 34 SPACES`), what would corrupt the dictionary.
+  \ That's why the code is compiled at `HERE` and then moved.
+  \ Beside, some of the words internally used during the
+  \ patching (`WORD` and others) call `1+` or `2+`.  That's why
+  \ the original names can be "ticked" only before patching the
+  \ original code; and the new code, including the new cfa,
+  \ must overwrite the old definition in one single operation,
+  \ with `CMOVE`.
+
+HERE ' 1+  ( a pfa )  DUP ,   \ the cfa will point to pfa:
+  \ pop hl / inc hl / jp PUSHHL
+  E1 C, 23 C, C3 C, PUSHHL ,
+  \ Overwrite the word and restore `DP`:
+  CFA OVER SWAP OVER HERE SWAP - CMOVE  ( a ) DP !
+
+HERE ' 2+  ( a pfa )  DUP , \ the cfa will point to pfa:
+  \ pop hl / inc hl / inc hl / jp PUSHHL
+  E1 C, 23 C, 23 C, C3 C, PUSHHL ,
+  \ Overwrite the word and restore `DP`:
+  CFA OVER SWAP OVER HERE SWAP - CMOVE  ( a ) DP !  DECIMAL -->
+
+( Screens and RAM-disks )
+
+  \ ............................................
+  \ Standard or common usage extensions
+
+: THRU  ( n1 n2 -- )  1+ SWAP DO  I LOAD  LOOP  ;
+: +LOAD  ( n -- )  BLK @ B/SCR / + LOAD  ;
+: +THRU  ( n1 n2 -- )  1+ SWAP DO  I +LOAD  LOOP  ;
+
+  \ ............................................
+  \ Load from tape and compile Forth RAM-disks
+
+  \ The following words make it possible to chain several Forth
+  \ RAM-disk files from tape, allowing the automatic
+  \ compilation of sources larger than 11 blocks.
+
+  \ Read a new RAM-disk from tape and load screen 'n'.
+: /RUNT  ( n -- )  EMPTY-BUFFERS INIT-DISC LOADT LOAD ;
+
+  \ Read a new RAM-disk from tape and load its first screen.
+: RUNT  ( -- )  1 /RUNT  ;
+
+  \ Screens per drive (RAM-disk).
+11 CONSTANT SCR/DR
+
+  \ DISC-SCR  ( n -- a )
+  \
+  \ Address of screen n in the Forth RAM-disk; error 6 if not
+  \ in range.
+  \
+  \ n = 1..11 for 48K
+  \     1..16 for 128K (with the <16kramdisks.fsb> installed)
+
+: DISC-SCR  ( n -- a )
+  1- DUP SCR/DR U< 0= 6 ?ERROR  /SCR * LO +  ;
+
+  \ ............................................
+  \ Required files
+
+  \ `NEEDS` is used in modules of the library that require
+  \ other modules.  Without disk support, `NEEDS` causes an
+  \ error when the required word is not defined. With disk
+  \ support (currently only for G+DOS) the required file will
+  \ be loaded from disk into the RAM-disk and then compiled;
+  \ finally the previous contents of the RAM-disk will be
+  \ restored. Any level of nesting is possible.
+
+  \ (NEEDS-TAPE)  ( f "filename" -- )
+  \
+  \ Tape version of `(NEEDS)`.
+  \
+  \ f = is there a word needed from the given filename?
+  \
+  \ If f is not zero stop with error 27 (source file needed),
+  \ because there's no way to load a specific file in a tape
+  \ based system; otherwise ignore the filename.
+  \
+  \ Error 27 is new, implemented by Afera. Error 0 (word not
+  \ found) could be used for `NEEDS`, but not for `?NEEDS`.
+  \ That's why a new error is defined for both cases.
+
+: (NEEDS-TAPE)  ( f "filename" -- )  27 ?ERROR  BL WORD  ;
+
+  \ ?NEEDS  ( f "filename" -- )
+  \
+  \ If f is not zero, load RAM-disk file "filename", else
+  \ remove the parameters.  The loading works only with disks
+  \ drives, when the correspondent module is installed; the
+  \ default tape-only system will stop with an error.
+  \ This is used instead of `NEEDS` when the needed file
+  \ does not define a word it can be identified with. This
+  \ happens with modules that simply patch the system.
+
+: ?NEEDS  ( f "filename" -- )  (NEEDS-TAPE)  ;
+
+  \ NEEDS  ( "name" "filename" -- )
+
+  \ If "name" is not defined, load file "filename", if
+  \ possible; else remove the parameters.  The loading works
+  \ only with disks drives, when the correspondent module is
+  \ installed; the default tape-only system will stop with an
+  \ error.
+
+: NEEDS  ( "name" "filename" -- )
+  [COMPILE] [UNDEFINED]  ?NEEDS  ;
+
+-->
+
+( EXTEND SYSTEM )
+
+: EXTEND  ( -- )
+
+  \ Change the `COLD` start parameters to extend the system to
+  \ its current state.
+
+  \ This word should be used especially when system words have
+  \ been patched with new words.  Otherwise `COLD` would delete
+  \ the new words and the system would crash when their space
+  \ would be overwritten.
+
+  LATEST 12 +ORIGIN !  HERE 28 +ORIGIN !  HERE 30 +ORIGIN !
+  HERE FENCE !  ' FORTH 8 + 32 +ORIGIN !  ;
+
+  \ SYSTEM  ( -- a len )
+  \
+  \ Prepare the system in order to save a copy.  Return its
+  \ start address and length, to be used as parameters for the
+  \ tape or disk saving commands.
+
+: SYSTEM  ( -- a len )  EXTEND  0 +ORIGIN SIZE 10 + ;
+
+  \ TURNKEY  ( cfa -- a len )
+  \
+  \ Prepare the system in order to save a copy that will
+  \ execute the given cfa after the ordinary boot process.
+  \ Return its start address and length, to be used as
+  \ parameters for the tape or disk saving commands.
+
+: TURNKEY  ( cfa -- a len )  BOOT ! SYSTEM  ;
+
+EXTEND  CLS0 GREETING
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 1985-1987:
+  \
+  \ Some words written to extend Abersoft Forth: `\`, `INVERT`,
+  \ `>=`, `<=`, `<>`, `SGN` (after the manual), `NOR`, `NAND`,
+  \ `NXOR`, `DEPTH`, `PICK`, `DRAWL`, `RDRAW`, `RDRAWL`...
+  \
+  \ 2015-03: Start of the Afera library. New words: `CHAR`,
+  \ `[CHAR]`, `PARSE-TEXT`, `PARSE-NAME`, `SLIT`, `S,`,
+  \ `SLITERAL`, `.(`, `(S)`, `S"`, `S'`, `TLOAD`, `RUNT`,
+  \ `BOUNDS`, `NIP`, `[DEFINED]`, `BYE`, `UDG!`, `AKEY`,
+  \ `THRU`, `+LOAD` (after Gforth), `+THRU` (after Gforth),
+  \ `RDROP`, `R@`, `RDEPTH`, `SGN`, `(after`, `Gforth)`,
+  \ `RECURSE`, `ROLL` (after Gforth), `XY>ATTRA`, `[DEFINED]`.
+  \
+  \ 2015-03-28:
+  \
+  \ The graphics and strings extensions are moved to their own
+  \ files. Fixes of Abersoft Forth's bugs: the RAM-disk length
+  \ and `EXIT`. Fix: `RDROP` was wrong.  New: `/INIT-DISC`,
+  \ `TUCK`.
+  \
+  \ 2015-03-29:
+  \
+  \ `TRUE`, `FALSE`, `ON`, `OFF`, `-ROT`, `?EXIT` (after
+  \ Gforth), `ALIAS` (for code words only), `HERE:` (Afera
+  \ specific), `BUFFER:` (after Forth-2012). The renamings
+  \ (`BYE`, `-DUP`, `VLIST`) are moved to an own file.
+  \
+  \ 2015-03-30:
+  \
+  \ `.(` is moved from the strings module, in order to use it
+  \ at block headers. New: `MS`.
+  \
+  \ 2015-03-31:
+  \
+  \ New: `INKEY?`, `?RSTACK`.
+  \
+  \ Change: `TLOAD` is combined into `RUNT`.
+  \
+  \ Fix: Now `RUNT` clears the return stack.
+  \
+  \ Fix: `+LOAD`: the problem was `BLK` doesn't hold the block
+  \ number in Abersoft Forth: it has to be divided by `B/SCR`
+  \ (a constant that returns 8). The definitions of `LOAD` and
+  \ `-->`, from Don Thomasson's book "Spectrum Advanced Forth",
+  \ gave the definitive clue.
+  \
+  \ Change: simpler definitions of `>=` and `<=`; `NEGATE` is
+  \ removed because it already exists, but it's called `MINUS`.
+  \
+  \ 2015-04-01:
+  \
+  \ Change: Now `RUNT` halts if Break is pressed.  The problem
+  \ was the Fuse emulator, when the TAP file is finished,
+  \ rewinds it, and this behaviour is not configurable.
+  \ Therefore loading a single module of the library was
+  \ impossible: it loaded itself in an endless loop.  This
+  \ change solves this problem to some extent, while still
+  \ keeping `RUNT` for chain loading. A better solution is
+  \ searched.
+  \
+  \ New: Patches that make it possible to use the whole screen.
+  \
+  \ New: `RND`, adapted from Bertie, the demo program bundled
+  \ with Abersoft Forth.
+  \
+  \ 2015-04-02:
+  \
+  \ Fix: Now `AT` works on line 32. The solution was to use
+  \ `>CHAN` (conversion of `TCH` from Lennart Benschop's
+  \ Spectrum Forth-83) instead of. `EMIT`.
+  \
+  \ Improvement: `RUNT` checks `DEPTH` instead of the Break
+  \ key.
+  \
+  \ New: `VALUE`, `TO`, `[TO]` and `<TO>`.
+  \
+  \ 2015-04-03:
+  \
+  \ Improvement: `RUNT` checks also `BLK`; this make it
+  \ possible to use it manually to load the next RAM-disk.
+  \
+  \ Change: `CHAR` and `[CHAR]` are moved here from the strings
+  \ module.
+  \
+  \ 2015-04-08:
+  \
+  \ New (moved from the assembler): `2*`, `2-`, 1-`.
+  \
+  \ 2015-04-09:
+  \
+  \ New: `/BLOCK`.
+  \
+  \ Change: `AKEY` and `INKEY?` are moved to their own file
+  \ <key.fsb>.
+  \
+  \ 2015-04-15:
+  \
+  \ Change: `VALUE` and related words are moved to <value.fsb>;
+  \ all words related to whole screen support are moved to
+  \ <plusscreen.fsb>; `ALIAS` is moved to <alias.fsb>; `CELL`
+  \ and related words are moved to <cell.fsb>; `RUNT` and
+  \ `?RUNT` are moved to <runt.fsb>; `HERE:` and `BUFFER:` are
+  \ moved to <buffercol.fsb>.
+  \
+  \ 2015-04-16:
+  \
+  \ Change: `2*`, `2-`, `1-`, `PICK`, `NIP` and `TUCK` are
+  \ rewritten in Z80.
+  \
+  \ New: `2/`, written in Z80 (still not working fine with
+  \ negative numbers).
+  \
+  \ Change: `FALSE`, `TRUE`, `ON` and `OFF` are moved to
+  \ <flags.fsb>.
+  \
+  \ 2015-04-17: `RUNT` moved back; its current definition is
+  \ useful to write loaders.
+  \
+  \ 2015-04-21: New: `UNLOOP`.
+  \
+  \ 2015-04-23: New: `/RUNT`, as a factor of `RUNT`.  Fix: `2/`
+  \ now works fine with negative numbers; the bug was a wrong
+  \ relative jump.
+  \
+  \ 2015-04-25: Change: `UNLOOP` and `-ROT` are rewritten in
+  \ Z80.
+  \
+  \ 2015-04-30: Change: `BLOCK>A` is renamed to `'BLOCK`.
+  \
+  \ 2015-05-02: Change: `[DEFINED]`, `[UNDEFINED]`, `?-->` and
+  \ `?;S` are moved here from the conditional compilation draft
+  \ module. Change: `-ROT`, `ROLL` and `PICK` are moved to
+  \ their own files.
+  \
+  \ 2015-05-03: New: 'RUNTS'. New: Patch to make screen #0
+  \ usable for compiling.
+  \
+  \ 2015-05-03: `UNLOOP` is moved to its own file.
+  \
+  \ 2015-05-05: `2/` and `2*` are moved to their own files.
+  \
+  \ 2015-05-06:
+  \
+  \ `1+` and `2+` are moved here from their own files, because
+  \ now they patch the original slower definitions without
+  \ using any dictionary space.
+  \
+  \ Change: `/BLOCK` is renamed as `/SCR`, to avoid confusion
+  \ with fig-Forth disk blocks.
+  \
+  \ New: `CFA` is patched with `2-`, for speed.
+  \
+  \ 2015-05-08: `RUNTS` is removed. The new modules
+  \ <loader.fsb>, <loaded.fsb> and <loaded_execute.fsb> make it
+  \ unnecessary.
+  \
+  \ 2015-05-10: Change: `'BLOCK` renamed to `'SCR`.
+  \
+  \ 2015-05-11: `SGN`, `RECURSE` and `?EXIT` are moved to their
+  \ own files.
+  \
+  \ 2015-05-12:
+  \
+  \ `<>`, is moved to its own file and rewritten in Z80. `?(`
+  \ is moved to drafts, because it can not work yet, without
+  \ `EVALUATE` or other method.
+  \
+  \ Change: `'SCR` renamed to `DISC-SCR`, after `DISC-BLOCK` in
+  \ the module <16kramdisks.fsb>.
+  \
+  \ 2015-05-13: `?;S` is moved to the drafts directory, until a
+  \ solution is found for it.  Three unused operators are
+  \ removed.
+  \
+  \ New: Temporary version of `48K?` (memory paging can not be
+  \ used without <lowersys.fsb>). `GREETING` and related words.
+  \ `EXTEND` to protect the changes from `COLD`.
+  \
+  \ 2015-05-14: File renamed <afera.fsb>. Several changes. New
+  \ approach... The system will be lowered by default, in order
+  \ to use memory paging to detect the available memory.
+  \
+  \ 2015-05-15: Simpler `GREETING`.
+  \
+  \ 2015-05-17: `/INIT-DISC` is moved to drafts, it has not
+  \ been needed yet, it's not useful with tapes.  `2*` is moved
+  \ back from is own files, it's needed by several important
+  \ modules. New: `0<>`. Improvement: simpler version of `\`,
+  \ copied from Matteo Vitturi's vForth (1990-2000). New:
+  \ `TURNKEY`.
+  \
+  \ 2015-05-18: `COLORS0` and `CLS0` are moved here from its
+  \ own file and modified.
+  \
+  \ 2015-05-19: The patches of `COLD` and `ABORT` have been
+  \ modified with a better approach. New: 'BOOT' returns the
+  \ address that holds the cfa of the user boot word, in the
+  \ pfa of `ABORT`.
+  \
+  \ 2015-06-02: Simpler method to create the patch of `R/W`,
+  \ with `]` and `[`.
+  \
+  \ 2015-06-19: Fix of Abersoft Forth's `0 MESSAGE` bug.
+  \
+  \ 2015-07-06: Improvement: `COLORS0` is factored to
+  \ `(COLORS0)` in order to make it configurable by the user.
+  \
+  \ 2015-07-14: Fix of Abersoft Forth's bug in `INVERSE` and
+  \ `GOVER`.
+  \
+  \ 2015-07-18: Fixed the hardcoded address of the RAM-disk in
+  \ `INIT-DISC` and `(TAPE)`. This problem was found during the
+  \ development of Tron 0xF
+  \ (http://programandala.net/en.program.tron_0xf.html).
+  \
+  \ 2015-07-18: Simpler method for patching `COLD`, with `]`
+  \ and `[`.
+  \
+  \ 2015-07-18: Fix: the user version was updated with decimal
+  \ numbers while the base was hexadecimal. This corrupted the
+  \ first byte of the init value of the user pointer variable,
+  \ at `HEX 10 +ORIGIN`, though there was no side effect
+  \ because Abersoft does not use it (the original fig-Forth
+  \ implementation does).
+
+  \ -----------------------------------------------------------
+
+  \ vim: filetype=abersoftforthafera

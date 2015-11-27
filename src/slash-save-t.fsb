@@ -1,0 +1,41 @@
+( /SAVET )
+
+\ slash-save-t.fsb
+\ `/SAVET` tape extension for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-28: First working version, in the module
+  \ <tape.fsb>.
+  \
+  \ 2015-05-19: Moved to its own file.
+  \
+  \ 2015-10-26: Fixed comment. File renamed.
+
+  \ -----------------------------------------------------------
+
+NEEDS >TAPE  tape
+NEEDS S"     strings
+
+: /SAVET  ( n1 n2 -- )
+  \ Save the Forth RAM-disk to tape,
+  \ from screen n1 to screen n2.
+  \ n1 = first screen
+  \ n2 = last screen
+  FLUSH 1+ DISC-SCR SWAP DISC-SCR
+  DUP ROT SWAP -  S" DISC" >TAPE  ;
+
+  \ vim: filetype=abersoftforthafera

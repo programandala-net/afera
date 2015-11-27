@@ -1,0 +1,46 @@
+\ upperc.fsb
+\ `UPPERC` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-23: First version.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( UPPERC )
+
+HEX
+
+CREATE UPPERC   ( c -- c' )
+  \ Convert an ASCII character to uppercase.
+  E1 C,           \ pop hl
+  78 05 + C,      \ ld a,l
+  FE C, 61 C,     \ cp 'a'
+  38 C, 06 C,     \ jr c,end
+  FE C, 7B C,     \ cp 'z'+1
+  30 C, 02 C,     \ jr nc,end
+  E6 C, DF C,     \ and %11011111 ; reset bit 5
+  \ end:
+  68 07 + C,      \ ld l,a
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE
+
+DECIMAL
+
+  \ vim: filetype=abersoftforthafera
+

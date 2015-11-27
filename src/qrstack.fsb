@@ -1,0 +1,37 @@
+.( ?RSTACK  )
+
+\ qrstack.fsb
+\ `?RSTACK` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History of this code/file
+
+  \ 2015-03-31: Code written.
+  \ 2015-04-14: Code extracted from the main file of the library
+  \ to <rstack.fsb>.
+  \ 2015-05-03: Code moved to its own file <qrstack.fsb>.
+
+  \ -----------------------------------------------------------
+
+: ?RSTACK  ( -- )
+  \ Issue an error message
+  \ if the return stack is out of bounds.
+  \ Written after `?STACK`, as shown in Don Thomasson's book
+  \ "Spectrum Advanced Forth".
+  R0 @ RP@ U< 1 ?ERROR      \ stack empty
+  RP@ @ S0 U< 7 ?ERROR  ;   \ stack full
+
+  \ vim: filetype=abersoftforthafera
+

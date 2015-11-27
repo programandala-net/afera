@@ -1,0 +1,26 @@
+.( TRAVERSE Benchmark )
+
+NEEDS TIME@ time
+
+  \ 2015-05-06
+
+: .TIME  ( -- )  TIME@ D. ." system frames"  ;
+
+10000 VARIABLE TIMES
+
+: TEST  ( -- )
+  TIMES @ 0 TIME0
+  DO  I 1 TRAVERSE I -1 TRAVERSE 2DROP  LOOP  .TIME  ;
+
+  \ Results in system frames
+  \
+  \ Times  Original  Patched
+  \ -----  --------  -------
+  \ 10000      1393      274  19%
+  \ 15000      1989      408  20%
+  \ 16000      6275      582   9%
+  \ 17000     17238      838   4%
+  \ 30000 (Too much for the original code, I had to reset.)
+
+  \ vim: filetype=abersoftforthafera
+

@@ -1,0 +1,66 @@
+.( BANK )
+
+\ bank.fsb
+\ Memory bank paging for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  49152 R0 @ U<  ?NEEDS lowersys
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-07: Start. Code adapted from Lennart Benschop's
+  \ Spectrum Forth-83.
+  \
+  \ 2015-04-08: The code can not work as is, because the stack
+  \ of Abersoft Forth is above 0xC000.
+  \
+  \ 2015-05-07: The code works with the new module that moves
+  \ the system below address 0xC000.  The code moved to its own
+  \ file, separated from `48K?`.
+  \
+  \ 2015-05-11: Fix/Improvement: The status of the memory banks
+  \ is saved into the system variable BANKM.
+  \
+  \ 2015-05-12: Change: the range conversion `DUP 1 > + DUP 4 >
+  \ +` (from range 0..5 to 0,1,3,4,6,7) is removed.
+  \
+  \ 2015-05-13: New: `DI` and `EI`.
+  \
+  \ 2015-05-17: `?NEEDS` used.
+
+  \ -----------------------------------------------------------
+
+      \ Disable and enable interrupts.
+HEX   CREATE -INTERRUPTS  ( -- )  F3 C, C3 C, NEXT , SMUDGE
+      CREATE +INTERRUPTS  ( -- )  FB C, C3 C, NEXT , SMUDGE
+
+5B5C CONSTANT SYS-BANKM  7FFD CONSTANT BANK1-PORT
+
+: BANK  ( n  -- )
+
+  \ Page memory bank n at 0xC000..0xFFFF.
+
+  \ XXX OLD 
+  \ DUP 1 > + DUP 4 > +   \ convert range 0..5 to 0,1,3,4,6,7
+
+  -INTERRUPTS  SYS-BANKM C@  \ get the saved status of BANKM
+  F8 AND OR  \ modify only bits 0-2
+  DUP SYS-BANKM C!  BANK1-PORT OUTP  +INTERRUPTS  ;  DECIMAL
+
+  \ vim: filetype=abersoftforthafera

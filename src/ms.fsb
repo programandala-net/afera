@@ -1,0 +1,99 @@
+.( MS )
+\ ms.fsb
+\ `MS` for ZX Spectrum Abersoft Forth.
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-30: Code written in the main file of the library.
+  \
+  \ 2015-04-02: Code moved to a time extensions module.
+  \
+  \ 2015-07-16: Code moved to its own file. The temporary
+  \ version, that depends on the system frames counter and has
+  \ 20 ms precision, is substituted with code adapted from
+  \ DZX-Forth.
+  \
+  \ 2015-10-26: Improved some comments.
+
+  \ -----------------------------------------------------------
+
+FORTH DEFINITIONS  -->
+
+( MS )
+
+  \ Note: Code adapted from DZX-Forth.
+
+CREATE MS  ( u -- )  HEX
+
+  \ Wait at least _u_ ms (milleseconds).
+
+  D1 C,         \ pop de
+  HERE          \ ms1:
+  78 03 + C,  B0 02 + C,
+                \ ld a,e
+                \ or d
+  CA C, NEXT ,  \ jp z,next
+  21 C, 0004 ,  \ ld hl,4 ; MHz
+  29 C,  29 C,  29 C,
+                \ add hl,hl
+                \ add hl,hl
+                \ add hl,hl
+  HERE          \ ms2:
+  E3 C,  E3 C,  E3 C,  E3 C,
+                \ ex (sp),hl        ; 19T
+                \ ex (sp),hl        ; 19T
+                \ ex (sp),hl        ; 19T
+                \ ex (sp),hl        ; 19T
+  E5 C,  E1 C,  2B C,
+                \ push hl           ; 11T
+                \ pop hl            ; 10T
+                \ dec hl            ;  6T
+  3E C, 00 C,  78 05 + C,  B0 04 + C,
+                \ ld a,0            ;  7T
+                \ ld a,l            ;  4T
+                \ or h              ;  4T
+  C2 C, ,       \ jp nz,ms2         ; 10T
+  1B C,         \ dec de
+  C3 C, ,       \ jp ms1
+  SMUDGE DECIMAL
+
+( MS ) \ XXX OLD -- first, temporary version
+
+[DEFINED] SYS-FRAMES ?\ 23672 CONSTANT SYS-FRAMES
+
+: MS  ( u -- )
+  \ Wait at least _u_ ms (milliseconds), with 20 ms precision.
+  20 / SYS-FRAMES @ +
+  BEGIN  DUP SYS-FRAMES @ U<  UNTIL DROP  ;
+
+( MS ) \ XXX TODO -- alternative version
+
+  \ Note: Code from Matteo Vitturi's vForth, not adapted yet.
+
+   \ POP DE|
+   \ BEGIN,
+   \  LDI A'| 171 N,
+   \  BEGIN,
+   \   NOP
+   \   DEC A'|
+   \  -UNTIL,
+   \  DECX DE|
+   \  LD A'| D|
+   \ ORA E|
+   \ -UNTIL,
+
+  \ vim: filetype=abersoftforthafera
+

@@ -1,0 +1,71 @@
+\ unloop.fsb
+\ `UNLOOP` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-21: First high level version written in the main
+  \ file of the library.  2015-04-21: First draft in Z80.
+  \
+  \ 2015-04-25: First working version in Z80.
+  \
+  \ 2015-05-03: Code moved to its own file.
+  \
+  \ 2015-05-10: Conditional compilation to reuse the code of
+  \ `2RDROP`, if present.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( UNLOOP )
+
+CREATE UNLOOP  ( R: x1 x2 -- )
+
+  \ Discard the loop control parameters for the current nesting
+  \ level. An `UNLOOP` is required for each nesting level
+  \ before the definition may be exited with `EXIT`.
+  \
+  \ In fig-Forth, the top of the return stack is the loop
+  \ index, and the value below it is the loop limit.
+  \
+  \ A high level version of `UNLOOP` would need to preserve the
+  \ return address of the word:
+  \
+  \   R> R> DROP R> DROP >R
+  \
+  \ But the low level version doesn't.
+
+SMUDGE
+
+[UNDEFINED] 2RDROP  \ if 2RDROP is not defined,
+  \ then ignore this line, that reuses its code and exit:
+  ?\  ' 2RDROP ' UNLOOP CFA ! ;S
+
+  \ 2RDROP is not defined, so create new code:
+
+  HEX
+
+  2A C, 5E68 ,  \ ld hl,(RP) ; return stack pointer
+  23 C,         \ inc hl
+  23 C,         \ inc hl
+  23 C,         \ inc hl
+  23 C,         \ inc hl
+  22 C, 5E68 ,  \ ld (RP),hl ; update the pointer
+  C3 C, NEXT ,  \ jp NEXT
+
+  DECIMAL
+
+  \ vim: filetype=abersoftforthafera

@@ -1,0 +1,28 @@
+.( RECURSE )
+
+\ recurse.fsb
+\ `RECURSE` for ZX Spectrum's Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: Written.
+  \ 2015-05-11: Extracted from the main file of the library.
+
+: RECURSE  ( -- )
+  \ Compile a call to the word being defined.
+  LATEST PFA CFA ,  ; IMMEDIATE
+
+  \ vim: filetype=abersoftforthafera

@@ -1,0 +1,39 @@
+.( The 11-KiB RAM-disk will be moved up below the UDG)
+
+\ hi-to-udg.fsb
+\ Move the RAM-disk of ZX Spectrum Abersoft Forth to UDG
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This module increases the free dictionary space of Abersoft
+  \ Forth with 856 bytes, but only if the system has been
+  \ previously moved below 0xC000 by the module <lowersys.fsb>.
+  \ This module is most useful for a 48K Spectrum; the 128K
+  \ model can use the module <16kramdisks.fsb> instead, and get
+  \ 11 KiB of memory for the dictionary.
+  \
+  \ The alternative module <hi-to-top.fsb> overwrites the UDG
+  \ and frees 1 KiB of memory.
+  \
+  \ This module must be loaded right before <hi-to.fsb>.  See
+  \ <hi-to.fsb> for full details, including a memory map.
+
+  \ -----------------------------------------------------------
+
+UDG 1- CONSTANT NEW-HI
+
+  \ vim: filetype=abersoftforthafera
+

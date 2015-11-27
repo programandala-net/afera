@@ -1,0 +1,184 @@
+.( Whole screen mode )
+
+\ plusscreen.fsb
+\ Whole screen mode for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+NEEDS AT@ at-fetch
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-15: Code extracted from the main file of the
+  \ library.
+
+  \ 2015-04-19: The scroll control words are moved to
+  \ <scroll.fsb>.
+  \
+  \ 2015-05-02: No constant created for the system variable.
+  \
+  \ 2015-05-06: `AT` modified with `EXIT` instead of `ELSE`: 2
+  \ bytes saved, and faster.
+  \
+  \ 2015-05-19: Fix: Now `-SCREEN` changes the print position
+  \ if it at the lower part of the screen.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( >CHAN )
+
+CREATE >CHAN  ( c -- )
+
+  \ Send the character with ASCII code c to the current channel.
+
+  \ This word is copied from `TOCH`, from Lennart Benschop's
+  \ Spectrum Forth-83. It is needed by the new version of `AT`,
+  \ because Abersoft Forth's `EMIT' changes the current
+  \ channel.
+
+  HEX
+  E1 C,                     \ pop hl
+  7D C,                     \ ld a,l
+  FD C, 36 C, 52 C, FF C,   \ ld (iy+0x52),0xFF ; set SCR CT
+  D7 C,                     \ rst 0x10
+  C3 C, NEXT ,              \ jp NEXT
+  SMUDGE DECIMAL
+
+-->
+
+( AT -- version 1 )
+
+  \ Finally, also `AT` must be patched.  Its original
+  \ definition is the following (from Don Thomasson's book
+  \ "Advanced Spectrum Forth", page 127):
+
+  \ : AT ( line col -- )
+  \   ABS DUP 31 >
+  \   IF    2DROP
+  \   ELSE  SWAP ABS DUP 21 >
+  \         IF  2DROP  ELSE  22 EMIT EMIT EMIT  THEN
+  \   THEN  ;
+
+  \ The number 21 (0x15) must be changed to 23 (0x17):
+  \
+  \ HEX  17 7BFA !  DECIMAL
+  \
+  \ But it's not enough: line 23 needs special treatment.  The
+  \ new version of `AT` is adapted from Lennart Benschop's
+  \ Spectrum Forth-83.
+
+  \ This version of `AT` is longer than the original one (62
+  \ bytes instead of 52). Otherwise it could be possible to
+  \ overwrite the original word.
+
+: AT ( line col -- )
+
+  \ Adapted from Lennart Benschop's Spectrum Forth-83.
+
+  \ Warning: The system will crash if the coordinates are out
+  \ of screen. For the sake of speed, no check is done.  A
+  \ wrapper secure word can be written if needed.
+
+  SWAP DUP 23 -  \ not the last line?
+  IF  22 >CHAN >CHAN >CHAN EXIT  THEN
+  \ Last line:
+  1- DUP >CHAN >CHAN 0 >CHAN CR
+  \ System variable:
+  \ address in display file of print position.
+  DUP 23684 +!
+  \ System variable:
+  \ 33 minus column number for print position.
+  33 SWAP - 23688 C!  ;
+
+-->
+
+( AT -- version 2 ) -->  \ XXX TODO
+
+  \ With a bit of factorization, the new word could fit the
+  \ original one.
+
+  \ 19 bytes:
+: (AT)  ( col line -- )  22 >CHAN >CHAN >CHAN  ;
+
+  \ 52 bytes: \ XXX TODO check
+: NEW-AT ( line col -- )
+
+  \ Adapted from Lennart Benschop's Spectrum Forth-83.
+
+  \ Warning: The system will crash if the coordinates are
+  \ out of screen. For the sake of speed, no check is done.
+  \ A wrapper secure word can be written if needed.
+
+  SWAP DUP 23 -  \ not the last line?
+  IF  (AT) EXIT  THEN
+  \ Last line:
+  1- DUP >CHAN >CHAN 0 >CHAN CR
+  \ System variable:
+  \ address in display file of print position.
+  DUP 23684 +!
+  \ System variable:
+  \ 33 minus column number for print position.
+  33 SWAP - 23688 C!  ;
+
+  \ Overwrite the code of the original `AT` with the code
+  \ of `NEW-AT` and forget the word:
+
+  \ ' NEW-AT ' AT OVER HERE SWAP - CMOVE
+  \ FORGET NEW-AT
+
+-->
+
+( +SCREEN -SCREEN and patches )
+
+  \ 23659 is the address of the system variable DF SZ, that
+  \ holds the number of lines in the lower part of the screen
+  \ (2 by default):
+
+: +SCREEN  ( -- )
+  \ Turn whole screen mode on.
+  0 23659 C!  ;
+
+: -SCREEN  ( -- )
+  \ Turn whole screen mode off.
+  \ Make sure the print position is above the lower part of the
+  \ screen. Otherwise the system will exit to BASIC with an
+  \ error "Out of screen", because of the way `EMIT` works.
+  AT@ SWAP 21 MIN SWAP AT
+  2 23659 C!  ;
+
+: SCREEN?  ( -- f )
+  \ Is the whole screen mode on?
+  23659 C@ 0=  ;
+
+  \ The DF SZ system variable must have its original value
+  \ restored before returning to BASIC, else the system will
+  \ crash.
+
+: MON  ( -- )  -SCREEN MON  ;
+
+  \ The definition of `CLS` has to be patched: it calls the ROM
+  \ routine CLS (0x0D6B), but CL-ALL (0x0DAF) must be used
+  \ instead (otherwise the system will crash):
+
+HEX  0DAF 75C0 !  DECIMAL
+
++SCREEN
+
+  \ vim: filetype=abersoftforthafera

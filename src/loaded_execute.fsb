@@ -1,0 +1,42 @@
+.( Loaded )
+\ loaded_execute.fsb
+
+\ Part of a
+\ tape source loader for ZX Spectrum Abersoft Forth
+
+\ http://programandala.net/en.program.tron_0xf.html
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This file must be the last one to be loaded. It stores the
+  \ cfa of the latest word into the `LOADED' variable, what
+  \ causes the loader to stop and to execute it.
+  \
+  \ See <loader.fsb> for details.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-08: Start.
+  \ 2015-07-14: Updated after the changes in <loader.fsb>.
+
+  \ -----------------------------------------------------------
+
+LATEST PFA CFA LOADED !
+
+  \ vim: filetype=abersoftforthafera
+
+

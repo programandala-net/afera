@@ -1,0 +1,46 @@
+.( The 11-KiB RAM-disk will be moved up to top of memory)
+
+\ hi-to-top.fsb
+\ Move the RAM-disk of ZX Spectrum Abersoft Forth to top
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This module increases the free dictionary space of Abersoft
+  \ Forth with 1 KiB, but only if the system has been
+  \ previously moved below 0xC000 by the module <lowersys.fsb>.
+  \ This module is most useful for a 48K Spectrum; the 128K
+  \ model can use the module <16kramdisks.fsb> instead, and get
+  \ 11 KiB of memory for the dictionary.
+  \
+  \ WARNING: This module moves the RAM-disk to the top of
+  \ memory, overwritting the zone reserved to user defined
+  \ graphics (UDG), whose address will be changed to 0 (ROM).
+  \ Then, in order to use the them, the user must reserve space
+  \ for them in the dictionary and point the correspondent
+  \ system variable (0x5C7B) to it.  The alternative module
+  \ <hi-to-udg.fsb> preserves the UDG.
+  \
+  \ This module must be loaded right before the module
+  \ <hi-to.fsb>.  See <hi-to.fsb> for full details, including a
+  \ memory map.
+
+  \ -----------------------------------------------------------
+
+HEX
+FFFF CONSTANT NEW-HI
+DECIMAL
+
+  \ vim: filetype=abersoftforthafera

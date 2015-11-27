@@ -1,0 +1,30 @@
+.( .VOCS )
+
+\ dot-vocs.fsb
+\ `.VOCS` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 1990-2013 Matteo Vitturi
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-17: Copied from Mateo Vitturi's v.Forth 1.3
+  \ (1990-2013).
+
+  \ -----------------------------------------------------------
+
+: .VOCS  ( -- )
+  CR ." Current " CURRENT @ 4 - NFA ID.
+  CR ." Context " CONTEXT @ 4 - NFA ID.  ;
+
+  \ vim: filetype=abersoftforthafera

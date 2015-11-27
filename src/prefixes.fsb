@@ -1,0 +1,122 @@
+\ prefixes.fsb
+\ Number prefixes for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ This module provides some words to create number prefixes
+  \ for hex numbers, control charactes and ASCII characters.
+  \
+  \ Contrary to the other modules, the words are not compiled
+  \ when the module is loaded. The required code must be copied
+  \ and pasted into the user application.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-01: Code taken from Albert van der Horst's lina
+  \ Forth.
+  \
+  \ 2015-05-07: New: Prefix "0x" for hex.
+  \
+  \ 2015-06-06: Improved: the current value of `WIDTH` is
+  \ preserved instead of using the default 0x1F.
+  \
+  \ 2015-10-26: Updated header and license info. Added `'.`,
+  \ reorganized the screens. Added description.
+  \
+  \ 2015-11-18: Updated header and license info. Added `NEEDS`.
+
+  \ -----------------------------------------------------------
+
+( C>HEX )
+
+  \ Note: `C>HEX` is needed by `$..`, `$....`, `0x..` and
+  \ `0x....`.
+
+HEX
+
+: C>HEX  ( c -- n )
+  \ Convert a character to its hexadecimal value.
+  30 - DUP 9 > IF 7 - THEN  ;
+
+DECIMAL
+
+( $.. $.... )
+
+NEEDS C>HEX prefixes
+
+WIDTH @  1 WIDTH !
+
+: $..
+  \ Leave hex number; example: $0A leaves 0AH
+  HERE 2 + C@ C>HEX 10 * HERE 3 + C@ C>HEX + [COMPILE] LITERAL
+  ; IMMEDIATE
+
+: $....
+  \ Leave 16-bit hex number; example: $0AFF leaves 0AFFH
+  0 HERE 6 + HERE 2 + DO 10 * I C@ C>HEX + LOOP
+  [COMPILE] LITERAL
+  ; IMMEDIATE
+
+WIDTH ! DECIMAL
+
+( 0x.. 0x.... )
+
+NEEDS C>HEX prefixes
+
+HEX  WIDTH @ 2 WIDTH !
+
+: 0x..  \ Leave hex number; example: 0x0A leaves 0AH
+  HERE 3 + C@ C>HEX 10 * HERE 4 + C@ C>HEX + [COMPILE] LITERAL
+  ; IMMEDIATE
+
+: 0x....  \ Leave hex number; example: 0x0AFF leaves 0AFFH
+  0 HERE 7 + HERE 3 + DO 10 * I C@ C>HEX + LOOP
+  [COMPILE] LITERAL
+  ; IMMEDIATE
+
+WIDTH ! DECIMAL
+
+( ". )
+
+HEX  WIDTH @ 1 WIDTH !
+
+: ".
+  \ Leave ASCII character; example: "A leaves 41H
+  HERE 2 + C@ [COMPILE] LITERAL  ; IMMEDIATE
+
+WIDTH ! DECIMAL
+
+( '. )
+
+HEX  WIDTH @ 1 WIDTH !
+
+: '.
+  \ Leave ASCII character; example: 'A leaves 41H
+  HERE 2 + C@ [COMPILE] LITERAL  ; IMMEDIATE
+
+WIDTH ! DECIMAL
+
+( ^. )
+
+HEX  WIDTH @ 1 WIDTH !
+
+: ^.  \ Leave control character; example: ^A leaves 01H
+  HERE 2 + C@ 1F AND [COMPILE] LITERAL  ; IMMEDIATE
+
+WIDTH ! DECIMAL
+
+  \ vim: filetype=abersoftforthafera

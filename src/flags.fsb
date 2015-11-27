@@ -1,0 +1,56 @@
+\ flags.fsb
+\ Boolean flags for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-16: Extracted from the main file of the library.
+  \ `ON` and `OFF` are rewritten in Z80.
+  \
+  \ 2015-04-23: Faster and smaller version of `OFF`.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( FALSE TRUE )
+
+       0 CONSTANT FALSE
+FALSE 0= CONSTANT TRUE
+
+-->
+
+.( ON OFF )
+
+CREATE ON   ( a -- )          HEX
+  \ TRUE SWAP !
+  E1 C,        \ pop hl
+  36 C, 01 C,  \ ld (hl),1  ; 10T
+  23 C,        \ inc hl     ; 06T
+  36 C, 00 C,  \ ld (hl),0  ; 10T
+  C3 C, NEXT , \ jp NEXT
+  SMUDGE
+
+CREATE OFF  ( a -- )
+  \ FALSE SWAP !
+  E1 C,        \ pop hl
+  A8 07 + C,   \ xor a      ; 04T
+  70 07 + C,   \ ld (hl),a  ; 07T
+  23 C,        \ inc hl     ; 06T
+  70 07 + C,   \ ld (hl),a  ; 07T
+  C3 C, NEXT , \ jp NEXT
+  SMUDGE                      DECIMAL
+
+  \ vim: filetype=abersoftforthafera

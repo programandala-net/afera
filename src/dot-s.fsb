@@ -1,0 +1,44 @@
+.( .S )
+
+\ dot-s.fsb
+\ `.S` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1990-2013 Matteo Vitturi
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-30: First version.
+  \ 2015-04-14: Second version, from Matteo Vitturi's vForth.
+  \ 2015-04-19: Combined version.
+  \ 2015-10-26: Updated header.
+
+  \ -----------------------------------------------------------
+
+: .S   ( -- )
+
+  DEPTH
+  DUP S->D <# [CHAR] > HOLD #S [CHAR] < HOLD #> TYPE SPACE
+
+  \ First version:
+  \ DEPTH -DUP IF  0 DO  DEPTH I - 1 - PICK .  LOOP  THEN
+
+  \ Second version, from Matteo Vitturi's vForth:
+  \ SP@ 2 - S0 @ 2 - DO I @ . -2 +LOOP
+
+  \ Combined version:
+  IF  SP@ 2- S0 @ 2- DO I @ . -2 +LOOP  THEN
+
+  ;
+
+  \ vim: filetype=abersoftforthafera

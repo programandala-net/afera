@@ -1,0 +1,110 @@
+.( G+DOS support -- DOS variables)
+
+\ gplusdos_vars.fsb
+\ G+DOS support for ZX Spectrum Abersoft Forth (DOS vars)
+
+\ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+  
+  \ This module provides words to manage the G+DOS system
+  \ variables.
+  
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS CODE assembler
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-15: Start.
+  \
+  \ 2015-04-16: File renamed to <g+dos_vars.fsb>.
+  \
+  \ 2015-05-08: Renamed to <gplusdos_vars.fsb>, because of an
+  \ issue with Makefile.
+  \
+  \ 2015-05-17: `DOSC@` and `DOSC!`are finished.
+
+  \ -----------------------------------------------------------
+
+  \ Address of the G+DOS vars in its own memory.
+8192 CONSTANT DOS-VARS
+
+2 5 THRU
+
+( DOSVARC@ )
+
+CODE DOSVARC@  ( n -- b )
+  \ Fetch the content of G+DOS variable n.
+  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH
+  PATCH HOOK
+  HL POP  DOS-VARS DE LDP#  DE ADDP
+  (HL) A LD 0 D LD#  A E LD
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  DE PUSH
+  NEXT JP
+  END-CODE
+
+( DOSVAR@ )
+
+CODE DOSVAR@  ( n1 -- n2 )
+  \ Fetch the content of G+DOS variable n1.
+  HL POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  HL PUSH
+  PATCH HOOK
+  HL POP  DOS-VARS DE LDP#  DE ADDP
+  (HL) E LD  HL INCP  (HL) D LD
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  DE PUSH
+  NEXT JP
+  END-CODE
+
+( DOSVARC! )
+
+CODE DOSVARC!  ( b n -- )
+  \ Store b into the G+DOS variable n.
+  HL POP  DE POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  DE PUSH HL PUSH
+  PATCH HOOK
+  HL POP  DOS-VARS DE LDP#  DE ADDP  DE POP
+  E (HL) LD
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+( DOSVAR! )
+
+CODE DOSVAR!  ( n1 n2 -- )
+  \ Store n1 into the G+DOS variable n2.
+  HL POP  DE POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  DE PUSH  HL PUSH
+  PATCH HOOK
+  HL POP  DOS-VARS DE LDP#  DE ADDP  DE POP
+  E (HL) LD  HL INCP  D (HL) LD
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP
+  END-CODE
+
+  \ vim: filetype=abersoftforthafera

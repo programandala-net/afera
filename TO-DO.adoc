@@ -1,0 +1,108 @@
+= Afera To-Do
+:author: Marcos Cruz (programandala.net)
+:revdate: 2015-10-23
+
+// This file is part of
+// Afera (Abersoft Forth Extensions, Resources and Addons)
+// http://programandala.net/en.program.afera.html
+
+This file contains some unfinished issues of Afera and ideas for new
+features, but the development of Afera already reached its goal and so
+was abandoned.  Solo Forth, a new Forth system under development for
+ZX Spectrum, is a more powerful alternative:
+(http://programandala.net/en.program.solo_forth.html).
+
+.2015-03-29:
+
+Fix: the `MESSAGE` bug.
+
+.2015-04-09:
+
+New: Patch the keyboard code to accept also codes 128..255.
+
+.2015-05-11:
+
+Fix: `?;S`.
+
+.2015-05-12:
+
+Change: Rewrite `2SWAP` in Z80.
+
+.2015-05-13:
+
+In DZX-Forth (http://programandala.net/en.program.dzx-forth.html)
+there's a Z80 version of `ROLL` and other stack words.
+
+.2015-05-16:
+
+Ideas from Forth-79:
+
+* `line screen LINELOAD`
+* `screen LOADS name`
+* `FLUSH` = `SAVE-BUFFERS`
+* `CHAIN vocabulary`
+* `from to len <CMOVE` (instead of the name `CMOVE>`)
+* `;: name`
+* `-text`
+* `-match`
+* `1+!`
+* `1-!`
+
+Ideas from vForth:
+
+* `16 CONSTANT L/SCR`
+* `0 VARIABLE DEVICE`
+
+.2015-05-17:
+
+New: `LINK@` returns the last flag used with `LINK`.
+
+Fix: bank hangs with lowersys+transient+assembler, but not with
+lowersys+assembler.  The problem is the way transient works.
+
+.2015-05-18:
+
+Change: Rewrite `UPPERS` in Z80?
+
+Change: `LOADT` and `LOADD` should do `EMPTY-BUFFERS`.
+
+Change: `SAVET` and `SAVED` should do `FLUSH`.
+
+Idea: `CONTINUED` could be a factor of `LOAD`.
+
+Idea from lina ciforth: `VARIABLE ERRSCR`.
+
+.2015-05-20:
+
+Fix: Problem in lowersys.fsb: when the stack gets full and error 7 happens, no
+word is recognized anymore.  Buffer bytes below S0 don't help.
+
+.2015-06-04:
+
+Check why in <lowersys.fsb> `<` is used in `?STACK` instead
+of `U<`.  It seems a mistake, but it works because the
+addresses are lower.
+
+.2015-07-13:
+
+New: colors 8 and 9 with `PAPER` and `INK`.
+
+.2015-07-14:
+
+Improve `MS` after vForth.
+
+.2015-07-18:
+
+Bug?: `THRU` causes error 18 when a definition is divided into more
+than one page.
+
+.2015-10-23:
+
+Last tasks from the paper note book:
+
+- Faster `EMIT`.
+- Faster `DRAW`.
+- Patch `AT` after loading <plusscreen.fsb>. Old version, 61 bytes;
+  new version, 66 bytes.
+- Patch `PLOT` to save memory.
+

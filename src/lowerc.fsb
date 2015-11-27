@@ -1,0 +1,47 @@
+\ lowerc.fsb
+\ `LOWERC` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-23: First version.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( LOWERC )
+
+HEX
+
+CREATE LOWERC   ( c -- c' )
+  \ Convert an ASCII character to lowercase.
+  E1 C,           \ pop hl
+  78 05 + C,      \ ld a,l
+  FE C, 41 C,     \ cp 'A'
+  38 C, 06 C,     \ jr c,end
+  FE C, 5B C,     \ cp 'Z'+1
+  30 C, 02 C,     \ jr nc,end
+  E6 C, 20 C,     \ or %00100000 ; set bit 5
+  \ end:
+  68 07 + C,      \ ld l,a
+  C3 C, PUSHHL ,  \ jp PUSHHL
+  SMUDGE
+
+DECIMAL
+
+  \ vim: filetype=abersoftforthafera
+
+

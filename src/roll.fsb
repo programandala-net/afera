@@ -1,0 +1,84 @@
+.( ROLL )
+
+\ roll.fsb
+\ `ROLL` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: Code written in the main file of the library,
+  \ using `RECURSE`, after the definition of `ROLL` in Gforth.
+  \ A faster version with `CMOVE` is unfinished.
+  \
+  \ 2015-05-02: Code moved to this file.
+  \
+  \ 2015-10-26: Reorganized the screens. Added `NEEDS`.
+
+  \ -----------------------------------------------------------
+
+NEEDS RECURSE recurse
+
+: ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
+  DUP 1 <
+  IF    DROP
+  ELSE  SWAP >R 1 - RECURSE R> SWAP
+  THEN  ;  ;S
+
+  \ XXX TODO -- In DZX-Forth
+  \ (http://programandala.net/en.program.dzx-forth.html)
+  \ there's a version written in Z80.
+
+  \ XXX OLD -- unfinished version
+  \ : ROLL  ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
+  \ 2 * 4 + DUP SP@ + DUP @ ROT 1 - DUP 2 + ROT 2 -
+  \ CMOVE DROP  ;
+
+( Spectrum Forth-83 ROLL )
+
+  \ XXX TODO -- Compare with the version of DZX-Forth.
+
+CODE ROLL ( u ---)
+     EXX    \ Use shadow registers.
+    EXSP    \ Operand now in HL
+   H INC
+  H ADDP    \ Add 1 and multiply by 2.
+  H B LD
+  L C LD    \ Byte count in BC = 2*(u+1)
+ SP ADDP    \ Add to SP,
+            \ Address of cell to pick up and move to top.
+  M E LD
+   H INC
+  M D LD    \ Read the cell that must be moved to top.
+  D PUSH    \ Save it.
+  L E LD
+
+( Spectrum Forth-83 ROLL )
+
+  H D LD
+   H DEC
+   H DEC    \ Source address is destination address - 2.
+  B A LD
+    C OR
+   NZ IF    \ Test for byte count zero is unnecessary
+            \ BC=2 even for 0 ROLL.
+       LDDR \ Move the remaining stack cells up.
+   THEN
+   H POP    \ Get saved top.
+   B POP    \ Remove junk cell.
+    EXSP    \ Put top back.
+     EXX      \ Back to normal registers
+    JPIX ;C
+
+  \ vim: filetype=abersoftforthafera

@@ -1,0 +1,53 @@
+.( S+ )
+
+\ s-plus.fsb
+\ String concatenation operator for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-18: Moved from the module <strings.fsb>.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+NEEDS MOVE              move
+NEEDS ALLOCATE-STRING   csb
+NEEDS PICK              pick
+
+[DEFINED] LENGTHS ?-->
+
+: LENGTHS  ( ca1 len1 ca2 len2 -- ca1 len1 ca2 len2 len1 len2 )
+  2OVER NIP OVER  ;
+
+  \ -----------------------------------------------------------
+
+-->
+
+( SMOVE S+ )
+
+: SMOVE  ( ca1 len ca2 -- )  SWAP MOVE  ;
+
+: S+  ( ca1 len1 ca2 len2 -- ca3 len3 )
+  \ Append the string ca2 len2 to the end of string ca1 len1
+  \ returning the string ca3 len3.
+  LENGTHS + >R          ( ca1 len2 ca2 len2 ) ( R: len3 )
+  R ALLOCATE-STRING >R  ( R: len3 ca3 )
+  2 PICK R +            ( ca1 len1 ca2 len2 len1+ca3 )
+  SMOVE                 ( ca1 len1 )  \ 2nd string to buffer
+  R SMOVE               \  1st string to buffer
+  R> R>  ;
+
+  \ vim: filetype=abersoftforthafera

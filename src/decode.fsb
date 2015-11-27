@@ -1,0 +1,157 @@
+.( DECODE )
+
+\ decode.fsb
+\ `DECODE` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1984 EHR
+\ Copyright (C) 1982 Robert Dudley Ackerman
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+\ Adapted and deeply modified from:
+
+\ Z80 CP/M fig-Forth 1.1g (adaptative version by EHR).
+\ Original code by Robert Dudley Ackerman, published in
+\ Forth Dimensions IV,#2 p28 (1982-07);
+\ modified by Dennis L. Wilson.
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS RECURSE   recurse
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-17: Code copied and adapted from Z80 CP/M fig-Forth
+  \ 1.1g. It works fine.
+  \
+  \ 2015-05-03: Improvement: The current address is shown, in
+  \ hex.  Clearer instructions.
+  \
+  \ 2015-05-04: No hex forced, the current base is used.
+  \
+  \ 2015-05-07:
+  \
+  \ The code that handles the special decoding cases and the
+  \ key selection have been rewritten with `CASE` structures,
+  \ easier to read, maintain and extend.
+  \
+  \ The check that prevented from decoding `ERROR` has been
+  \ removed.
+  \
+  \ Improvement: The destination address of branches is shown
+  \ after the relative value.
+  \
+  \ The main code has been divided in smaller pieces, easier to
+  \ understand and maintain.
+  \
+  \ 2015-05-13: Fix: the address shown at the left of the colon
+  \ was the last value of `DECODE-ADDRESS`. Now it's the nfa of
+  \ the definition. The check in `INDENT` is removed.
+  \
+  \ 2015-05-17: `NEEDS` used. Improved with run-time and
+  \ shorter instructions.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( DECODE -- variables, indentation and pause control )
+
+
+FORTH DEFINITIONS DECIMAL
+
+0 VARIABLE DECODE-LEVEL    \ depth of nesting
+0 VARIABLE DECODE-ADDRESS  \ in the word being decoded
+
+: INDENT  ( -- )
+  CR DECODE-ADDRESS @ U. DECODE-LEVEL @ 2 * SPACES  ;
+
+: INDENT+  ( -- )  1 DECODE-LEVEL +! INDENT ;
+
+-->
+
+( DECODE -- Special cases )
+
+: DECODE-COMPILE  ( a1 -- a2 )  2+ DUP @ 2+ NFA ID.  ;
+
+: DECODE-LITERAL  ( a1 -- a2 )  2+ DUP @ .  ;
+
+: DECODE-BRANCH  ( a1 -- a2 )
+  DECODE-LITERAL  ."  \ to " DUP DUP @ + U.  ;
+
+: DECODE-DOT-QUOTE  ( a1 -- a2 )
+  2+ DUP COUNT TYPE  DUP C@ + 1 -  ;
+
+-->
+
+( DECODE -- Special cases dispatcher )
+
+: DECODE-SPECIAL-CASES  ( a1 -- a1 | a2 )
+  DUP @ CASE
+          [ ' COMPILE CFA ] LITERAL OF  DECODE-COMPILE    ENDOF
+          [ ' LIT     CFA ] LITERAL OF  DECODE-LITERAL    ENDOF
+          [ ' BRANCH  CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+          [ ' 0BRANCH CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+          [ ' (LOOP)  CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+          [ ' (+LOOP) CFA ] LITERAL OF  DECODE-BRANCH     ENDOF
+          [ ' (.")    CFA ] LITERAL OF  DECODE-DOT-QUOTE  ENDOF
+        ENDCASE  ; 
+-->
+
+( DECODE -- checks of the main code )
+
+: DECODE-END?  ( cfa -- f )
+  \ Is the given cfa the end of a definition?
+  DUP  ' ;S CFA =  SWAP ' (;CODE) CFA =  OR  ;
+
+: COLON-PFA?  ( pfa -- f )
+  \ Is the given pfa a colon definition?
+  CFA @ ' : CFA @ =  ;
+
+-->
+
+( DECODE -- main code )
+
+: (DECODE)  ( pfa --- )
+
+  \ Decode the definition at the given pfa.
+
+  DUP COLON-PFA? IF
+    DUP NFA DECODE-ADDRESS ! INDENT  ." : " DUP NFA ID.
+    BEGIN   ( pfa+n ) DUP DECODE-ADDRESS !
+            DUP @ DUP ( pfa+n cfa cfa ) DECODE-END? 0=
+            \ ( pfa+n cfa f )
+    WHILE  \ high level & NOT end of colon definition
+      \ ( pfa+n cfa )
+      ( pfa+n cfa ) 2+ ( pfa+n pfa' ) DUP INDENT+  NFA ID.
+      KEY CASE  [CHAR] Q  OF  SP! QUIT  ENDOF \ Q
+                      BL  OF  DROP      ENDOF \ Space
+                                 SWAP RECURSE \ Default
+          ENDCASE  DECODE-SPECIAL-CASES
+      2+  -1 DECODE-LEVEL +!
+    REPEAT  INDENT 2+ NFA ID. \ show the last word
+  ELSE  ." Not a colon definition."  THEN  DROP  ;  -->
+
+( DECODE -- interface )
+
+: DECODE-USAGE  ( -- )
+     \  <------------------------------>
+  CR ." Keys: Space=more, Q=quit, other=deeper." CR  ;
+
+: DECODE  ( "name" -- )
+  DECODE-USAGE
+  -FIND IF    DROP 0 DECODE-LEVEL ! (DECODE)
+        ELSE  ." Not Found"  THEN  ;
+
+  \ vim: filetype=abersoftforthafera

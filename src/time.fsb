@@ -1,0 +1,48 @@
+\ time.fsb
+\ Time extensions for ZX Spectrum Abersoft Forth.
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-07-02: Start, with the code of `MS`, moved from the
+  \ main file of the library.
+  \
+  \ 2015-04-03: New: `TIME@`, `TIME!` and `TIME0`.
+  \
+  \ 2015-07-16: Moved `MS` to its own file.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( Time extensions )
+
+FORTH DEFINITIONS  DECIMAL
+
+[DEFINED] SYS-FRAMES ?\ 23672 CONSTANT SYS-FRAMES
+
+: TIME@  ( -- d )
+  \ System frames counter (incremented every 20 ms).
+  SYS-FRAMES @ [ SYS-FRAMES 2+ ] LITERAL C@  ;
+
+: TIME!  ( d -- )
+  \ Set the system frames counter.
+  [ SYS-FRAMES 2+ ] LITERAL C! SYS-FRAMES !  ;
+
+: TIME0  ( -- )
+  \ Reset the system frames counter.
+  0. TIME!  ;
+
+  \ vim: filetype=abersoftforthafera

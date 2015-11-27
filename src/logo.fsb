@@ -1,0 +1,77 @@
+.( Logo-like graphics)
+
+\ logo.fsb
+\ Logo-like graphics for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 1985,2009,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+  
+  \ 1985-05-20: First version.
+  \
+  \ 2009-05-27: Improved with the following words: `X!`, `Y!`,
+  \ `COORDS`, `X-COORD`, `Y-COORD, `RELATIVE`.
+  \
+  \ 2015-04-15: Included in the Afera library. `COORDS` is
+  \ renamed to `SYS-COORDS` after the current convention.
+  \
+  \ 2015-05-02: Improved with `MINUS` and conditional
+  \ compilation. `X-COORD` and `Y-COORD` renamed with the
+  \ "SYS-" prefix, after the current convention for system
+  \ variable aliases.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( Coordinates )
+
+  \ Define the required system variables,
+  \ if needed.
+
+[DEFINED] SYS-COORDS
+  ?\ 23677 CONSTANT SYS-COORDS  \ ZX Spectrum system variable
+[DEFINED] SYS-X-COORDS
+  ?\ SYS-COORDS    CONSTANT SYS-X-COORD
+[DEFINED] SYS-Y-COORD
+  ?\ SYS-COORDS 1+ CONSTANT SYS-Y-COORD
+
+: X@  ( -- b )  SYS-X-COORD C@  ;
+: Y@  ( -- b )  SYS-Y-COORD C@  ;
+: X!  ( b -- )  SYS-X-COORD C!  ;
+: Y!  ( b -- )  SYS-Y-COORD C!  ;
+
+-->
+
+( Commands )
+
+: RELATIVE  ( x1 y1 -- x2 y2 )  Y@ + SWAP X@ + SWAP  ;
+
+: RDRAW  ( x y -- )  RELATIVE DRAW  ;
+: SETXY  ( x y -- )  RELATIVE PLOT  ;
+
+: RIGHT  ( u -- )  0 RDRAW  ;
+: LEFT  ( u -- )  MINUS 0 RDRAW  ;
+: UP  ( u -- )  0 SWAP RDRAW  ;
+: DOWN  ( u -- )  MINUS 0 SWAP RDRAW  ;
+
+: PAT  ( x y -- )  Y! X!  ;
+: RPAT  ( x y -- )  Y@ + Y!  X@ + X!  ;
+
+: RPLOT  ( u -- )  0 SETXY  ;
+: LPLOT  ( u -- )  MINUS 0 SETXY  ;
+: UPLOT  ( u -- )  0 SWAP SETXY  ;
+: DPLOT  ( u -- )  MINUS 0 SWAP SETXY  ;
+  
+  \ vim: filetype=abersoftforthafera

@@ -1,0 +1,87 @@
+.( G+DOS -- CAT )
+
+\ gplusdos_cat.fsb
+\ G+DOS `CAT` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS CODE assembler
+
+  \ -----------------------------------------------------------
+  \ Note
+
+  \ "DISC" in Forth words means the Forth RAM-disk, after the
+  \ name used by Abersoft Forth's documentation and vocabulary,
+  \ e.g.  `INIT-DISC`.
+  \
+  \ "DISK" means always a G+DOS disk.
+  \
+  \ In the comments of this library, "disc" is not used, and
+  \ the Abersoft Forth RAM-disk is always called "RAM-disk".
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-20: Extracted from <gplusdos_2.fsb>. Finished.
+  \
+  \ 2015-08-27: Typo.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( CAT ACAT )
+
+CODE (CAT)  ( n -- )
+
+  AF POP
+  BC PUSH  IX PUSH  \ save the Forth registers
+  AF PUSH  PATCH HOOK
+
+  \ Copy Forth UFIA to G+DOS UFIA1.
+  UFIA HL LDP#  UFIA1 DE LDP#  /UFIA BC LDP#  LDIR
+
+  HL POP  L A LD  \ CAT type: 2=compact;4=detailed
+  24B5 CALL \ CAT_RUN
+  168E CALL \ BORD_REST = restore the border
+
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  NEXT JP  END-CODE
+
+  \ CAT  ( ca len -- )
+  \
+  \ Show a disk catologue using the given wild-card filename.
+  \ See the +D manual for wild-card syntax.
+  \
+  \ The catalogue can be printed out on a printer by storing
+  \ the number 3 into SSTR1 (a field of UFIA that holds the
+  \ stream number to use) before doing `CAT`. The default value
+  \ is 2 (screen) and should be restored. Example:
+  \
+  \   3 SSTR1 C! S" FORTH?.*" CAT 2 SSTR C!
+
+: CAT  ( ca len -- )  FILENAME>UFIA  4 (CAT)  ;
+
+  \ ACAT  ( ca len -- )
+  \
+  \ A variant of `CAT` that shows an abbreviated catalogue.
+
+: ACAT  ( ca len -- )  FILENAME>UFIA  2 (CAT)  ;
+
+DECIMAL
+
+  \ vim: filetype=abersoftforthafera

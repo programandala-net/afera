@@ -1,0 +1,30 @@
+\ test the speed of PLOT
+
+-->
+
+( tests )
+
+NEEDS TIME@ time
+
+: SECONDS.  ( -- )  TIME@ D.  ;
+
+: TEST  ( -- )
+  TIME0
+  256 0 DO  176 0 DO  J I PLOT  LOOP  LOOP  SECONDS.  ;
+
+: TESTQ  ( -- )
+  TIME0
+  256 0 DO  176 0 DO  J I QPLOT  LOOP  LOOP  SECONDS.  ;
+
+( Results )
+
+
+  \ 2015-05-04: Results in system frames,
+  \
+  \           Original of  Adapted from
+  \           Abersoft     ZX Spectrum
+  \           Forth        Forth-83
+  \           --------     --------
+  \ PLOT      1019         856  (84%)
+
+  \ vim: filetype=abersoftforthafera

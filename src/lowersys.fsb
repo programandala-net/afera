@@ -1,0 +1,345 @@
+.( Lower the system below 0xC000 )
+
+\ lowersys.fsb
+\ Move ZX Spectrum Abersoft Forth below address 0xC000
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Abersoft Forth is a fig-Forth system and so its memory map:
+
+  \ Address         Returned by  Description
+  \ --------------  -----------  --------------------------
+  \ 0xFFFF (65535)               Top of memory
+  \ 0xFF58 (65368)  `UDG`        User defined graphics
+  \                              Unused space (856 bytes)
+  \ 0xFBFF (64511)  `HI`         End of screens area
+  \                                (RAM-disk)
+  \ 0xD000 (53248)  `LO`         Start of screens area
+  \                                (RAM-disk)
+  \ 0xD000 (53248)  `LIMIT`      End of buffer area plus 1
+  \ 0xCBE0 (52192)  `FIRST`      Start of buffer area
+  \                                (lowest buffer start)
+  \ 0xCBE0 (52192)  `R0 @`       Initial location (bottom)
+  \                                of the return stack
+  \                                (grows toward low memory)
+  \ ?               `RP@`        Return stack pointer
+  \ 0xCB40 (52032)  `TIB @`      Terminal input buffer
+  \ 0xCB40 (52032)  `S0 @`       Initial location (bottom)
+  \                                of the data stack
+  \                                (grows toward low memory)
+  \ ?               `SP@`        Data stack pointer
+  \ ...                          Free space
+  \ 0x819D (33181)  `PAD`        Text output buffer
+  \ 0x8159 (33113)  `HERE`       `WORD` buffer
+  \ 0x8159 (33113)  `HERE`       Dictionary pointer
+  \ 0x5E40 (24128)  `0 +ORIGIN`  Start of the system
+
+  \ The problem is the ZX Spectrum 128 models page the
+  \ additional RAM banks on the upper 16 KiB of the memory
+  \ (0xC000-0xFFFF).  In order to use this extra memory, the
+  \ vital parts of the Forth system (the data stack, the
+  \ terminal input buffer, the return stack and the disk block
+  \ buffers) have to be moved below address 0xC000.
+
+  \ This module is useful for the ZX Spectrum 48 too, in
+  \ combination with the module <hi-to.fsb>, in order to get 1
+  \ KiB of additional memory for the Forth dictionary. See
+  \ <hi-to.fsb> for more details.
+
+  \ Important note:
+  \
+  \ With the new memory map, a stack overflow could corrupt the
+  \ dictionary below the stack, before `?STACK` can notice,
+  \ easier than with the original fig-Forth memory map.  The
+  \ same can happen when a stack is empty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-06: Start.
+  \ 2015-05-07: Data stack, return stack and TIB are moved.
+  \ 2015-05-08: Block buffers are moved. `FREE` is patched.
+  \ 2015-07-17: Description completed with a mention to
+  \ <hi-to.fsb>.
+
+  \ -----------------------------------------------------------
+  \ To-do
+
+  \ XXX FIXME 2015-05-15
+  \
+  \ Everything works fine when this module is loaded with
+  \ `LOADER`; but when the module is loaded manually with
+  \ `RUNT` or `LOADT 1 LOAD`, a strange "OT? MSG # 0" error
+  \ always happens at the end, but with no `WHERE` parameters
+  \ on the stack...
+  \
+  \ The reason of this problem is still unknown.  The contents
+  \ of the buffers are exactly the same at the end of the
+  \ proccess, and the pointers have been properly adapted.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( Move the data stack )
+
+  \ Definition of `?STACK` in C. H. Ting's book _Systems Guide
+  \ to figFORTH_.
+
+  \ : ?STACK  ( -- )
+  \   \ Issue error message
+  \   \ if the data stack is out of bounds.
+  \   SP@ S0 >          \ out of upper bound?
+  \   1 ?ERROR          \ stack underflow
+  \   SP@ HERE 128 + <  \ out of lower bound?
+  \   7 ?ERROR          \ stack overflow
+  \   ;
+
+  \ Definition of `?STACK` in Abersoft Forth.
+
+  \ : ?STACK  ( -- )
+  \   \ Issue error message
+  \   \ if the data stack is out of bounds.
+  \   SP@ S0 @ SWAP U<  \ out of upper bound?
+  \   1 ?ERROR          \ stack underflow
+  \   SP@ HERE 128 + <  \ out of lower bound?
+  \   7 ?ERROR          \ stack overflow
+  \   ;
+
+  \ The lower bound has to be changed: instead of `HERE 128 +`
+  \ it must be the new fixed address.
+
+  \ -----------------------------------------------------------
+
+HEX
+
+  \ The current dictionary pointer is both the start of the
+  \ patch and the new lower bound of the data stack.
+
+HERE
+
+  \ Step 0: Compile the patch for `?STACK`.
+  \
+  \ The first `?ERROR` in `?STACK` is temporarily substituted
+  \ with `2DROP` to prevent a later error during the init of
+  \ the new data stack pointers.
+
+' 2DROP CFA , ' SP@ CFA , ' LIT CFA , DUP ,
+' < CFA , ' LIT CFA , 7 , ' ?ERROR CFA , ' ;S CFA ,
+  \ XXX Unused space: 4 bytes at 0x6C4B
+
+  \ Step 1: Copy the patch
+
+DUP             \ Origin: start of the compiled patch.
+' ?STACK 0C +   \ Destination: first `?ERROR` in `?STACK`.
+OVER HERE SWAP - CMOVE  \ Do it.
+
+  \ Step 2: Allocate space for the new data stack
+  \ (0x80 bytes minus the bytes reused from the patch).
+
+80 HERE ROT - - ALLOT
+
+  \ Step 3: Init the new data stack pointers.
+
+  \ System addresses:
+  \   0x5E06 holds `S0`.
+  \   0x5E54 holds its initial value.
+
+HERE DUP 5E06 ! 5E52 ! SP!
+
+  \ Step 4: Restore the first `?ERROR` of `?STACK`,
+  \ that was substituted by a `2DROP`.
+
+  ' ?ERROR CFA ' ?STACK 0C + !
+
+DECIMAL  -->
+
+( Move the terminal input buffer )
+
+HEX
+
+  \ System addresses:
+  \   0x5E0A holds the address of `TIB`.
+  \   0x5E56 holds its initial value.
+
+HERE DUP 5E0A ! 5E56 !  52 ALLOT
+
+DECIMAL  -->
+
+( Move the return stack -- old first method ) --> \ XXX OLD
+
+  \ XXX FIXME 2015-05-15
+  \
+  \ Stacks dont't match at the end: A 0x20 is added at the top,
+  \ no matter if the limit of the second loop is reduced.
+
+HEX  80 ALLOT \ space for the new return stack
+
+  \ System addresses:
+  \   0x5E08 holds `R0`.
+  \   0x5E54 holds its initial value.
+
+  \ 0x5E54 is used only by `COLD`, so it's safe to change it
+  \ now; it will be used to update 0x5E08:
+HERE 5E54 !
+
+: TASK ;
+
+[DEFINED] RDEPTH ?\ : RDEPTH  ( -- u )  RP@ R0 @ - -2 /  ;
+
+0 VARIABLE SAVED  \ Elements saved from the old return stack.
+
+: R>R  ( -- )
+
+  \ Move the old return stack to the new one.
+
+  \ Copy the contents of the old return stack
+  \ to the data stack
+  \ (the `LOOP` parameters must be preserved).
+  RDEPTH
+
+  \ XXX TMP for debugging
+  \ DUP CR ." RDEPTH before=" .  ." RTOS="  R . CR
+  CR .RS
+
+  DUP SAVED !  0 DO  R> R> R> ROT ROT >R >R  LOOP
+
+  \ Activate and clear the new return stack:
+  5E54 @ 5E08 !  RP!
+
+  \ Restore the contents of the old return stack
+  \ from the data stack to the new return stack
+  \ (the `LOOP` parameters must be preserved).
+  SAVED @ 0 DO  R> R> ROT >R >R >R  LOOP
+
+  \ XXX TMP for debugging
+  \ RDEPTH ." RDEPTH after=" . ." RTOS="  R . KEY DROP  ;
+  CR .RS  ;
+
+R>R  FORGET TASK  DECIMAL  -->
+
+( Move the return stack -- second method )
+
+  \ This second method is simpler, faster, and works fine.
+  \ The new stack is an exact copy of the old one.
+
+HEX  80 ALLOT HERE  \ space for the new return stack
+
+  \ System addresses:
+  \   0x5E68 holds the return stack pointer, returned by `RP@`
+  \   0x5E08 holds `R0`
+  \   0x5E54 holds the initial value of `R0`
+
+: R>R  ( a -- )
+
+  \ Move the old return stack to the new one.
+  \ a = top of the new return stack
+
+  \ Calculate the positive offset
+  \ from the old stack to the new one.
+  R0 @ OVER -
+  \ Move the contents of the old stack to the new one.
+  OVER 50 - R0 @ 50 - SWAP 50 CMOVE
+  \ Activate the new return stack,
+  \ updating the pointer with the offset.
+  RP@ SWAP - 5E68 !
+  \ Update `R0` and its default value.
+  DUP 5E54 ! 5E08 !  ;
+
+R>R  FORGET R>R  DECIMAL  -->
+
+( Compare buffers )  --> \ XXX TMP for debugging
+
+0 CONSTANT OLD-PREV 0 CONSTANT OLD-USE
+LIMIT CONSTANT OLD-LIMIT FIRST CONSTANT OLD-FIRST
+B/BUF 4 + CONSTANT /BUF
+: .BUFFERS  ( -- )
+  HEX  #BUFF 0 DO
+    ." Buffer " I . ." is at " FIRST I /BUF * + U. CR
+  LOOP  DECIMAL  ;
+
+-->
+
+( Compare buffers )  --> \ XXX TMP for debugging
+
+: COMPARE  ( n1 n2 -- )  2DUP U. U. SWAP - . CR  ;
+
+: MISMATCH  ( n -- )
+  DUP ." Mismatch at FIRST + " U. CR CR
+  FIRST OVER + 32 DUMP CR OLD-FIRST SWAP + 32 DUMP  ;
+
+: COMPARE-BUFFERS  ( -- )
+  HEX  CR ."         new  old  offset" CR
+  ." FIRST = " OLD-FIRST FIRST COMPARE
+  ." LIMIT = " OLD-LIMIT LIMIT COMPARE
+  ." PREV  = " OLD-PREV PREV @ COMPARE
+  ." USE   = " OLD-USE USE @ COMPARE
+  LIMIT FIRST - 0 DO
+    FIRST I + C@ OLD-FIRST I + C@ - IF  I MISMATCH LEAVE  THEN
+  LOOP  DECIMAL  ;  -->
+
+( Move the disk block buffers and update FREE )
+
+HERE  \ address of the new buffers
+DUP FIRST -  \ negative offset from the old buffers
+
+LIMIT FIRST -  ALLOT \ space for the new buffers
+
+: BUFFERS>BUFFERS  ( -n a -- )
+
+  \ Move the disk buffers to their new position.
+
+  \ a = address of the new buffers
+  \ -n = offset from the old buffers to the new ones
+
+  \ Copy the disk buffers to the new address.
+  FIRST OVER LIMIT FIRST - CMOVE
+
+  \ Update their bound addresses.
+  ( a ) DUP ' FIRST !  B/BUF 4 + #BUFF * + ' LIMIT !
+
+    \ XXX TMP -- for debugging
+    \ PREV @ ' OLD-PREV !  USE @ ' OLD-USE !
+    \ HEX CR ." PREV  = " PREV @ U. ." USE   = " USE @ U. CR
+    \ ." offset="  DUP . CR
+
+  \ Update the buffer pointers with the offset.
+  ( -n ) DUP PREV +! USE +!
+
+    \ XXX TMP -- for debugging
+    \ ." PREV  = " PREV @ U. ." USE   = " USE @ U. CR
+
+  \ XXX OLD
+  \ Make this word to forget itself.
+  \ [ LATEST ] LITERAL DUP DP ! PFA LFA @ CURRENT @ !
+
+    \ XXX TMP -- for debugging
+    \ COMPARE-BUFFERS
+
+  ;  SWAP BUFFERS>BUFFERS  FORGET BUFFERS>BUFFERS
+
+  \ The word `FREE` returns the free dictionary space,
+  \ according to the original memory map.
+  \
+  \   : FREE  ( -- n )  SP@ HERE -  ;
+  \
+  \ It has to be modified because the top limit of the free
+  \ dictionary space is not the stack pointer any more, but the
+  \ start of the RAM-disk, returned by `LO`.
+
+' LO CFA ' FREE !
+
+  \ vim: filetype=abersoftforthafera

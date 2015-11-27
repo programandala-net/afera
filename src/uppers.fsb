@@ -1,0 +1,38 @@
+.( UPPERS )
+
+\ uppers.fsb
+\ `UPPERS` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-06: First version.
+  \
+  \ 2015-05-18: Added `NEEDS`.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+NEEDS UPPERC upperc
+
+  \ -----------------------------------------------------------
+
+: UPPERS   ( ca len -- )
+  \ Convert a string to uppercase.
+  \ XXX FIXME -- use `?DO` when available
+  BOUNDS DO  I C@ UPPERC I C!  LOOP  ;
+
+  \ vim: filetype=abersoftforthafera
+

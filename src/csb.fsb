@@ -1,0 +1,87 @@
+.( Circular string buffer )
+
+\ csb.fsb
+\ Circular string buffer for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS 2>R 2r
+  NEEDS 2R> 2r
+  NEEDS MOVE move
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-29: Written, adapted from csb8
+  \ (http://programandala.net/en.program.csb8.html), as part of
+  \ the module <strings.fsb>.
+  \
+  \ 2015-05-18: Moved to its own file. This way, applications
+  \ that just need transient strings do not waste the
+  \ dictionary space occupied by this code.
+  \
+  \ 2015-05-23: Requirements with `NEEDS`.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( Circular string buffer -- core)
+
+  \ The parameters of the buffer are initialized with zero.
+  \ They will be updated when the buffer is created
+  \ by `ALLOT-CSB` or `USE-CSB`.
+
+0 CONSTANT /CSB         \ size
+0 VARIABLE CSB-UNUSED   \ unused space
+0 CONSTANT CSB0         \ bottom address
+
+: ?CSB  ( len -- )
+  \ Make sure there's room for the given characters.
+  DUP CSB-UNUSED @ > IF  /CSB CSB-UNUSED !  THEN
+  MINUS CSB-UNUSED +!  ;
+
+: ALLOCATE-STRING
+  \ Allocate space in the circular string buffer
+  \ for a string of the given length, and return
+  \ the free address.
+  ( len -- ca )  ?CSB CSB0 CSB-UNUSED @ +  ;
+
+-->
+
+( Circular string buffer -- interface)
+
+: SET-CSB  ( a len -- )
+  \ Use the given memory zone as circular string buffer.
+  DUP ' /CSB !  CSB-UNUSED !  ' CSB0 !  ;
+
+: ALLOT-CSB  ( len -- )
+  \ Create a circular string buffer of len bytes
+  \ in the dictionary and init it.
+  HERE OVER ALLOT SWAP SET-CSB  ;
+
+: SAVE-STRING  ( ca1 len1 -- ca2 len1 )
+  \ Save a string into the circular string buffer
+  \ return it in its new address.
+  DUP ALLOCATE-STRING SWAP  2DUP 2>R  MOVE  2R>  ;
+
+: SAVE-COUNTED-STRING  ( ca1 len1 -- ca2 )
+  \ Save a string into the circular string buffer
+  \ as a counted string and return its new address.
+  DUP 1+ ALLOCATE-STRING DUP >R PLACE R> ;
+
+
+  \ vim: filetype=abersoftforthafera

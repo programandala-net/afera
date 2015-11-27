@@ -1,0 +1,60 @@
+\ graphics.fsb
+\ Graphic extensions for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 1985-1987,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-28: Code extracted from the main file of the
+  \ library.
+  \
+  \ 2015-04-22: `UDG!` is moved to its own file
+  \ <udg-store.fsb>.
+  \
+  \ 2015-10-26: Updated header.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( Graphic extensions )
+
+FORTH DEFINITIONS DECIMAL
+
+  \ System variables and addresses
+
+23677 CONSTANT SYS-COORDS  \ ZX Spectrum system variable
+SYS-COORDS    CONSTANT X-COORD
+SYS-COORDS 1+ CONSTANT Y-COORD
+
+22528 CONSTANT ATTRIBUTES
+
+ : DRAWL  ( x1 y1 x2 y2 -- )
+  \ Draw a line from x1 y1 to x2 y2
+  2SWAP PLOT DRAW  ;
+
+: RDRAW  ( inc-x inc-y -- )
+  \ Draw a line from the current plot position
+  Y-COORD C@ + SWAP X-COORD C@ + SWAP DRAW  ;
+
+: RDRAWL  ( x y inc-x inc-y -- )
+  \ Draw a line from x1 y1
+  2SWAP PLOT RDRAW  ;
+
+: XY>ATTRA  ( x y -- a )
+  \ Convert a pixel coordinate to its attribute address.
+  \ XXX TODO Rewrite in Z80, using the ROM routine.
+  175 SWAP - 8 / 32 *  SWAP 8 /  + ATTRIBUTES +  ;
+
+  \ vim: filetype=abersoftforthafera

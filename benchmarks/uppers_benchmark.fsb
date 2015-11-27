@@ -1,0 +1,36 @@
+( UPPERS benchmark )
+
+  \ 2015-05-19
+
+NEEDS TIME0 time
+
+: TASK ;
+
+: .TIME  ( -- )  TIME@ D. ." system frames"  ;
+
+: GARBAGE  0 16384 6144 CMOVE  ;
+
+: BENCH1  ( n -- )
+  GARBAGE TIME0
+  0 DO  16384 6144 UPPERS  LOOP
+  .TIME  ; 
+
+: BENCH2  ( n -- )
+  TIME0
+  0 DO  0 16384 UPPERS  LOOP
+  .TIME  ; 
+
+  \ BENCH1 results in system frames
+  \ times   frames
+  \ 05      0441
+  \ 10      0882
+  \ 20      1764
+  \ 40      3528
+  \
+  \ BENCH2 results in system frames
+  \ times   frames
+  \ 01      0235
+  \ 10      2341
+  \ 20      4681
+  
+  \ vim: filetype=abersoftforthafera

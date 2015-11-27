@@ -1,0 +1,53 @@
+.( Case insensitive mode )
+
+\ caseins.fsb
+\ Case insensitive mode for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS UPPERS uppers
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-06: First version.
+  \ 2015-05-18: `NEEDS` used.
+
+  \ -----------------------------------------------------------
+
+: UPPER-WORD  ( c -- )
+  \ Read the next text characters from the input stream being
+  \ interpreted, until a delimiter c is found, storing the
+  \ counted string, converted to uppercase, at the dictionary
+  \ pointer. This word does the same than `WORD` but it
+  \ converts the string to uppercase.
+  WORD HERE COUNT UPPERS  ;
+
+  \ Patching `-FIND` this way, substituting its original `WORD`
+  \ with `UPPER-WORD`, is enough to make the system case
+  \ insensitive:
+
+: +CASEINS   ( -- )
+  \ Turn case insensitive mode on.
+  [ ' UPPER-WORD CFA ] LITERAL [ ' -FIND 2+ ] LITERAL !  ;
+
++CASEINS
+
+: -CASEINS   ( -- )
+  \ Turn case insensitive mode off.
+  [ ' WORD CFA ] LITERAL [ ' -FIND 2+ ] LITERAL !  ;
+
+  \ vim: filetype=abersoftforthafera

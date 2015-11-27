@@ -1,0 +1,53 @@
+\ rdrop.fsb
+\ `RDROP` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03: Code written in the main file of the library.
+  \
+  \ 2015-04-14: Code moved to <rstack.fsb> with all return
+  \ stack words.
+  \
+  \ 2015-05-10: Code moved to this file and rewritten in Z80.
+  \ `EXIT` is patched to execute `RDROP`.
+  \
+  \ 2015-06-17: Fix: `EXIT` can not execute the code of
+  \ `RDROP`. `EXIT` is a colon definition, thus it removes its
+  \ own nesting; but `RDROP` is a primitive, thus it does not
+  \ adds a nesting level. The patch is removed.
+  \
+  \ 2015-07-12: Fix: `SMUDGE` was missing!
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( RDROP )
+
+
+CREATE RDROP  ( -- ) ( R: x -- )
+
+  HEX
+
+  2A C, 5E68 ,  \ ld hl,(RP) ; return stack pointer
+  23 C,         \ inc hl
+  23 C,         \ inc hl
+  22 C, 5E68 ,  \ ld (RP),hl ; update the pointer
+  C3 C, NEXT ,  \ jp NEXT
+
+  SMUDGE DECIMAL
+
+  \ vim: filetype=abersoftforthafera

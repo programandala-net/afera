@@ -1,0 +1,11 @@
+_doc/
+_drafts/
+_errors/
+_ex/
+_tmp/
+abersoft_forth_afera.tap
+abersoft_forth_afera_tools.tap
+afera.zip
+es.programa.afera.historia.fs
+src.grouped_for_disk/
+tap.grouped_for_disk/

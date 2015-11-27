@@ -1,0 +1,393 @@
+.( G+DOS -- part 2 )
+
+\ gplusdos_2.fsb
+\ G+DOS support for ZX Spectrum Abersoft Forth (part 2)
+
+\ Copyright (C) 1988,1994,2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  NEEDS CODE assembler
+
+  \ -----------------------------------------------------------
+  \ Note
+
+  \ "DISC" in Forth words means the Forth RAM-disk, after the
+  \ name used by Abersoft Forth's documentation and vocabulary,
+  \ e.g.  `INIT-DISC`.
+  \
+  \ "DISK" means always a G+DOS disk.
+  \
+  \ In the comments of this library, "disc" is not used, and
+  \ the Abersoft Forth RAM-disk is always called "RAM-disk".
+
+  \ -----------------------------------------------------------
+  \ Requirements
+
+  \ This module needs the circular string buffer, part of the
+  \ module <strings.fsb>. But `NEEDS` can not be used yet
+  \ because it must be defined later.
+
+  [UNDEFINED] SAVE-STRING 0 ?ERROR
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-04-15: Extracted from <gdos_1.fsb>.
+  \
+  \ 2015-04-16: File renamed to <g+dos_2.fsb>.
+  \
+  \ 2015-04-30: New version of `RUND` and new word `/RUND`,
+  \ after the tape versions `RUNT` and `/RUNT`. `'BLOCK`
+  \ instead of `BLOCK>A`, after the change in the main file of
+  \ the library.
+  \
+  \ 2015-05-03: Simpler word names: no "MEM" affix.
+  \
+  \ 2015-05-08: Renamed to <gplusdos_2.fsb>, because of an
+  \ issue with Makefile. Some words are renamed.
+  \
+  \ 2015-05-10: `'BLOCK` changed to `'SCR`, after the changes
+  \ in the library.
+  \
+  \ 2015-05-12:
+  \
+  \ The "RAM-" prefix is removed from the RAM-disk words, after
+  \ the changes in the library. Minor fixes: `EMPTY-BUFFERS`
+  \ instead of `FLUSH`; parameter of `/RUND`.
+  \
+  \ Fix: `(<DISK)`. The problem was the specified parameters,
+  \ stored in UFIA, are always overwritten by the file header.
+  \ Now they are saved apart and a calculation is done to
+  \ decide which start address and file length must be used.
+  \
+  \ Change: `'SCR` renamed to `DISC-SCR`, after the changes in
+  \ the library.
+  \
+  \ 2015-05-17: New: `FILE?`. Some renamings, after the changes
+  \ in the library (common core words for some tape and disk
+  \ operations).
+  \
+  \ 2015-05-18: New: support for 16-KiB RAM-disks in memory
+  \ banks.
+  \
+  \ 2015-05-20: The `CAT` code, still under development, is
+  \ moved to its own file.
+  \
+  \ 2015-08-28: Typo.
+
+  \ -----------------------------------------------------------
+
+2 10 THRU
+
+( Save a file)
+
+CODE (>FILE)  ( -- ior )
+
+  \ Save a file to disk using the data hold in UFIA.
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+  UFIA IX LDP#
+  HOFLE HOOK \ open the file and create its header
+  NC IF \ no error?
+    HD0D DE LDP \ start
+    HD0B BC LDP \ length
+    HSVBK HOOK \ save to file
+    NC IF  \ no error?
+      CFSM HOOK  \ close the file
+    THEN
+  THEN  IX POP  BC POP  \ restore the Forth registers
+  AF PUSH  \ ior
+  NEXT JP
+  END-CODE
+
+( Load a file -- part 1 )
+
+CODE (<FILE)  ( -- ior )
+
+  \ Load a file from disk, using the data hold in UFIA, the
+  \ file header and the parameters specified by the high level
+  \ command.
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+
+  UFIA IX LDP#  HGFLE HOOK \ get the file
+  NC IF \ no error?  -- load the file header:
+
+    \ Load the file header
+    HD00 DE LDP# 9 B LD# \ destination and count
+    BEGIN
+      LBYT HOOK \ load byte and store it in A
+      DE STAP  DE INCP  \ update destination and count
+    DSZ
+
+( Load a file -- part 2 )
+
+    \ The start address and length specified
+    \ in the command are used by default instead
+    \ of those stored in the file header.
+    FILE-ADDRESS DE LDP
+    FILE-LENGTH BC LDP
+
+    BC TST  \ is the length zero?
+    \ If so, use the length of the file header instead:
+    Z IF  HD0B BC LDP  THEN
+
+    \ Load the file data
+    HLDBK HOOK
+
+  THEN
+
+  IX POP  BC POP  \ restore the Forth registers
+  AF PUSH  \ ior
+  NEXT JP
+
+END-CODE
+
+( Delete a file)
+
+CODE (-FILE)  ( -- ior )
+
+  \ Delete a disk file using the data hold in UFIA.
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+  UFIA IX LDP#
+  HERAZ HOOK \ erase the file
+  IX POP  BC POP  \ restore the Forth registers
+  AF PUSH
+  NEXT JP
+  END-CODE
+
+( Forth RAM-disk)
+
+: DISC>UFIA  ( ca len -- )  LO 0 2SWAP >UFIA  ;
+
+  \ `DISC-FILENAME` keeps the address and length of the latest
+  \ RAM-disk loaded. It is updated by `LOADD?` and used by
+  \ `(NEEDS-DISK)` to implement nested requirements between
+  \ modules.
+
+0. 2VARIABLE DISC-FILENAME
+
+  \ When the system has been lowered below 0xC000 by
+  \ <lowersys.fsb>, in order to use the memory banks, and the
+  \ 16-KiB RAM-disks have been installed by <16kramdisks.fsb>,
+  \ the G+DOS words that manage the Forth RAM-disk must include
+  \ the commands to switch the memory banks.
+  \
+  \ A flag is calculated to be used by `SAVED?` and `LOAD?`
+  \ during compilation. Every word needs to check the flag
+  \ twice. The flag can not be put on the stack and duplicated,
+  \ because it would be consumed during the compilation, what
+  \ would make `;` to stop with an error 20 (definition not
+  \ finished). The variable `X1`, only used by `DRAW`, is used
+  \ as a temporary storage.
+
+HEX
+R0 @ C000 U<      \ Has the system been lowered below 0xC000
+/DISC 4000 =  AND \ and the 16-KiB RAM-disks installed?
+0= X1 !           \ No? Save it into a temporary storage.
+DECIMAL
+
+  \ XXX TODO -- Use a different address to store the flag. One
+  \ of the planned modules removes `DRAW` and its variables
+  \ from the dictionary and redefines it in Z80.
+
+( Forth RAM-disk -- user interface)
+
+  \ DISC>UFIA  ( ca len -- )
+  \
+  \ Init the User File Information Area to load or save the
+  \ Forth RAM-disk.  Zero length is specified, what will make
+  \ `(<FILE)` to use the length of the file header.
+  \
+  \ ca1 len1 = filename
+
+: SAVED?  ( ca len -- f n )
+  \ Save the Forth RAM-disk to disk
+  \ (word named after Abersoft Forth's `SAVET`).
+  \ ca len  = filename
+  \ f       = error?
+  \ n       = error
+  \ During compilation, as a temporary solution,
+  \ `X1` holds a flag: Use the original RAM-disk?
+  DISC>UFIA       [ X1 @ ] ?\ DISC-BANK BANK
+  (>FILE)    [ X1 @ ] ?\ 0 BANK
+  IOR>ERROR  ;
+
+  \ SAVED  ( ca len -- )
+  \
+  \ Save the Forth RAM-disk to disk
+  \ (word named after Abersoft Forth's `SAVET`).
+  \ ca len = filename
+
+: SAVED  ( ca len -- )  SAVED? ?ERROR  ;
+
+  \ The latest filename used to load a RAM-disk is saved by
+  \ `LOADD?` (the lowest level word) into the circular string
+  \ buffer and its address and length are stored into a double
+  \ variable.
+
+: LOADD?  ( ca len -- f n )
+  \ Load a Forth RAM-disk from disk.
+  \ (word named after Abersoft Forth's `LOADT`).
+  \ ca len  = filename
+  \ f       = error?
+  \ n       = error
+  \ During compilation, as a temporary solution,
+  \ `X1` holds a flag: Use the original RAM-disk?
+  SAVE-STRING 2DUP DISC-FILENAME 2!
+  DISC>UFIA       [ X1 @ ] ?\ DISC-BANK BANK
+  (<FILE)    [ X1 @ ] ?\ 0 BANK
+  IOR>ERROR  ;
+
+  \ LOADD  ( ca len -- )
+  \
+  \ Load a Forth RAM-disk from disk.
+  \ (word named after Abersoft Forth's `LOADT`).
+  \ ca len = filename
+
+: LOADD  ( ca len -- )  LOADD? ?ERROR  ;
+
+: /RUND  ( ca len n -- )
+  \ Read a new RAM-disk from disk and load block 'n'.
+  \ ca len = filename
+  >R EMPTY-BUFFERS INIT-DISC LOADD R> LOAD  ;
+
+  \ RUND  ( ca len -- )
+  \
+  \ Read a new RAM-disk from disk and load its first block.
+  \ ca len = filename
+
+: RUND  ( ca len -- )  1 /RUND  ;
+
+( User interface: ordinary files )
+
+: <FILE?  ( a1 len1 ca2 len2 -- f n )
+  \ Load a file from disk.
+  \ a1 len1   = memory region to load
+  \ ca2 len2  = filename
+  \ f         = error?
+  \ n         = error
+  >UFIA (<FILE) IOR>ERROR  ;
+
+: <FILE  ( a1 len1 ca2 len2 -- )
+  \ Load a file from disk.
+  \ a1 len1   = memory region to load
+  \ ca2 len2  = filename
+  <FILE? ?ERROR  ;
+
+: >FILE?  ( ca1 len1 ca2 len2 -- f n )
+  \ Save a file to disk.
+  \ a1 len1   = memory region to save
+  \ ca2 len2  = filename
+  \ f         = error?
+  \ n         = error
+  >UFIA (>FILE) IOR>ERROR  ;
+
+: >FILE  ( ca1 len1 ca2 len2 -- )
+  \ Save a file to disk.
+  \ a1 len1   = memory region to save
+  \ ca2 len2  = filename
+  >FILE? ?ERROR  ;
+
+: -FILE?  ( ca len -- f n )
+  \ Delete a disk file.
+  \ ca len  = filename
+  \ f       = error?
+  \ n       = error
+  FILENAME>UFIA (-FILE) IOR>ERROR  ;
+
+: -FILE  ( ca len -- )
+  \ Delete a disk file.
+  \ ca len = filename
+  -FILE? ?ERROR  ;
+
+( FILE? )
+
+CODE (FILE?)  ( -- f )
+
+  \ XXX FIXME this changes the current drive to 2! why?
+
+  BC PUSH  IX PUSH  \ save the Forth registers
+  PATCH HOOK
+  NSTR2 IX LDP#  1146 CALL
+  E7 OUT  \ page +D out
+  IX POP  BC POP  \ restore the Forth registers
+  0 HL LDP#  PUSHHL JPNZ
+  HL INCP    PUSHHL JP
+  END-CODE
+
+: FILE?  ( ca len -- f )  FILENAME! (FILE?)  ;
+
+  \ CODE DISK-CAPACITY  ( -- n )
+
+  \   \ n = tracks (+128 if double sided)
+  \   \
+  \   \ XXX OLD -- not useful, it just reads the DOS variable at
+  \   \ 0x2001 or 0x2002, depending on the current drive.
+
+  \   PATCH HOOK
+  \   0985 CALL
+  \   E7 OUT  \ page +D out
+  \   0 H LD#  A L LD  PUSHHL JP
+
+  \   END-CODE
+
+( User interface: screens of the Forth RAM-disk )
+
+  : (/LOADD)  ( n ca len -- a len1 ca2 len2 )
+    \ Prepare the parameters to load a RAM-disk from disk,
+    \ at address of screen n.
+    \ Warning: the file will be loaded, no matter its length.
+    \ n = first block (1..11)
+    ROT FLUSH DISC-SCR 0 2SWAP ;
+
+  : /LOADD  ( n ca len -- )
+    \ Load a RAM-disk from disk, at address of screen n.
+    \ Warning: the file will be loaded, no matter its length.
+    \ n = first screen (1..11)
+    (/LOADD) <FILE  ;
+
+  : /LOADD?  ( n ca len -- error? error )
+    \ Load a RAM-disk from disk, at address of screen n.
+    \ Warning: the file will be loaded, no matter its length.
+    \ n = first screen (1..11)
+    (/LOADD) <FILE?  ;
+
+  : (/SAVED)  ( n1 n2 ca len -- ca len ca2 len2 )
+    \ Prepare the parameters to save a RAM-disk to disk,
+    \ from screen n1 to screen n2.
+    \ n1 = first screen (1..11)
+    \ n2 = last screen (1..11)
+    \ ca len = filename
+    \ ca2 len2 = memory zone
+    2SWAP 1+ DISC-SCR SWAP DISC-SCR DUP ROT SWAP - 2SWAP  ;
+
+  : /SAVED  ( n1 n2 ca len -- )
+    \ Save a RAM-disk to disk, from block n1 to block n2.
+    \ n1 = first block (1..11)
+    \ n2 = last block (1..11)
+    \ ca len = filename
+    (/SAVED) >FILE  ;
+
+  : /SAVED?  ( n1 n2 ca len -- error? error )
+    \ Save a RAM-disk to disk, from block n1 to block n2.
+    \ n1 = first block (1..11)
+    \ n2 = last block (1..11)
+    \ ca len = filename
+    (/SAVED) >FILE?  ;
+
+
+  \ vim: filetype=abersoftforthafera

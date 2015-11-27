@@ -1,0 +1,191 @@
+.( Tape extensions )
+
+\ tape.fsb
+\ Tape extensions for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Abersoft Forth only includes two tape words: `LOADT` and
+  \ `SAVET`, that load and save its 11-KiB RAM-disk with the
+  \ name "DISC".  It includes no word to load or save any code
+  \ files, any name and size, what is especially useful in
+  \ order to include graphics or data during the compilation of
+  \ a Forth program.
+  \
+  \ This module defines `>TAPE` ("to tape") and `<TAPE` ("from
+  \ tape"). The approach used was to patch the tape load header
+  \ of Abersoft Forth, passed to the ROM routine, and restore
+  \ its default values after the operation.
+  \
+  \ Two more words, `/LOADT` and `/SAVET`, let improved
+  \ manipulation of the RAM-disk. As they are less needed, they
+  \ are defined in their own files, <slash-loadt.fsb> and
+  \ <slash-savet.fsb>.
+  
+  \ -----------------------------------------------------------
+  \ Requirements
+
+NEEDS   S"        strings
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-03-26: Start.
+  \
+  \ 2015-03-28: First working version.
+  \
+  \ 2015-04-23: Some comments are improved.
+  \
+  \ 2015-04-30: `'BLOCK` instead of `BLOCK>A`, after the change
+  \ in the main file of the library.
+  \
+  \ 2015-05-03: Simpler word names: no "MEM" affix.
+  \
+  \ 2015-05-08: Some words are renamed.
+  \
+  \ 2015-05-10: `INCLUDET` is removed; not useful with tapes.
+  \ `'SCR` instead of `'BLOCK`, after the change in the main
+  \ file of the library.
+  \
+  \ 2015-05-12: Change: `'SCR` renamed to `DISC-SCR`, after the
+  \ changes in the library.
+  \
+  \ 2015-05-17: `NEEDS` used.  Some renamings, after the
+  \ changes in the library (common core words for some tape and
+  \ disk operations).
+
+  \ -----------------------------------------------------------
+  \ Development documentation
+
+  \ Dictionary references from Don Thomasson's book
+  \ _Advanced Spectrum Forth_:
+  \
+  \ 340 (page 119): (TAPE)
+  \ 
+  \ pop hl
+  \ push bc
+  \ push ix
+  \ ld a,l ; 1=LOAD, 0=SAVE
+  \ ; this instruction is at 0x7618:
+  \ ld hl,D000  ; start address to save or load
+  \ ld ix,start-of-header-area
+  \ ; ld a,(5C72) ; XXX this is a mistake in the book
+  \ ; XXX fixed:
+  \ ld (5C74),A
+  \ call 075A
+  \ pop ix
+  \ pop bc
+  \ jp next1
+  \
+  \ 344 (page 120): LOADT
+  \
+  \ 1 (TAPE)
+
+  \ 345 (page 120): SAVET
+  \
+  \ 0 (TAPE)
+
+  \ The load header (pointed by IX before calling the ROM
+  \ routine) is at address 30182 (0x75E6).  Its contents are:
+
+  \ +00 : 3 (identifier of code file type)
+  \ +01 : "DISC      " = 10-char filename, padded with spaces
+  \ +11 : 11263 (0x2BFF)  = length
+  \ +13 : 53248 (0xD0FF)  = start address
+  \ +15 : "  " (2 spaces) = not used for code files
+
+  \ The save header (pointed by the ROM routine, by adding 0x11
+  \ to IX) is right after the save header, at address 30199
+  \ (0x75F7).
+
+  \ -----------------------------------------------------------
+
+2 4 THRU
+
+( Headers )
+
+30182 CONSTANT TAPE-LOAD-HEADER \ load header
+17 CONSTANT /TAPE-HEADER  \ header length
+  \ XXX OLD -- Save header, not needed.
+  \ TAPE-LOAD-HEADER /TAPE-HEADER + CONSTANT TAPE-SAVE-HEADER
+
+10 CONSTANT /TAPE-FILENAME \ filename max length
+
+: >TAPE-FILENAME  ( a1 -- a2 )   1+   ;
+: >TAPE-LENGTH    ( a1 -- a2 )  11 +  ;
+: >TAPE-START     ( a1 -- a2 )  13 +  ;
+
+  \ Keep a copy of both tape headers:
+0 VARIABLE TAPE-HEADERS-BACKUP  /TAPE-HEADER 2* 2- ALLOT
+TAPE-LOAD-HEADER TAPE-HEADERS-BACKUP /TAPE-HEADER 2* CMOVE
+
+( Tools )
+
+  \ Address of the file start address
+   \ in the code of the word `(TAPE)`:
+30233 CONSTANT (TAPE)-START
+
+: TAPE-RESTORE  ( -- )
+  \ Restore the original contents of both tape headers:
+  TAPE-HEADERS-BACKUP TAPE-LOAD-HEADER /TAPE-HEADER 2* CMOVE
+  \ Unpatch `(TAPE)`
+  LO (TAPE)-START !  ;
+
+: -TAPE-FILENAME  ( -- )
+  \ Blank the filename of the load header.
+  TAPE-LOAD-HEADER >TAPE-FILENAME /TAPE-FILENAME BLANKS ;
+
+  \  XXX TODO use the file execution table
+  \  to share one word with the disk support?
+: TAPE-FILENAME!  ( ca len -- )
+  \ Store a filename into the load header.
+  -TAPE-FILENAME  /TAPE-FILENAME MIN
+  TAPE-LOAD-HEADER >TAPE-FILENAME SWAP CMOVE  ;
+
+: ANY-TAPE-FILENAME  ( -- )
+  \ Configure the load header to load any filename.
+  255 TAPE-LOAD-HEADER >TAPE-FILENAME C!  ;
+
+: TAPE-LENGTH!  ( len -- )
+  \ Set the given code length for the next tape loading,
+  \ storing it into the load header.
+  TAPE-LOAD-HEADER >TAPE-LENGTH !  ;
+
+: TAPE-START!  ( a -- )
+  \ Set the given code start for the next tape loading,
+  \ storing it into the load header and patching
+  \ the code of the word `(TAPE)`.
+  DUP (TAPE)-START !  TAPE-LOAD-HEADER >TAPE-START !  ;
+
+( <TAPE >TAPE )
+
+: <TAPE  ( a1 len1 ca2 len2 -- )
+  \ Load a file from tape.
+  \ a1       = destination
+  \ len1     = length (or zero if unspecified)
+  \ ca2 len2 = filename (len2 is zero if unspecified) 
+  DUP IF  TAPE-FILENAME!  ELSE  2DROP ANY-TAPE-FILENAME  THEN
+  TAPE-LENGTH! TAPE-START!  1 (TAPE)  TAPE-RESTORE  ;
+
+: >TAPE  ( a1 len1 ca2 len2 -- )
+  \ Save a memory region into a tape file.
+  \ a1       = start
+  \ len1     = length
+  \ ca2 len2 = filename
+  TAPE-FILENAME! TAPE-LENGTH! TAPE-START!
+  0 (TAPE)  TAPE-RESTORE  ;
+
+  \ vim: filetype=abersoftforthafera

@@ -1,0 +1,56 @@
+\ plot.fsb
+\ Faster `PLOT` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 1988 Lennart Benschop.
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-05-01: Start.
+  \
+  \ 2015-05-04: Adapted from Lennart Benschop's Spectrum
+  \ Forth-83.  Benchmark: it runs in 84% the time of the
+  \ original version. Change: Instead of creating a new word,
+  \ the cfa of the original word is patched with the address of
+  \ the new code.
+  \
+  \ 2015-05-06: New method: the original definition is
+  \ overwritten with the new code. No space used.
+
+  \ -----------------------------------------------------------
+
+-->
+
+.( Faster PLOT )
+
+HEX  HERE ' PLOT  ( a pfa )
+
+  DUP , \ new code field, pointing to the current pfa
+
+  D9 C,           \ exx
+  E1 C,           \ pop hl
+  C1 C,           \ pop bc
+  40 05 + C,      \ ld b,l
+  DD C, E5 C,     \ push ix
+  CD C, 22E5 ,    \ call 0x22E5 ; plot-sub
+  DD C, E1 C,     \ pop ix
+  D9 C,           \ exx
+  C3 C, NEXT ,    \ jp next
+
+  CFA OVER SWAP OVER HERE SWAP - CMOVE  \ overwrite the word
+  ( a ) DP !  \ restore the dictionary pointer
+
+DECIMAL
+
+  \ vim: filetype=abersoftforthafera

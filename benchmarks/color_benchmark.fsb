@@ -1,0 +1,57 @@
+\ test the speed of color words
+
+-->
+
+( test)
+
+NEEDS DEFER defer  NEEDS TIME@ time
+
+DEFER TESTED
+
+: NORMAL  ( -- )
+  0 INK 7 PAPER 0 FLASH 0 BRIGHT 7 BORDER 0 GOVER 0 INVERSE  ;
+
+: FRAMES.  ( -- )  NORMAL TIME@ D.  ;
+
+: >TESTED  ( pfa -- )  DUP NFA ID. ' TESTED DEFER!  ;
+
+: 09TEST  ( n pfa -- )
+  >TESTED TIME0
+  0 DO  10 0 DO  I TESTED  LOOP  LOOP  FRAMES.  ;
+: 07TEST  ( n pfa -- )
+  >TESTED TIME0
+  0 DO  8 0 DO  I TESTED  LOOP  LOOP  FRAMES.  ;
+: 01TEST  ( n pfa -- )
+  >TESTED TIME0
+  0 DO  1 0 DO  I TESTED  LOOP  LOOP  FRAMES.  ;
+
+( tests )
+
+ 2000 ' INK 09TEST
+ 2000 ' QINK 09TEST
+ 2000 ' PAPER 09TEST
+ 2000 ' QPAPER 09TEST
+10000 ' BRIGHT 01TEST
+10000 ' QBRIGHT 01TEST
+10000 ' INVERSE 01TEST
+10000 ' QINVERSE 01TEST
+10000 ' FLASH 01TEST
+10000 ' QFLASH 01TEST
+
+\ 10000 ' GOVER 01TEST
+
+  \ 2015-04-18: Results in system frames,
+  \ with both versions of the same words:
+  \
+  \           Abersoft   SPECTRUM
+  \           Forth      FORTH83*
+  \           --------   --------
+  \ INK           2269       1797   79%
+  \ PAPER         3626       1806   49%
+  \ BRIGHT         426       1000  234%
+  \ INVERSE        426       1301  305%
+  \ FLASH          426       1000  234%
+
+  \ * With `EMIT`.
+
+  \ vim: filetype=abersoftforthafera

@@ -1,0 +1,99 @@
+.( Faster POINT )
+
+\ point.fsb
+\ Faster `POINT` for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ The original code of `POINT` is slow: it makes sure the y
+  \ coordinate is less than 0xB0; then calls the ROM routine
+  \ POINT-SUB (0x22CE), that stores its result on the BASIC
+  \ calculator stack; then calls FIND-INT (0x1E94) to fetch the
+  \ result; finally, it doesn't jump directly to PUSHHL, but
+  \ first pushes HL and then jumps to NEXT...
+
+  \ This alternative is much faster because the y coordinate is
+  \ not forced (the program must do it, if needed); the
+  \ POINT-SUB ROM routine is replicated without using the BASIC
+  \ calculator stack at the end; and PUSHHL is used as Forth
+  \ re-entry point.
+
+  \ -----------------------------------------------------------
+  \ History
+  \
+  \ 2015-05-01: Start.
+  \
+  \ 2015-05-02: Tested.
+  \
+  \ 2015-05-04: Benchmark: it runs in 32% the time of the
+  \ original version. Change: Instead of creating a new word,
+  \ the cfa of the original word is patched with the address of
+  \ the new code.
+  \
+  \ 2015-05-06: Improved: There was no need to save the IX
+  \ register. The Y coordinate check is removed too. Finally,
+  \ the new code overwrites the original (formerly the code was
+  \ one byte bigger): no dictionary space is used.  The
+  \ execution time is still almost the same, only one system
+  \ frame less.
+  \
+  \ 2015-07-05: Fix: the y coordinate was not converted at the
+  \ start.
+
+  \ -----------------------------------------------------------
+
+-->
+
+( Faster POINT -- part 1 )
+
+HERE  \ save the current dictionary pointer
+
+  \ POINT  ( x y -- )
+  HEX
+  E1 C,               \ pop hl ; l = y coordinate
+  D1 C,               \ pop de ; e = x coordinate
+  C5 C,               \ push bc ; save the Forth IP
+  40 05 + C,          \ ld b,l ; b = y coordinate
+  48 03 + C,          \ ld c,e ; c = x coordinate
+  \ ; C = x coordinate
+  \ ; B = y coordinate
+  3E C, AF C,         \ ld a,175 ; max y coordinate
+  90 00 + C,          \ sub b
+  CD C, 22AA 6 + ,    \ call PIXELADD ; +6 to skip BASIC error
+  \ ; HL = screen address
+  \ ; A = pixel position in HL
+
+  -->
+
+( Faster POINT -- part 2 )
+
+  40 07 + C,          \ ld b,a
+  04 C,               \ inc b
+  7E C,               \ ld a,(hl)
+  \ rotate:
+  07 C,               \ rlca
+  10 C, FD C,         \ djnz rotate
+  E6 C, 01 C,         \ and 1
+  \ finish:
+  26 C, 00 C,         \ ld h,0
+  68 07 + C,          \ ld l,a
+  C1 C,               \ pop bc
+  C3 C, PUSHHL ,      \ jp PUSHHL
+
+  DUP ' POINT OVER HERE SWAP - CMOVE  \ move the code
+  DP !  DECIMAL  \ restore the dictionary pointer
+
+  \ vim: filetype=abersoftforthafera
