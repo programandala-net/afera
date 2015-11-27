@@ -1,4 +1,6 @@
-Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.  This file is offered as-is,
-without any warranty.
+Copying and distribution of the Afera library
+(http://programandala.net/en.afera.html), with or without
+modification, are permitted in any medium without royalty
+provided the copyright notices and this notice are
+preserved.  This work is offered as-is, without any
+warranty.
