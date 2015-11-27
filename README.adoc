@@ -1,18 +1,48 @@
-= Afera README
-:revdate: 2015-11-26
+= Afera
+:author: Marcos Cruz (programandala.net)
+:revdate: 2015-11-27
 
 // This file is part of
 // Afera (Abersoft Forth Extensions, Resources and Addons)
 // http://programandala.net/en.program.afera.html
 
-Note:
+// Copying and distribution of this file, with or without
+// modification, are permitted in any medium without royalty provided
+// the copyright notice and this notice are preserved.  This file is
+// offered as-is, without any warranty.
+
+== Description
+
+Afera stands for “Abersoft Forth Extensions, Resources and Addons”.
+It's a library for Abersoft Forth, a fig-Forth system for ZX Spectrum
+from 1983.  I wrote Afera in 2015, in order to make the development of
+http://en.program.tron_0xf.html[Tron 0xF] (an improved remake of an
+old game of mine) easier, but improving an old tape-based fig-Forth
+and making it more powerful was such a nice programming challenge that
+the library soon grew beyond the requirements of the game.
+
+Some of the main features of Afera are the following:
+
+* Many common words and tools found in modern Forth systems.
+* Improved tape support.
+* 1 KiB of additional free memory on Spectrum 48K.
+* 11 KiB of additional free memory on Spectrum 128K.
+* Two 16-KiB RAM-disks on Spectrum 128K.
+* Improved blocks handling.
+* Full screen mode.
+* Faster color commands.
+* G+DOS support.
+* Fixes some bugs of the original system.
+
+== About this file
 
 This file is not intended to teach about the Forth language, the
-Abersoft Forth system for ZX Spectrum, or what a Makefile or `make`
-is...  You are supposed to know all that and much more.
+fig-Forth model, the Abersoft Forth system, what a TAP file is, what a
+Makefile is...  You are supposed to know all that and much more.
 
 The build instructions are for a GNU/Linux system or similar, but the
-library is ready to be used on any ZX Spectrum emulator on any OS.
+library is ready to be used on any ZX Spectrum emulator on any
+platform.
 
 The sources in <src/> are the main documentation.  They are fully
 commented.  Also the <Makefile> is useful, as an example of building
@@ -22,8 +52,6 @@ Contact: http://programandala.net/en.contact.html
 
 == Files
 
-The provided ZIP archive contains the following files and directories:
-
 ACKNOWLEDGMENTS.adoc ::
   The credits.
 Makefile ::
@@ -31,10 +59,9 @@ Makefile ::
 README.adoc ::
   This file.
 TO-DO.adoc ::
-  The to-do tasks (abandoned).
+  The to-do tasks (abandoned, kept only for reference).
 benchmarks/ ::
   Some benchmarks used during the development.
-  The files are
 src/ ::
   The source of all modules.
 sys/ ::
@@ -43,8 +70,8 @@ sys/ ::
 tap/ ::
   The TAP files of all modules.
 tests/ ::
-  TAP files and launchers for Fuse of selected groups of modules,
-  used to test the library during the development.
+  TAP files and launchers for the Fuse emulator, with selected groups
+  of modules, used to test the library during the development.
 
 == How to build the library files
 
@@ -97,11 +124,10 @@ their own requirements.
 
 Examples:
 
-- See how the <Makefile> provided with Afera creates the TAP files in
-  the <tests/> directory.
-- See how the program Tron 0xF
-  (http://programandala.net/en.program.tron_0xf.html) creates its TAP
-  file.
+- See how the Afera's <Makefile> creates the TAP files in the <tests/>
+  directory.
+- See how http://programandala.net/en.program.tron_0xf.html[Tron 0xF]
+  creates its TAP file.
 
 After creating your TAP file, you can run your program as usual:
 
@@ -115,7 +141,7 @@ After creating your TAP file, you can run your program as usual:
 Afera provides support for G+DOS (the disk operating system of the
 Plus D interface), but the first time the library itself must be
 loaded from tape. Then a modified system, with compiled support for
-G+DOS, could be saved to disk. Ssee <src/afera.fsb> and the G+DOS
+G+DOS, could be saved to disk. See <src/afera.fsb> and the G+DOS
 modules <scr/gplusdos_*.fsb> for reference on how to save a modified
 system).
 
