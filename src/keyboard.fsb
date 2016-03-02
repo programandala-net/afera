@@ -30,6 +30,8 @@
   \ 0x10.
   \
   \ 2015-10-16: Fixed comment.
+  \
+  \ 2016-02-20: Changed the layout of the table.
 
   \ -----------------------------------------------------------
 
@@ -141,10 +143,13 @@ DECIMAL  -->
 
 40 CONSTANT KEYS
 0 VARIABLE K-TABLE -2 ALLOT
-K-1 K, K-2 K, K-3 K, K-4 K, K-5 K, K-Q K, K-W K, K-E K, K-R K,
-K-T K, K-A K, K-S K, K-D K, K-F K, K-G K, K-CS K, K-Z K, K-X K,
-K-C K, K-V K, K-0 K, K-9 K, K-8 K, K-7 K, K-6 K, K-P K, K-O K,
-K-I K, K-U K, K-Y K, K-EN K, K-L K, K-K K, K-J K, K-H K,
+K-1 K,  K-2 K,  K-3 K, K-4 K, K-5 K,
+K-Q K,  K-W K,  K-E K, K-R K, K-T K,
+K-A K,  K-S K,  K-D K, K-F K, K-G K,
+K-CS K, K-Z K,  K-X K, K-C K, K-V K,
+K-0 K,  K-9 K,  K-8 K, K-7 K, K-6 K,
+K-P K,  K-O K,  K-I K, K-U K, K-Y K,
+K-EN K, K-L K,  K-K K, K-J K, K-H K,
 K-SP K, K-SS K, K-M K, K-N K, K-B K,
 
 -->

@@ -66,6 +66,8 @@ NEEDS   S"        strings
   \ 2015-05-17: `NEEDS` used.  Some renamings, after the
   \ changes in the library (common core words for some tape and
   \ disk operations).
+  \
+  \ 2015-12-23: Fixed mistake in comment about the tape header.
 
   \ -----------------------------------------------------------
   \ Development documentation
@@ -108,7 +110,7 @@ NEEDS   S"        strings
   \ +15 : "  " (2 spaces) = not used for code files
 
   \ The save header (pointed by the ROM routine, by adding 0x11
-  \ to IX) is right after the save header, at address 30199
+  \ to IX) is right after the load header, at address 30199
   \ (0x75F7).
 
   \ -----------------------------------------------------------

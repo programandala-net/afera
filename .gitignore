@@ -1,5 +1,4 @@
 _meta/
 *.zip
 *.grouped_for_disk/
-_ex/
-_drafts/
+abersoft_forth_afera*.tap

@@ -1,7 +1,7 @@
 \ afera.fsb
 \ Main file of the Afera library for ZX Spectrum Abersoft Forth
 
-\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 2015,2016 Marcos Cruz (programandala.net)
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -40,15 +40,6 @@
   \ 25 Unsupported tape operation.
   \ 26 Unsupported disk operation.
   \ 27 Source file needed.
-
-  \ -----------------------------------------------------------
-  \ fsb directives
-
-  \ The following #vim directive, processed by fsb, translate
-  \ every "\*" into the copyright symbol code of the ZX
-  \ Spectrum character set (0x7F):
-
-  \ #vim %substitute@\\\*@\=nr2char(127)@g
 
 ( CHAR [CHAR] , line comments)
 
@@ -264,7 +255,7 @@ CREATE TUCK  ( x1 x2 -- x2 x1 x2 )
 : ?\  ( f "ccc<newline>" -- )  IF  [COMPILE] \
   THEN  ; IMMEDIATE  DECIMAL -->
 
-( .CPU GREETING )
+( .CPU .SYS .SYS-AUTHOR GREETING )
 
   \ ............................................
   \ Modified computer name
@@ -283,15 +274,24 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
   \ New messages shown after a cold start.
 
 : .SYS         ( -- )  ." Spectrum fig-Forth"  ;
-: .SYS-AUTHOR  ( -- )  ." v1.1A \* 1983 Abersoft" CR
-                       ." v1.1C+Afera \* 2015 Marcos Cruz" CR
-                       ." (programandala.net)"  ;
+: .SYS-AUTHOR  ( -- )
+  \  <------------------------------>
+  ." v1.1A (C) 1983 Abersoft" CR CR
+  ." v1.1C + Afera v1.1.1+20160302" CR
+  ." (C) 2015,2016 Marcos Cruz" CR
+  ." (programandala.net)"  ;
+  \  <------------------------------>
 
 : GREETING  ( -- )  .SYS CR .SYS-AUTHOR CR  ;
 
-  \ As the message shows, the current user version is "C".
-  \ Store it into its standard fig-Forth address.
+  \ As the message shows, the current user version of the
+  \ fig-Forth implementation is "C".  Store it into its
+  \ standard fig-Forth address.
 43 0A +ORIGIN C!  \ 0x43 = ASCII "C"
+
+-->
+
+( COLORS0 ABORT BOOT )
 
   \ ............................................
   \ New system colors: black background, green foreground.
@@ -814,6 +814,12 @@ EXTEND  CLS0 GREETING
   \ at `HEX 10 +ORIGIN`, though there was no side effect
   \ because Abersoft does not use it (the original fig-Forth
   \ implementation does).
+  \
+  \ 2016-03-02: Fix: removed the `#vim` directive which
+  \ converted "\*" to the copyright symbol (code 127 of the ZX
+  \ Spectrum charset). This directive is supported only by fsb,
+  \ not by fsb2, which is currently used. "(c)" is used
+  \ instead.
 
   \ -----------------------------------------------------------
 

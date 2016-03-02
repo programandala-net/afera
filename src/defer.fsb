@@ -28,6 +28,8 @@
   \ `[IS]` and `<IS>`), documented.
   \
   \ 2015-10-26: Improved and fixed some comments.
+  \
+  \ 2016-01-25: Layout.
 
   \ -----------------------------------------------------------
 
@@ -38,7 +40,7 @@
 : (DEFER)  ( -- )
   \ Default behaviour of an uninitialized deferred word:
   \ "Definition not finished".
-  20 ERROR ;
+  20 ERROR  ;
 
 : DEFER  ( "name" -- )
   \ Create a deferred word.
