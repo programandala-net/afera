@@ -34,7 +34,7 @@
   \ manipulation of the RAM-disk. As they are less needed, they
   \ are defined in their own files, <slash-loadt.fsb> and
   \ <slash-savet.fsb>.
-  
+
   \ -----------------------------------------------------------
   \ Requirements
 
@@ -76,7 +76,7 @@ NEEDS   S"        strings
   \ _Advanced Spectrum Forth_:
   \
   \ 340 (page 119): (TAPE)
-  \ 
+  \
   \ pop hl
   \ push bc
   \ push ix
@@ -178,7 +178,7 @@ TAPE-LOAD-HEADER TAPE-HEADERS-BACKUP /TAPE-HEADER 2* CMOVE
   \ Load a file from tape.
   \ a1       = destination
   \ len1     = length (or zero if unspecified)
-  \ ca2 len2 = filename (len2 is zero if unspecified) 
+  \ ca2 len2 = filename (len2 is zero if unspecified)
   DUP IF  TAPE-FILENAME!  ELSE  2DROP ANY-TAPE-FILENAME  THEN
   TAPE-LENGTH! TAPE-START!  1 (TAPE)  TAPE-RESTORE  ;
 

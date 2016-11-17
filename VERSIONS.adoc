@@ -1,0 +1,36 @@
+= Afera versions
+:author: Marcos Cruz (programandala.net)
+:revdate: 2016-11-17
+
+// This file is part of
+// Afera (Abersoft Forth Extensions, Resources and Addons)
+// http://programandala.net/en.program.afera.html
+
+// Copying and distribution of this file, with or without
+// modification, are permitted in any medium without royalty provided
+// the copyright notice and this notice are preserved.  This file is
+// offered as-is, without any warranty.
+
+== Version 1.1.2
+
+Released on 2016-11-17.
+
+- Fix `+PLACE`.
+
+== Version 1.1.1
+
+Released on 2016-03-02.
+
+- Remove the `#vim` directive, which translates the copyright symbol in the
+  greeting message. It's supported only by
+  http://programandala.net/en.program.fsb.html[fsb], not by
+  http://programandala.net/en.program.fsb2.html[fsb2].
+- Fix greeting message. Add version number after
+  http://semver.org[Semantic Versioning].
+- Fix typo and layout.
+
+== Version 1.1.0
+
+Released on 2015-11-27.
+
+First public version.

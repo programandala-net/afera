@@ -277,7 +277,7 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 : .SYS-AUTHOR  ( -- )
   \  <------------------------------>
   ." v1.1A (C) 1983 Abersoft" CR CR
-  ." v1.1C + Afera v1.1.1+20160302" CR
+  ." v1.1C + Afera v1.1.2+20161117" CR
   ." (C) 2015,2016 Marcos Cruz" CR
   ." (programandala.net)"  ;
   \  <------------------------------>

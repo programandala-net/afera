@@ -1,6 +1,6 @@
 = Afera
 :author: Marcos Cruz (programandala.net)
-:revdate: 2015-11-27
+:revdate: 2016-11-17
 
 // This file is part of
 // Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -60,6 +60,8 @@ README.adoc ::
   This file.
 TO-DO.adoc ::
   The to-do tasks (abandoned, kept only for reference).
+VERSIONS.adoc ::
+  Main changes in latest versions.
 benchmarks/ ::
   Some benchmarks used during the development.
 src/ ::
@@ -174,6 +176,6 @@ Forth from disk.
 3. Load the main Afera modules from tape, with the following Forth
 command: `LOADT 1 LOAD`.
 
-4. When all modules have been loaded. You are ready to use the disk.
+4. When all modules have been loaded, you are ready to use the disk.
 Examples: `S" *" CAT`, `S" modulename" LOADD`...
 
