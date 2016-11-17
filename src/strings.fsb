@@ -20,6 +20,8 @@
 
 NEEDS MOVE    move
 NEEDS FALSE   flags
+NEEDS 2>R     2r
+NEEDS 2R>     2r
 
   \ -----------------------------------------------------------
   \ History
@@ -61,6 +63,8 @@ NEEDS FALSE   flags
   \ 2015-06-22: Fix: `S,` didn't compile the count byte.
   \
   \ 2015-07-16: `S=` is moved to its own file.
+  \
+  \ 2016-11-17: Fix `+PLACE`.
 
 2 3 THRU
 
@@ -75,7 +79,7 @@ NEEDS FALSE   flags
 
 : PLACE  ( ca1 len1 ca2 )  2DUP C! 1+ SWAP MOVE  ;
 : +PLACE  ( ca1 len1 ca2 )
-  2DUP C@ + OVER C!  DUP C@ 1+ + SWAP MOVE  ;
+  2DUP 2>R COUNT + SWAP MOVE 2R> DUP C@ ROT + SWAP C!  ;
 
 : /STRING  ( ca1 len1 n -- ca2 len2 )
   DUP >R - SWAP R> + SWAP  ;
