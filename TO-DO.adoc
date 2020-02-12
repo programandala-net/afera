@@ -1,6 +1,6 @@
 = Afera To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2015-10-23
+:revdate: 2020-02-13
 
 // This file is part of
 // Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -106,3 +106,8 @@ Last tasks from the paper note book:
   new version, 66 bytes.
 - Patch `PLOT` to save memory.
 
+.2020-02-13:
+
+`THRU` fails when a word definition ocuppies more than one block and
+`."` is used in the second block. Error #18 is thrown ("Execution
+only").
