@@ -1,0 +1,41 @@
+.( Random number generator )
+
+\ random.jones-steele.fsb
+\ Random number generator for ZX Spectrum Abersoft Forth
+
+\ Copyright (C) 2015,2020 Marcos Cruz (programandala.net)
+\ Copyright (C) 1983 John Jones-Steel
+
+\ This file is part of
+\ Afera (Abersoft Forth Extensions, Resources and Addons)
+\ http://programandala.net/en.program.afera.html
+
+  \ Copying and distribution of this file, with or without
+  \ modification, are permitted in any medium without royalty
+  \ provided the copyright notice and this notice are
+  \ preserved.  This file is offered as-is, without any
+  \ warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2020-02-16: Move from <random.fsb>. Add `RANDOMIZE`.
+  \ Update the source style.
+
+  \ -----------------------------------------------------------
+
+  \ Code from "Bertie", the demo program bundled with Abersoft
+  \ Forth (1983).
+
+  \ Copyright (C) 1983 John Jones-Steele
+
+23670 CONSTANT SYS-SEED
+
+: RND ( n1 -- n2 )
+  SYS-SEED @ 75 U* 75 0 D+
+  OVER OVER U< - - 1 - DUP SYS-SEED !
+  U* NIP ;
+
+: RANDOMIZE ( x -- ) SYS-SEED ! ;
+
+\ vim: filetype=abersoftforthafera

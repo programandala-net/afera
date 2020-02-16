@@ -3,7 +3,7 @@
 \ random.fsb
 \ Random number generator for ZX Spectrum Abersoft Forth
 
-\ Copyright (C) 2015 Marcos Cruz (programandala.net)
+\ Copyright (C) 2015,2020 Marcos Cruz (programandala.net)
 
 \ This file is part of
 \ Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -31,6 +31,10 @@
   \
   \ 2015-10-26: Updated copyright notices and comments. Fixed
   \ the default `RANDOM`.
+  \
+  \ 2020-02-16: Move the alternative implementations to
+  \ <random.vitturi.fsb> and <random.jones-steele.fsb>. Update
+  \ the source style.
 
   \ -----------------------------------------------------------
 
@@ -40,40 +44,10 @@
 
 23670 CONSTANT SYS-SEED
 
-: RND  ( -- n )
-  SYS-SEED @ 31421 * 6927 +  DUP SYS-SEED !  ;
+: RND ( -- x ) SYS-SEED @ 31421 * 6927 + DUP SYS-SEED ! ;
 
-: RANDOM  ( u -- 0..u-1 )  RND U* NIP  ;
+: RANDOM ( n -- 0..n-1 )  RND U* NIP ;
 
-: RANDOMIZE  ( n -- )  SYS-SEED !  ;
-
-( Alternative: RND of Abersoft Forth )
-
-  \ Code from "Bertie", the demo program bundled with Abersoft
-  \ Forth (1983).
-
-  \ Copyright (C) 1983 John Jones-Steele
-
-23670 CONSTANT SYS-SEED
-
-: RND  ( u1 -- u2 )
-  SYS-SEED @ 75 U* 75 0 D+
-  OVER OVER U< - - 1 - DUP SYS-SEED !
-  U* NIP ;
-
-( Alternative: RND of vForth )
-
-  \ Code from Matteo Vitturi's vForth 1.3 (1990-2015).
-
-  \ Copyright (C) 1990-2015 Matteo Vitturi
-
-23670 CONSTANT SYS-SEED
-
-: RND  ( n1 -- n2 )
-  1+ 8195 23672 @ U* 1 0 D+
-  16383 U/ DROP DUP SYS-SEED !
-  SWAP MOD ;
-
-: SEED  ( n -- ) SYS-SEED ! ;
+: RANDOMIZE ( x -- ) SYS-SEED ! ;
 
   \ vim: filetype=abersoftforthafera

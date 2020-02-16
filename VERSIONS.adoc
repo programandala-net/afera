@@ -1,6 +1,6 @@
 = Afera versions
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-11-17
+:revdate: 2020-02-16
 
 // This file is part of
 // Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -10,6 +10,12 @@
 // modification, are permitted in any medium without royalty provided
 // the copyright notice and this notice are preserved.  This file is
 // offered as-is, without any warranty.
+
+== Version 1.2.0
+
+Unreleased. Started in 2020-02.
+
+- Split `RANDOM` variants in independent modules.
 
 == Version 1.1.2
 

@@ -276,9 +276,9 @@ DUP ' .CPU 2+ OVER HERE SWAP - CMOVE DP !
 : .SYS         ( -- )  ." Spectrum fig-Forth"  ;
 : .SYS-AUTHOR  ( -- )
   \  <------------------------------>
-  ." v1.1A (C) 1983 Abersoft" CR CR
-  ." v1.1C + Afera v1.1.2+20161117" CR
-  ." (C) 2015,2016 Marcos Cruz" CR
+  ." 1.1A (C) 1983 Abersoft" CR CR
+  ." 1.1C Afera 1.2.0-dev.0+20200215" CR
+  ." (C) 2015,2016,2020 Marcos Cruz" CR
   ." (programandala.net)"  ;
   \  <------------------------------>
 
