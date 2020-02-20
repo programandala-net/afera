@@ -111,3 +111,7 @@ Last tasks from the paper note book:
 `THRU` fails when a word definition ocuppies more than one block and
 `."` is used in the second block. Error #18 is thrown ("Execution
 only").
+
+.2020-02-20:
+
+Split <src/renamings.fsb>: one word per file.
