@@ -1,6 +1,6 @@
 # Makefile
 
-# Copyright (C) 2015 Marcos Cruz (programandala.net)
+# Copyright (C) 2015,2025 Marcos Cruz (programandala.net)
 
 # This file is part of Afera
 # (Abersoft Forth Extensions, Resources and Addons)
@@ -626,6 +626,10 @@ tests/hi-to_test.tap: tapes
 		tap/loaded.tap \
 		> tests/hi-to_test.tap
 
+readme_title = Afera
+
+include Makefile.readme
+
 # ##############################################################
 # History
 
@@ -671,3 +675,6 @@ tests/hi-to_test.tap: tapes
 # 2015-10-26: Updated two names of modules. fsb2 is used by default instead of fsb.
 #
 # 2015-10-30: Updated the zip recipe with the licenses.
+#
+# 2025-08-20: Add secondary file to convert <README.adoc> to <README.md> for
+# SourceHut.
