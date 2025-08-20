@@ -1,4 +1,14 @@
-_meta/
-*.zip
 *.grouped_for_disk/
+*.zip
+*_session.nvim
+*_session.vim
+*_sessionx.vim
+000-info.txt
+Session.nvim
+Session.vim
+Sessionx.vim
+_meta
+_meta/
 abersoft_forth_afera*.tap
+target
+tmp
