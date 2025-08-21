@@ -190,3 +190,15 @@ Steps to run Abersoft Forth with Afera and disk support:
 
 4.  When all modules have been loaded, you are ready to use the disk.
     Examples: `S" *" CAT`, `S" modulename" LOADD`…​
+
+## Repository
+
+Since 2025-08 the [Afera’s
+repository](https://hg.sr.ht/~programandala_net/afera) is powered by
+[Mercurial](https://mercurial-scm.org) instead of Git and hosted on
+[SourceHut](https://sr.ht/).
+
+For convenience, the [Afera’s old repository on
+GitHub](https://github.com/programandala-net/afera), created in 2015-11,
+is kept as a mirror, handled by Mercurial’s
+[hg-git](https://wiki.mercurial-scm.org/HgGit) extension.

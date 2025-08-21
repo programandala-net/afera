@@ -1,6 +1,6 @@
 = Afera
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-11-17
+:revdate: 2025-08-21
 
 // This file is part of
 // Afera (Abersoft Forth Extensions, Resources and Addons)
@@ -179,3 +179,13 @@ command: `LOADT 1 LOAD`.
 4. When all modules have been loaded, you are ready to use the disk.
 Examples: `S" *" CAT`, `S" modulename" LOADD`...
 
+== Repository
+
+Since 2025-08 the https://hg.sr.ht/~programandala_net/afera[Afera's
+repository] is powered by https://mercurial-scm.org[Mercurial] instead
+of Git and hosted on https://sr.ht/[SourceHut].
+
+For convenience, the
+https://github.com/programandala-net/afera[Afera's old repository on
+GitHub], created in 2015-11, is kept as a mirror, handled by
+Mercurial's https://wiki.mercurial-scm.org/HgGit[hg-git] extension.
